@@ -1,2 +1,0 @@
-# forturd1
-sorteos

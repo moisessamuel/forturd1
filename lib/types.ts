@@ -1,0 +1,77 @@
+export interface Config {
+  id: string
+  total_boletos: number
+  precio_boleto_dop: number
+  precio_boleto_usd: number
+  comision_referido: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AdminUser {
+  id: string
+  username: string
+  password_hash: string
+  created_at: string
+}
+
+export interface Banco {
+  id: string
+  nombre: string
+  titular: string
+  cuenta: string
+  tipo_cuenta: string
+  moneda: string
+  activo: boolean
+  logo_url: string | null
+  created_at: string
+}
+
+export interface Referido {
+  id: string
+  nombre_agente: string
+  codigo: string
+  activo: boolean
+  created_at: string
+}
+
+export type EstadoCompra = 'pendiente' | 'aprobado' | 'rechazado'
+
+export interface Compra {
+  id: string
+  numero_boleto: string
+  nombre_comprador: string
+  telefono: string
+  email: string | null
+  cedula: string | null
+  cantidad_boletos: number
+  monto: number
+  moneda: string
+  banco: string
+  metodo_pago: string
+  referido_codigo: string | null
+  comprobante_url: string | null
+  estado: EstadoCompra
+  origen: 'directo' | 'referido'
+  created_at: string
+  updated_at: string
+}
+
+export interface PurchaseFormData {
+  cantidad: number
+  nombre: string
+  telefono: string
+  email?: string
+  cedula?: string
+  banco: string
+  referido_codigo?: string
+}
+
+export interface AdminStats {
+  ventas_totales: number
+  agentes_activos: number
+  pagos_pendientes: number
+  transacciones_totales: number
+  boletos_asignados: number
+  boletos_disponibles: number
+}
