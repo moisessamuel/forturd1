@@ -142,7 +142,7 @@ export default function AdminDashboard() {
       await fetch('/api/admin/logout', { method: 'POST' })
       router.push('/admin')
     } catch {
-      toast.error('Error al cerrar sesion')
+      toast.error('Error al cerrar sesión')
     }
   }
 
@@ -182,10 +182,10 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error saving config')
 
-      toast.success('Configuracion guardada')
+      toast.success('Configuración guardada')
       fetchData()
     } catch {
-      toast.error('Error al guardar configuracion')
+      toast.error('Error al guardar configuración')
     } finally {
       setIsSavingConfig(false)
     }
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Sesion: <span className="text-foreground">{username}</span>
+              Sesión: <span className="text-foreground">{username}</span>
             </span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
@@ -293,7 +293,7 @@ export default function AdminDashboard() {
       <div className="p-4 lg:p-6">
         {/* Title and actions */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-primary">Panel de Administracion</h1>
+          <h1 className="text-2xl font-bold text-primary">Panel de Administración</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -321,10 +321,10 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-red-500">ADVERTENCIA</h3>
               </div>
               <p className="mb-2 text-base font-medium text-foreground">
-                Esta accion es irreversible.
+                Esta acción es irreversible.
               </p>
               <p className="mb-6 text-sm text-muted-foreground">
-                Al restablecer el sistema, se eliminaran TODAS las compras, boletos asignados, comprobantes de pago y datos de referidos. Todo volvera a cero como si fuera un sistema nuevo. Esta seguro de continuar?
+                {'Al restablecer el sistema, se eliminarán TODAS las compras, boletos asignados, comprobantes de pago y datos de referidos. Todo volverá a cero como si fuera un sistema nuevo. ¿Está seguro de continuar?'}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                   onClick={handleReset}
                   disabled={isResetting}
                 >
-                  {isResetting ? 'Restableciendo...' : 'Si, confirmo restablecer'}
+                  {isResetting ? 'Restableciendo...' : 'Sí, confirmo restablecer'}
                 </Button>
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function AdminDashboard() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-primary">
                 <Settings className="h-5 w-5" />
-                Configuracion de Boletos
+                Configuración de Boletos
               </span>
               {sectionsOpen.config ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
@@ -370,7 +370,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="font-medium">Total de boletos</p>
                       <p className="text-xs text-muted-foreground">
-                        Define el rango maximo de boletos (1 hasta N)
+                        Define el rango máximo de boletos (1 hasta N)
                       </p>
                     </div>
                   </div>
@@ -390,7 +390,7 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Los numeros de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.
+                    Los números de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.
                   </p>
                 </div>
 
@@ -474,7 +474,7 @@ export default function AdminDashboard() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-primary">
                 <Clock className="h-5 w-5" />
-                Pagos Pendientes de Validacion
+                Pagos Pendientes de Validación
               </span>
               {sectionsOpen.pagos ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
@@ -487,7 +487,7 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>Boleto #</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>Telefono</TableHead>
+                      <TableHead>Teléfono</TableHead>
                       <TableHead>Boletos</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
@@ -653,7 +653,7 @@ export default function AdminDashboard() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar nombre, telefono, boleto, cedula..."
+                    placeholder="Buscar nombre, teléfono, boleto, cédula..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="bg-input pl-9"
@@ -694,8 +694,8 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>Boleto #</TableHead>
                       <TableHead>Comprador</TableHead>
-                      <TableHead>Telefono</TableHead>
-                      <TableHead>Cedula</TableHead>
+                      <TableHead>Teléfono</TableHead>
+                      <TableHead>Cédula</TableHead>
                       <TableHead>No. poder</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
@@ -795,7 +795,7 @@ export default function AdminDashboard() {
           {/* Referidos Section */}
           <Card className="border-border/50 bg-card">
             <CardHeader>
-              <CardTitle className="text-lg">Gestion de Referidos</CardTitle>
+              <CardTitle className="text-lg">Gestión de Referidos</CardTitle>
             </CardHeader>
             <CardContent>
               {/* Create new referido */}
@@ -809,7 +809,7 @@ export default function AdminDashboard() {
                     className="flex-1 bg-input"
                   />
                   <Input
-                    placeholder="Codigo (ej. JUAN10)"
+                    placeholder="Código (ej. JUAN10)"
                     value={newReferidoCodigo}
                     onChange={(e) => setNewReferidoCodigo(e.target.value.toUpperCase())}
                     className="w-40 bg-input"
@@ -830,10 +830,10 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Agente</TableHead>
-                      <TableHead>Codigo</TableHead>
+                      <TableHead>Código</TableHead>
                       <TableHead>Ventas Aprobadas</TableHead>
                       <TableHead>Ventas (DOP)</TableHead>
-                      <TableHead>Comision (10%)</TableHead>
+                      <TableHead>Comisión (10%)</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -882,7 +882,7 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>Boleto #</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>Telefono</TableHead>
+                      <TableHead>Teléfono</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Estado</TableHead>

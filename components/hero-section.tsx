@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { MapPin, Search, CreditCard, Shield } from 'lucide-react'
 
 const SLIDE_IMAGES = [
-  { src: '/images/slide1.png', alt: 'FortuRD - Arranca tu sueno' },
+  { src: '/images/slide1.png', alt: 'FortuRD - Arranca tu sueño' },
   { src: '/images/slide2.jpg', alt: 'BMW X6 - Premio FortuRD' },
   { src: '/images/slide3.jpg', alt: 'BMW X7 - Premio FortuRD' },
 ]
@@ -111,14 +111,14 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
 
         <div className="flex flex-col justify-center">
           <h1 className="mb-2 text-2xl font-extrabold uppercase text-primary md:text-3xl lg:text-4xl">
-            {'TU DECIDES TU SUERTE UNA X6 Y UNA X7 ESPERANDO Dueño.'}
+            {'TU DECIDES TU SUERTE UNA X6 Y UNA X7 ESPERANDO DUEÑO.'}
           </h1>
           <div className="mb-4 flex items-center gap-2 text-muted-foreground">
             <MapPin className="h-4 w-4" />
             <span>Santo Domingo, Distrito Nacional</span>
           </div>
           <p className="mb-6 text-foreground/80">
-{'La BMW X6 es una SUV deportiva tipo coupe, conocida por su potencia y tecnologia avanzada. La BMW X7 es una SUV ejecutiva de gran tamaño, diseñada para maximo confort.'}
+{'La BMW X6 es una SUV deportiva tipo coupé, conocida por su potencia y tecnología avanzada. La BMW X7 es una SUV ejecutiva de gran tamaño, diseñada para máximo confort.'}
           </p>
 
           <div className="grid grid-cols-2 gap-4">
@@ -142,7 +142,7 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
 
           <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Shield className="h-4 w-4 text-green-500" />
-            Compra minima garantizada por sistema seguro
+            Compra mínima garantizada por sistema seguro
           </p>
         </div>
       </div>
@@ -178,7 +178,7 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
             </div>
 
             <div>
-              <p className="mb-2 text-xs text-muted-foreground">SELECCION RAPIDA</p>
+              <p className="mb-2 text-xs text-muted-foreground">SELECCIÓN RÁPIDA</p>
               <div className="grid grid-cols-4 gap-2">
                 {[1, 5, 10, 25].map((qty) => (
                   <Button
@@ -196,7 +196,7 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
 
             <div>
               <label className="mb-2 block text-sm font-medium">
-                Codigo de Referido (Opcional)
+                Código de Referido (Opcional)
               </label>
               <Input
                 type="text"
@@ -218,7 +218,7 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
 
             <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <Shield className="h-3 w-3" />
-              Pago seguro por transferencia bancaria con validacion manual
+              Pago seguro por transferencia bancaria con validación manual
             </p>
           </form>
         </CardContent>
@@ -230,9 +230,9 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
           <div className="flex items-center gap-3">
             <Search className="h-5 w-5 text-primary" />
             <div>
-              <p className="text-lg font-semibold">Ya compraste tu boleto?</p>
+              <p className="text-lg font-semibold">{'¿Ya compraste tu boleto?'}</p>
               <p className="text-lg text-muted-foreground">
-                Verifica el estado de tu boleto aqui
+                Verifica el estado de tu boleto aquí
               </p>
             </div>
           </div>

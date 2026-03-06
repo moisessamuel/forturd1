@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 export function WhatsAppBubble() {
   const [showTooltip, setShowTooltip] = useState(false)
 
-  const whatsappNumber = '0000000000' // Sin numero asignado aun
+  const whatsappNumber = '0000000000' // Sin número asignado aún
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hola%2C%20necesito%20ayuda%20con%20FortuRD`
 
   return (
@@ -15,7 +15,7 @@ export function WhatsAppBubble() {
       {showTooltip && (
         <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-card px-4 py-3 shadow-xl">
           <p className="text-sm text-foreground">
-            Necesitas ayuda? <span className="font-semibold text-primary">Escribenos</span>
+            {'¿Necesitas ayuda?'} <span className="font-semibold text-primary">{'¡Escríbenos!'}</span>
           </p>
           <button
             onClick={() => setShowTooltip(false)}

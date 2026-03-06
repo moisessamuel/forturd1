@@ -43,17 +43,17 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg' },
     { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg' },
     { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg' },
-    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg' },
+    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en línea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg' },
     { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '', tipoCuenta: '', image: '/images/banks/qik.jpeg' },
     { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '', tipoCuenta: '', image: '/images/banks/santacruz.jpeg' },
     { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg' },
     { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg' },
     { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg' },
-    { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '', tipoCuenta: '', image: '/images/banks/apopular.jpeg' },
+    { id: 'apopular', nombre: 'Asociación Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '', tipoCuenta: '', image: '/images/banks/apopular.jpeg' },
   ]
 
   const titular = {
-    nombre: 'Moises Samuel Escano Bravo',
+    nombre: 'Moisés Samuel Escaño Bravo',
     cedula: '402-3305853-2',
   }
   const [formData, setFormData] = useState<FormData>({
@@ -108,13 +108,13 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     // Validate file type
     const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Solo se permiten imagenes PNG, JPG o WEBP')
+      toast.error('Solo se permiten imágenes PNG, JPG o WEBP')
       return
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('El archivo excede el tamaño maximo de 10MB')
+      toast.error('El archivo excede el tamaño máximo de 10MB')
       return
     }
 
@@ -194,7 +194,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
       setTicketNumber(compra.numero_boleto)
       setCompraId(compra.id)
       setStep(4)
-      toast.success('Compra registrada exitosamente!')
+      toast.success('¡Compra registrada exitosamente!')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al procesar la compra')
     } finally {
@@ -204,7 +204,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
 
   const copyTicketNumber = () => {
     navigator.clipboard.writeText(ticketNumber)
-    toast.success('Numero de boleto copiado!')
+    toast.success('¡Número de boleto copiado!')
   }
 
   const renderStepIndicator = () => (
@@ -276,7 +276,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 <Input
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  placeholder="Ej. Juan Perez"
+                  placeholder="Ej. Juan Pérez"
                   className="bg-input"
                 />
               </div>
@@ -284,7 +284,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <span className="text-primary">📞</span>
-                  Numero de Celular <span className="text-destructive">*</span>
+                  Número de Celular <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={formData.telefono}
@@ -293,14 +293,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                   className="bg-input"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Ingresa tu numero con codigo de pais (ej. +1, +52, +34)
+                  Ingresa tu número con código de país (ej. +1, +52, +34)
                 </p>
               </div>
 
               <div>
                 <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                   <span className="text-primary">@</span>
-                  Correo Electronico <span className="text-muted-foreground font-normal">(opcional)</span>
+                  Correo Electrónico <span className="text-muted-foreground font-normal">(opcional)</span>
                 </label>
                 <Input
                   type="email"
@@ -333,7 +333,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
         {renderOrderSummary()}
 
         <h2 className="mb-2 text-center text-2xl font-bold text-primary">MODOS DE PAGO</h2>
-        <p className="mb-4 text-center text-muted-foreground">Elige una opcion.</p>
+        <p className="mb-4 text-center text-muted-foreground">Elige una opción.</p>
 
         {/* Currency Selector */}
         <div className="mb-6">
@@ -351,7 +351,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
               onClick={() => setMoneda('USD')}
               className={moneda === 'USD' ? 'bg-primary text-primary-foreground' : ''}
             >
-              USD (Dolares)
+              USD (Dólares)
             </Button>
           </div>
           <p className="mt-2 text-center text-sm text-muted-foreground">
@@ -365,7 +365,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
         {/* Cash payment button */}
         <div className="relative mb-6 flex flex-col items-center">
           <p className="mb-2 text-center text-sm font-semibold text-primary" style={{ textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
-            Para pago en efectivo presione aqui
+            Para pago en efectivo presione aquí
           </p>
           <button
             onClick={() => setShowCashPanel(!showCashPanel)}
@@ -388,13 +388,13 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
               <CardContent className="p-4">
                 <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
+                  Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente más cercano y depositar solo con tu cédula.
                 </p>
                 <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
+                  Si es depósito bancario vía cajero sin importar la hora, específicamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
                 </p>
                 <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-                  Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago de abajo.
+                  Una vez realizado el pago, deberá subir el comprobante seleccionando el banco donde realizó el depósito en los métodos de pago de abajo.
                 </p>
               </CardContent>
             </Card>
@@ -440,7 +440,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                         <span className="font-medium text-foreground">{titular.nombre}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Cedula:</span>
+                        <span className="text-muted-foreground">Cédula:</span>
                         <span className="font-medium text-foreground">{titular.cedula}</span>
                       </div>
                       {method.cuenta && (
@@ -487,7 +487,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           <CardContent className="flex items-start gap-3 p-4">
             <Check className="mt-0.5 h-5 w-5 text-green-500" />
             <p className="text-sm">
-              Asegurese de transferir el monto exacto. Despues de realizar la
+              Asegúrese de transferir el monto exacto. Después de realizar la
               transferencia, presione continuar para subir el comprobante.
             </p>
           </CardContent>
@@ -499,14 +499,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             onClick={() => setStep(1)}
             className="flex-1"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Atras
+            <ArrowLeft className="mr-2 h-4 w-4" /> Atrás
           </Button>
           <Button
             onClick={() => setStep(3)}
             disabled={!selectedBanco}
             className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            Ya transferi, subir comprobante <ArrowRight className="ml-2 h-4 w-4" />
+            Ya transferí, subir comprobante <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -566,10 +566,10 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 <p className="mb-2 text-center">
                   {formData.comprobante
                     ? formData.comprobante.name
-                    : 'Toca aqui para subir tu comprobante'}
+                    : 'Toca aquí para subir tu comprobante'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  PNG, JPG, JPEG - Maximo 10 MB
+                  PNG, JPG, JPEG - Máximo 10 MB
                 </p>
                 {!formData.comprobante && (
                   <Button
@@ -605,7 +605,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                           <Camera className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">Camara</p>
+                          <p className="font-medium">Cámara</p>
                           <p className="text-xs text-muted-foreground">Tomar foto</p>
                         </div>
                       </button>
@@ -618,7 +618,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                           <ImageIcon className="h-5 w-5 text-green-500" />
                         </div>
                         <div>
-                          <p className="font-medium">Galeria</p>
+                          <p className="font-medium">Galería</p>
                           <p className="text-xs text-muted-foreground">Seleccionar de fotos</p>
                         </div>
                       </button>
@@ -685,14 +685,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 onClick={() => setStep(2)}
                 className="flex-1"
               >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Atras
+                <ArrowLeft className="mr-2 h-4 w-4" /> Atrás
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={!formData.comprobanteUrl || isSubmitting}
                 className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isSubmitting ? 'Procesando...' : 'Confirmar Envio'}
+                {isSubmitting ? 'Procesando...' : 'Confirmar Envío'}
                 <Check className="ml-2 h-4 w-4" />
               </Button>
             </div>
@@ -716,15 +716,15 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             </div>
           </div>
 
-          <h2 className="mb-2 text-2xl font-bold">Comprobante Recibido!</h2>
+          <h2 className="mb-2 text-2xl font-bold">{'¡Comprobante Recibido!'}</h2>
           <p className="mb-6 text-muted-foreground">
-            Tu comprobante ha sido enviado exitosamente. Tu billete esta en estado{' '}
-            <span className="font-medium text-primary">Pendiente de Validacion</span>.
+            Tu comprobante ha sido enviado exitosamente. Tu billete está en estado{' '}
+            <span className="font-medium text-primary">Pendiente de Validación</span>.
           </p>
 
           <Card className="mb-6 border-primary/50 bg-primary/10">
             <CardContent className="p-6">
-              <p className="mb-2 text-sm text-muted-foreground">TU NUMERO DE BOLETO</p>
+              <p className="mb-2 text-sm text-muted-foreground">TU NÚMERO DE BOLETO</p>
               <div className="flex items-center justify-center gap-3">
                 <p className="font-mono text-3xl font-bold text-primary">
                   # {ticketNumber.padStart(6, '0')}
@@ -739,7 +739,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 </Button>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                Guarda este numero para verificar el estado de tu boleto
+                Guarda este número para verificar el estado de tu boleto
               </p>
             </CardContent>
           </Card>
@@ -748,7 +748,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           {compraId && (
             <Card className="mb-6 border-border/50 bg-card/50">
               <CardContent className="flex flex-col items-center p-6">
-                <p className="mb-3 text-sm font-medium text-muted-foreground">Escanea el codigo QR para ver tu boleto</p>
+                <p className="mb-3 text-sm font-medium text-muted-foreground">Escanea el código QR para ver tu boleto</p>
                 <div className="rounded-xl bg-white p-4">
                   <QRCodeSVG
                     value={`${typeof window !== 'undefined' ? window.location.origin : ''}/boleto/${compraId}`}
@@ -760,14 +760,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                   />
                 </div>
                 <p className="mt-3 text-xs text-muted-foreground">
-                  Este QR contiene toda la informacion de tu compra
+                  Este QR contiene toda la información de tu compra
                 </p>
               </CardContent>
             </Card>
           )}
 
           <p className="mb-6 text-sm text-muted-foreground">
-            Te contactaremos al numero <span className="font-medium text-foreground">{formData.telefono}</span> cuando tu pago sea verificado en un plazo de <span className="font-medium text-foreground">24 horas</span>. Si no es verificado en ese tiempo, contacta a <span className="font-medium text-primary">soporte</span>.
+            Te contactaremos al número <span className="font-medium text-foreground">{formData.telefono}</span> cuando tu pago sea verificado en un plazo de <span className="font-medium text-foreground">24 horas</span>. Si no es verificado en ese tiempo, contacta a <span className="font-medium text-primary">soporte</span>.
           </p>
 
           <div className="flex gap-4">

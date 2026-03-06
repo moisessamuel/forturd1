@@ -9,8 +9,8 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'FortuRD - Arranca tu sueno, Enciende tu fortuna',
-  description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, Republica Dominicana. Compra tus boletos y gana.',
+  title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
+  description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
   generator: 'FortuRD',
   icons: {
     icon: [

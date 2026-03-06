@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
 
     if (!file) {
-      return NextResponse.json({ error: 'No se proporciono archivo' }, { status: 400 })
+      return NextResponse.json({ error: 'No se proporcionó archivo' }, { status: 400 })
     }
 
     // Validate file type
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: 'El archivo excede el tamano maximo de 10MB' },
+        { error: 'El archivo excede el tamaño máximo de 10MB' },
         { status: 400 }
       )
     }

@@ -84,7 +84,7 @@ export default function QRPage() {
       // Bottom text
       ctx.fillStyle = '#666666'
       ctx.font = '18px sans-serif'
-      ctx.fillText('Arranca tu sueno, Enciende tu fortuna', 512, 860)
+      ctx.fillText('Arranca tu sueño, Enciende tu fortuna', 512, 860)
 
       // Powered by
       ctx.fillStyle = '#444444'
@@ -105,7 +105,7 @@ export default function QRPage() {
       try {
         await navigator.share({
           title: 'FortuRD - Rifa de Apartamentos',
-          text: 'Participa en la rifa de apartamentos de lujo en Punta Cana!',
+          text: '¡Participa en la rifa de apartamentos de lujo en Punta Cana!',
           url: siteUrl,
         })
       } catch {
@@ -138,7 +138,7 @@ export default function QRPage() {
             style={{ width: 'auto', height: '90px' }}
           />
           <p className="mb-6 text-center text-sm text-muted-foreground">
-            Escanea el codigo QR para participar
+            Escanea el código QR para participar
           </p>
 
           {/* QR Code */}
@@ -155,7 +155,7 @@ export default function QRPage() {
 
           {/* URL */}
           <p className="mt-4 text-sm font-medium text-primary">{siteUrl}</p>
-          <p className="mt-1 text-xs text-muted-foreground">Arranca tu sueno, Enciende tu fortuna</p>
+          <p className="mt-1 text-xs text-muted-foreground">Arranca tu sueño, Enciende tu fortuna</p>
 
           {/* Actions */}
           <div className="mt-6 flex w-full gap-3">

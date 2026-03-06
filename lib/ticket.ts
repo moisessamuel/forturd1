@@ -21,7 +21,7 @@ export async function generateTicketNumber(): Promise<string> {
     attempts++
     
     if (attempts > maxAttempts) {
-      throw new Error('No se pudo generar un numero de boleto unico')
+      throw new Error('No se pudo generar un número de boleto único')
     }
   } while (usedNumbers.has(ticketNumber))
   

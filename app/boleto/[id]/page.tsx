@@ -94,7 +94,7 @@ export default function BoletoPage() {
         return (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-500/15 px-3 py-1 text-sm font-medium text-yellow-500">
             <Clock className="h-4 w-4" />
-            Pendiente de Validacion
+            Pendiente de Validación
           </span>
         )
       case 'rechazado':
@@ -118,7 +118,7 @@ export default function BoletoPage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Cargando informacion del boleto...</p>
+          <p className="text-muted-foreground">Cargando información del boleto...</p>
         </div>
       </div>
     )
@@ -134,7 +134,7 @@ export default function BoletoPage() {
             </div>
             <h2 className="mb-2 text-xl font-bold">Boleto no encontrado</h2>
             <p className="mb-6 text-sm text-muted-foreground">
-              El boleto que buscas no existe o el enlace es invalido.
+              El boleto que buscas no existe o el enlace es inválido.
             </p>
             <Link href="/">
               <Button variant="outline" className="border-primary text-primary">
@@ -175,7 +175,7 @@ export default function BoletoPage() {
         {/* Ticket Number Header */}
         <Card className="mb-6 border-primary/50 bg-primary/10">
           <CardContent className="p-6 text-center">
-            <p className="mb-1 text-sm text-muted-foreground">NUMERO DE BOLETO</p>
+            <p className="mb-1 text-sm text-muted-foreground">NÚMERO DE BOLETO</p>
             <p className="font-mono text-4xl font-bold text-primary">
               # {compra.numero_boleto}
             </p>
@@ -186,7 +186,7 @@ export default function BoletoPage() {
         {/* Buyer Info */}
         <Card className="mb-6 border-border/50 bg-card/50">
           <CardContent className="p-6">
-            <h3 className="mb-4 text-lg font-semibold text-foreground">Informacion del Comprador</h3>
+            <h3 className="mb-4 text-lg font-semibold text-foreground">Información del Comprador</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
@@ -203,7 +203,7 @@ export default function BoletoPage() {
                   <Phone className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Telefono</p>
+                  <p className="text-xs text-muted-foreground">Teléfono</p>
                   <p className="font-medium">{compra.telefono}</p>
                 </div>
               </div>
@@ -214,7 +214,7 @@ export default function BoletoPage() {
                     <Mail className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Correo Electronico</p>
+                    <p className="text-xs text-muted-foreground">Correo Electrónico</p>
                     <p className="font-medium">{compra.email}</p>
                   </div>
                 </div>
@@ -226,7 +226,7 @@ export default function BoletoPage() {
                     <IdCard className="h-4 w-4 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Cedula</p>
+                    <p className="text-xs text-muted-foreground">Cédula</p>
                     <p className="font-medium">{compra.cedula}</p>
                   </div>
                 </div>
@@ -265,7 +265,7 @@ export default function BoletoPage() {
                   <Building2 className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Metodo de Pago</p>
+                  <p className="text-xs text-muted-foreground">Método de Pago</p>
                   <p className="font-medium">{compra.banco}</p>
                 </div>
               </div>
@@ -296,7 +296,7 @@ export default function BoletoPage() {
         {/* Footer */}
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            FortuRD - Arriesga la suerte, Enciende tu fortuna
+            FortuRD - Arranca tu sueño, Enciende tu fortuna
           </p>
         </div>
       </div>

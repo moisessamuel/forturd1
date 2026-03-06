@@ -45,13 +45,13 @@ export default function AdminLoginPage() {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.error || 'Credenciales invalidas')
+        throw new Error(error.error || 'Credenciales inválidas')
       }
 
-      toast.success('Inicio de sesion exitoso')
+      toast.success('Inicio de sesión exitoso')
       router.push('/admin/dashboard')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al iniciar sesion')
+      toast.error(error instanceof Error ? error.message : 'Error al iniciar sesión')
     } finally {
       setIsLoading(false)
     }
@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
           </div>
           <h1 className="mb-2 text-2xl font-bold">Acceso restringido</h1>
           <p className="text-center text-muted-foreground">
-            Panel de Administracion — Solo personal autorizado
+            Panel de Administración — Solo personal autorizado
           </p>
         </div>
 
@@ -90,13 +90,13 @@ export default function AdminLoginPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">Contrasena</label>
+                <label className="mb-2 block text-sm font-medium">Contraseña</label>
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Ingresa tu contrasena"
+                    placeholder="Ingresa tu contraseña"
                     className="bg-input pr-16"
                   />
                   <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-2">
@@ -118,16 +118,16 @@ export default function AdminLoginPage() {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <User className="mr-2 h-4 w-4" />
-                {isLoading ? 'Verificando...' : 'Iniciar sesion'}
+                {isLoading ? 'Verificando...' : 'Iniciar sesión'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Este acceso esta protegido y monitoreado.
+          Este acceso está protegido y monitoreado.
           <br />
-          Los intentos no autorizados seran registrados.
+          Los intentos no autorizados serán registrados.
         </p>
       </div>
     </main>

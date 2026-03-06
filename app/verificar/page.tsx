@@ -28,7 +28,7 @@ export default function VerificarPage() {
     e.preventDefault()
     
     if (!ticketNumber.trim()) {
-      toast.error('Por favor ingresa un numero de boleto')
+      toast.error('Por favor ingresa un número de boleto')
       return
     }
 
@@ -82,7 +82,7 @@ export default function VerificarPage() {
           color: 'text-yellow-500',
           bgColor: 'bg-yellow-500/10',
           borderColor: 'border-yellow-500/50',
-          label: 'Pendiente de Validacion',
+          label: 'Pendiente de Validación',
         }
     }
   }
@@ -118,7 +118,7 @@ export default function VerificarPage() {
           </div>
           <h1 className="mb-2 text-3xl font-bold italic">Verificar Boleto</h1>
           <p className="text-center text-muted-foreground">
-            Ingresa el numero de tu boleto para verificar su estado.
+            Ingresa el número de tu boleto para verificar su estado.
           </p>
         </div>
 
@@ -165,7 +165,7 @@ export default function VerificarPage() {
               </h2>
               
               <div className="mb-4 text-center">
-                <p className="text-sm text-muted-foreground">Numero de Boleto</p>
+                <p className="text-sm text-muted-foreground">Número de Boleto</p>
                 <p className="font-mono text-2xl font-bold text-primary">
                   #{result.numero_boleto.padStart(6, '0')}
                 </p>
@@ -199,8 +199,8 @@ export default function VerificarPage() {
               <XCircle className="mx-auto mb-4 h-16 w-16 text-red-500" />
               <h2 className="mb-2 text-xl font-bold">Boleto no encontrado</h2>
               <p className="text-muted-foreground">
-                El numero de boleto ingresado no existe en nuestro sistema.
-                Por favor verifica el numero e intenta de nuevo.
+                El número de boleto ingresado no existe en nuestro sistema.
+                Por favor verifica el número e intenta de nuevo.
               </p>
             </CardContent>
           </Card>
@@ -210,7 +210,7 @@ export default function VerificarPage() {
           <CardContent className="flex items-start gap-3 p-4">
             <Clock className="mt-0.5 h-5 w-5 text-primary" />
             <p className="text-sm">
-              Los pagos son verificados en un maximo de <span className="font-bold text-primary">24 horas</span>. Si tienes dudas, contacta a nuestro equipo de soporte.
+              Los pagos son verificados en un máximo de <span className="font-bold text-primary">24 horas</span>. Si tienes dudas, contacta a nuestro equipo de soporte.
             </p>
           </CardContent>
         </Card>
