@@ -160,6 +160,20 @@
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Instagram glow animation */
+@keyframes instagram-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(221, 42, 123, 0.5), 0 0 24px rgba(245, 133, 41, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(221, 42, 123, 0.8), 0 0 40px rgba(245, 133, 41, 0.5);
+  }
+}
+
+.animate-instagram-glow {
+  animation: instagram-glow 2s ease-in-out infinite;
+}
+
 /* Abstract background pattern */
 .abstract-bg {
   background-image: 
