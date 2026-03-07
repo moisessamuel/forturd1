@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { ArrowLeft, ArrowRight, Check, Clock, User, Upload, CreditCard, Copy, Camera, FolderOpen, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, Clock, User, Upload, CreditCard, Copy, Camera, FolderOpen, Image as ImageIcon, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -668,13 +668,26 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
               />
               {formData.comprobanteUrl && (
                 <div className="mt-4 flex items-center justify-center">
-                  <Image
-                    src={formData.comprobanteUrl}
-                    alt="Comprobante"
-                    width={200}
-                    height={200}
-                    className="rounded-lg object-cover"
-                  />
+                  <div className="relative inline-block">
+                    <Image
+                      src={formData.comprobanteUrl}
+                      alt="Comprobante"
+                      width={200}
+                      height={200}
+                      className="rounded-lg object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))
+                        if (fileInputRef.current) fileInputRef.current.value = ''
+                      }}
+                      className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md transition-transform hover:scale-110"
+                      aria-label="Eliminar comprobante"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -766,8 +779,8 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             </Card>
           )}
 
-          <p className="mb-6 text-sm text-muted-foreground">
-            Te contactaremos al número <span className="font-medium text-foreground">{formData.telefono}</span> cuando tu pago sea verificado en un plazo de <span className="font-medium text-foreground">24 horas</span>. Si no es verificado en ese tiempo, contacta a <span className="font-medium text-primary">soporte</span>.
+          <p className="mb-6 text-xl font-semibold text-foreground">
+            Boletos confirmados en 24 horas.
           </p>
 
           <div className="flex gap-4">

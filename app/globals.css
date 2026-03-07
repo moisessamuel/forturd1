@@ -144,6 +144,36 @@
   border-color: oklch(0.75 0.15 85);
 }
 
+/* Pulse glow animation for menu button */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px oklch(0.75 0.15 85 / 0.4), 0 0 20px oklch(0.75 0.15 85 / 0.2);
+    border-color: oklch(0.75 0.15 85 / 0.7);
+  }
+  50% {
+    box-shadow: 0 0 16px oklch(0.75 0.15 85 / 0.7), 0 0 36px oklch(0.75 0.15 85 / 0.35);
+    border-color: oklch(0.75 0.15 85);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Instagram glow animation */
+@keyframes instagram-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(221, 42, 123, 0.5), 0 0 24px rgba(245, 133, 41, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(221, 42, 123, 0.8), 0 0 40px rgba(245, 133, 41, 0.5);
+  }
+}
+
+.animate-instagram-glow {
+  animation: instagram-glow 2s ease-in-out infinite;
+}
+
 /* Abstract background pattern */
 .abstract-bg {
   background-image: 

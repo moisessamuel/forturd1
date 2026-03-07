@@ -17,7 +17,7 @@ async function handleInit() {
     const supabase = await createClient();
     
     // Hash the password
-    const password = "pocoyo123";
+    const password = "gillette007";
     const hash = await bcrypt.hash(password, 10);
     
     // Check if admin already exists

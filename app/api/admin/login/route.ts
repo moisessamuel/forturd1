@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createSession, setSessionCookie } from '@/lib/auth'
 
 const DEFAULT_USERNAME = 'pocoyo'
-const DEFAULT_PASSWORD = 'pocoyo123'
+const DEFAULT_PASSWORD = 'gillette007'
 
 export async function POST(request: NextRequest) {
   try {
