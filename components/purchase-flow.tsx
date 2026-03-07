@@ -767,7 +767,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           )}
 
           <p className="mb-6 text-sm text-muted-foreground">
-            Te contactaremos al número <span className="font-medium text-foreground">{formData.telefono}</span> cuando tu pago sea verificado en un plazo de <span className="font-medium text-foreground">24 horas</span>. Si no es verificado en ese tiempo, contacta a <span className="font-medium text-primary">soporte</span>.
+            Boleto confirmado en un plazo de <span className="font-medium text-foreground">24 horas</span>. Si no es verificado en ese tiempo por favor contactar <span className="font-medium text-primary">soporte</span>.
           </p>
 
           <div className="flex gap-4">
