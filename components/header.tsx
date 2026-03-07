@@ -37,7 +37,7 @@ export function Header() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary/50 bg-background transition-all hover:border-primary hover:shadow-[0_0_12px_rgba(218,165,32,0.4)]"
+            className="animate-pulse-glow flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background transition-all hover:border-primary hover:shadow-[0_0_24px_rgba(218,165,32,0.6)]"
             aria-label="Menu"
           >
             <Image
@@ -71,7 +71,7 @@ export function Header() {
               </Link>
               <div className="mx-4 border-t border-border/30" />
               <a
-                href="https://wa.me/18091234567"
+                href="https://wa.me/18298059020"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMenuOpen(false)}
