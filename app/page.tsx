@@ -31,7 +31,7 @@ export default function HomePage() {
         <div
           className="h-full w-full bg-contain bg-center bg-no-repeat"
           style={{ 
-            backgroundImage: 'url(/images/forturd-bg.png)',
+            backgroundImage: 'url(/images/forturd-bg-new.jpeg)',
             filter: 'blur(2px)',
             transform: 'scale(0.85)',
             clipPath: 'inset(0 0 6% 0)',
