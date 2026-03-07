@@ -766,16 +766,8 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             </Card>
           )}
 
-          <p className="mb-6 text-base text-muted-foreground">
-            Boleto confirmado en un plazo de <span className="font-medium text-foreground">24 horas</span>. Si no es verificado en ese tiempo por favor contactar{' '}
-            <a
-              href="https://wa.me/18298059020"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80"
-            >
-              soporte
-            </a>.
+          <p className="mb-6 text-lg text-muted-foreground">
+            <span className="font-medium text-foreground">8293152453</span> Boletos confirmados en 24 horas
           </p>
 
           <div className="flex gap-4">
