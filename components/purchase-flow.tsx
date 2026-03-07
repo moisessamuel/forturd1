@@ -766,8 +766,8 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             </Card>
           )}
 
-          <p className="mb-6 text-lg text-muted-foreground">
-            <span className="font-medium text-foreground">8293152453</span> Boletos confirmados en 24 horas
+          <p className="mb-6 text-xl font-semibold text-foreground">
+            Boletos confirmados en 24 horas.
           </p>
 
           <div className="flex gap-4">
