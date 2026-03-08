@@ -29,7 +29,7 @@ export function WhatsAppBubble() {
 
       {/* Instagram Button */}
       <a
-        href="https://www.instagram.com/forturd1/"
+        href="https://www.instagram.com/moises_escano_"
         target="_blank"
         rel="noopener noreferrer"
         className="animate-instagram-glow flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] shadow-lg transition-all hover:scale-110"

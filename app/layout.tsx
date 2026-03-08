@@ -12,6 +12,20 @@ export const metadata: Metadata = {
   title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
   description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
   generator: 'FortuRD',
+  metadataBase: new URL('https://www.forturd1.com'),
+  openGraph: {
+    title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
+    description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
+    url: 'https://www.forturd1.com',
+    siteName: 'FortuRD',
+    locale: 'es_DO',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
+    description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
+  },
   icons: {
     icon: [
       {
@@ -37,8 +51,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es">
-      <body className="font-sans antialiased">
+    <html lang="es" suppressHydrationWarning>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         {children}
         <WhatsAppBubble />
         <Toaster 
