@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 
 export const runtime = 'edge'
-export const alt = 'FortuRD - Arranca tu sueño, Enciende tu fortuna'
+export const alt = 'FortuRD - BMW X6 y X7 esperando dueño'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -20,7 +20,7 @@ export default async function Image() {
         }}
       >
         <img
-          src={new URL('/images/forturd-bg-new.jpeg', process.env.NEXT_PUBLIC_SITE_URL || 'https://www.forturd1.com').toString()}
+          src={new URL('/images/og-image.png', process.env.NEXT_PUBLIC_SITE_URL || 'https://www.forturd1.com').toString()}
           width={1200}
           height={630}
           style={{

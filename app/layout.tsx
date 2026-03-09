@@ -10,21 +10,30 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-  description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
+  description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
   generator: 'FortuRD',
   metadataBase: new URL('https://www.forturd1.com'),
   openGraph: {
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-    description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
+    description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
     url: 'https://www.forturd1.com',
     siteName: 'FortuRD',
+    images: [
+      {
+        url: '/images/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'FortuRD - BMW X6 y X7',
+      },
+    ],
     locale: 'es_DO',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-    description: 'Participa en la rifa de apartamentos de lujo en Punta Cana, República Dominicana. Compra tus boletos y gana.',
+    description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+    images: ['/images/og-image.png'],
   },
   icons: {
     icon: [
