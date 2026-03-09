@@ -30,70 +30,151 @@ export default function QRPage() {
     img.crossOrigin = 'anonymous'
 
     img.onload = () => {
-      canvas.width = 1024
-      canvas.height = 1024
+      const W = 2048
+      const H = 2048
+      canvas.width = W
+      canvas.height = H
+      const cx = W / 2
 
-      // Background
+      // Background negro
       ctx.fillStyle = '#0a0a0a'
-      ctx.fillRect(0, 0, 1024, 1024)
+      ctx.fillRect(0, 0, W, H)
 
-      // Gold border
+      // Borde dorado doble
       ctx.strokeStyle = '#DAA520'
-      ctx.lineWidth = 4
-      ctx.strokeRect(20, 20, 984, 984)
+      ctx.lineWidth = 8
+      ctx.strokeRect(30, 30, W - 60, H - 60)
+      ctx.lineWidth = 3
+      ctx.strokeRect(50, 50, W - 100, H - 100)
 
-      // Title
-      ctx.fillStyle = '#DAA520'
-      ctx.font = 'bold 48px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('FortuRD', 512, 80)
-
-      // Subtitle
-      ctx.fillStyle = '#999999'
-      ctx.font = '20px sans-serif'
-      ctx.fillText('Escanea para participar', 512, 115)
-
-      // QR white background
-      const qrSize = 600
-      const qrX = (1024 - qrSize) / 2
-      const qrY = 150
-      ctx.fillStyle = '#ffffff'
-      const radius = 20
+      // Linea decorativa superior
+      ctx.strokeStyle = '#DAA520'
+      ctx.lineWidth = 2
       ctx.beginPath()
-      ctx.moveTo(qrX + radius, qrY)
-      ctx.lineTo(qrX + qrSize - radius, qrY)
-      ctx.quadraticCurveTo(qrX + qrSize, qrY, qrX + qrSize, qrY + radius)
-      ctx.lineTo(qrX + qrSize, qrY + qrSize - radius)
-      ctx.quadraticCurveTo(qrX + qrSize, qrY + qrSize, qrX + qrSize - radius, qrY + qrSize)
-      ctx.lineTo(qrX + radius, qrY + qrSize)
-      ctx.quadraticCurveTo(qrX, qrY + qrSize, qrX, qrY + qrSize - radius)
-      ctx.lineTo(qrX, qrY + radius)
-      ctx.quadraticCurveTo(qrX, qrY, qrX + radius, qrY)
+      ctx.moveTo(200, 130)
+      ctx.lineTo(W - 200, 130)
+      ctx.stroke()
+
+      // Titulo FortuRD
+      ctx.fillStyle = '#DAA520'
+      ctx.font = 'bold 110px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillText('FortuRD', cx, 230)
+
+      // Subtitulo
+      ctx.fillStyle = '#cccccc'
+      ctx.font = '42px sans-serif'
+      ctx.fillText('Arranca tu sueño. Enciende tu fortuna', cx, 300)
+
+      // Linea decorativa
+      ctx.strokeStyle = '#DAA520'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(200, 340)
+      ctx.lineTo(W - 200, 340)
+      ctx.stroke()
+
+      // Texto escanea
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 48px sans-serif'
+      ctx.fillText('ESCANEA EL CODIGO QR', cx, 420)
+
+      // QR fondo blanco con borde dorado
+      const qrSize = 900
+      const qrX = (W - qrSize) / 2
+      const qrY = 470
+      const r = 30
+
+      // Sombra dorada
+      ctx.shadowColor = 'rgba(218, 165, 32, 0.4)'
+      ctx.shadowBlur = 40
+      ctx.shadowOffsetX = 0
+      ctx.shadowOffsetY = 0
+
+      // Fondo blanco redondeado
+      ctx.fillStyle = '#ffffff'
+      ctx.beginPath()
+      ctx.moveTo(qrX + r, qrY)
+      ctx.lineTo(qrX + qrSize - r, qrY)
+      ctx.quadraticCurveTo(qrX + qrSize, qrY, qrX + qrSize, qrY + r)
+      ctx.lineTo(qrX + qrSize, qrY + qrSize - r)
+      ctx.quadraticCurveTo(qrX + qrSize, qrY + qrSize, qrX + qrSize - r, qrY + qrSize)
+      ctx.lineTo(qrX + r, qrY + qrSize)
+      ctx.quadraticCurveTo(qrX, qrY + qrSize, qrX, qrY + qrSize - r)
+      ctx.lineTo(qrX, qrY + r)
+      ctx.quadraticCurveTo(qrX, qrY, qrX + r, qrY)
       ctx.closePath()
       ctx.fill()
 
-      // Draw QR
-      const padding = 40
+      // Reset shadow
+      ctx.shadowColor = 'transparent'
+      ctx.shadowBlur = 0
+
+      // Borde dorado del QR
+      ctx.strokeStyle = '#DAA520'
+      ctx.lineWidth = 5
+      ctx.beginPath()
+      ctx.moveTo(qrX + r, qrY)
+      ctx.lineTo(qrX + qrSize - r, qrY)
+      ctx.quadraticCurveTo(qrX + qrSize, qrY, qrX + qrSize, qrY + r)
+      ctx.lineTo(qrX + qrSize, qrY + qrSize - r)
+      ctx.quadraticCurveTo(qrX + qrSize, qrY + qrSize, qrX + qrSize - r, qrY + qrSize)
+      ctx.lineTo(qrX + r, qrY + qrSize)
+      ctx.quadraticCurveTo(qrX, qrY + qrSize, qrX, qrY + qrSize - r)
+      ctx.lineTo(qrX, qrY + r)
+      ctx.quadraticCurveTo(qrX, qrY, qrX + r, qrY)
+      ctx.closePath()
+      ctx.stroke()
+
+      // Dibujar QR
+      const padding = 70
       ctx.drawImage(img, qrX + padding, qrY + padding, qrSize - padding * 2, qrSize - padding * 2)
 
-      // URL text
+      // URL
       ctx.fillStyle = '#DAA520'
-      ctx.font = 'bold 28px sans-serif'
-      ctx.fillText(siteUrl, 512, 820)
+      ctx.font = 'bold 56px sans-serif'
+      ctx.fillText('www.forturd1.com', cx, 1500)
 
-      // Bottom text
+      // Descripcion vehiculos
+      ctx.fillStyle = '#ffffff'
+      ctx.font = 'bold 40px sans-serif'
+      ctx.fillText('BMW X6 Y BMW X7 ESPERANDO DUEÑO', cx, 1580)
+
+      // Precio boleto
+      ctx.fillStyle = '#DAA520'
+      ctx.font = 'bold 52px sans-serif'
+      ctx.fillText('BOLETOS: 1,000 DOP', cx, 1660)
+
+      // Linea decorativa inferior
+      ctx.strokeStyle = '#DAA520'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(200, 1720)
+      ctx.lineTo(W - 200, 1720)
+      ctx.stroke()
+
+      // Footer
+      ctx.fillStyle = '#888888'
+      ctx.font = '32px sans-serif'
+      ctx.fillText('POTENCIA - LUJO - EXCLUSIVIDAD', cx, 1780)
+
+      // Santo Domingo
       ctx.fillStyle = '#666666'
-      ctx.font = '18px sans-serif'
-      ctx.fillText('Arranca tu sueño, Enciende tu fortuna', 512, 860)
+      ctx.font = '28px sans-serif'
+      ctx.fillText('Santo Domingo, Distrito Nacional', cx, 1830)
 
-      // Powered by
-      ctx.fillStyle = '#444444'
-      ctx.font = '14px sans-serif'
-      ctx.fillText('forturd.com', 512, 960)
+      // Linea inferior
+      ctx.strokeStyle = '#DAA520'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(200, 1920)
+      ctx.lineTo(W - 200, 1920)
+      ctx.stroke()
 
+      // Descargar
       const link = document.createElement('a')
-      link.download = 'FortuRD-QR.png'
-      link.href = canvas.toDataURL('image/png')
+      link.download = 'FortuRD-QR-Flyer.png'
+      link.href = canvas.toDataURL('image/png', 1.0)
       link.click()
     }
 
@@ -104,8 +185,8 @@ export default function QRPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'FortuRD - Rifa de Apartamentos',
-          text: '¡Participa en la rifa de apartamentos de lujo en Punta Cana!',
+          title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
+          text: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos en www.forturd1.com',
           url: siteUrl,
         })
       } catch {
