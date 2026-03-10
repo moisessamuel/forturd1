@@ -58,6 +58,15 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
+        <meta property="og:image" content="https://www.forturd1.com/images/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:title" content="FortuRD - Arranca tu sueño, Enciende tu fortuna" />
+        <meta property="og:description" content="Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana." />
+        <meta property="og:url" content="https://www.forturd1.com" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="FortuRD" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
