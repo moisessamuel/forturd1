@@ -57,6 +57,59 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'FortuRD',
+              url: 'https://www.forturd1.com',
+              description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: 'https://www.forturd1.com/verificar?q={search_term_string}',
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Event',
+              name: 'Sorteo FortuRD - BMW X6 y BMW X7',
+              description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Boletos a 1,000 DOP.',
+              image: 'https://www.forturd1.com/images/og-image.png',
+              organizer: {
+                '@type': 'Organization',
+                name: 'FortuRD',
+                url: 'https://www.forturd1.com',
+              },
+              location: {
+                '@type': 'Place',
+                name: 'Santo Domingo, Distrito Nacional',
+                address: {
+                  '@type': 'PostalAddress',
+                  addressLocality: 'Santo Domingo',
+                  addressRegion: 'Distrito Nacional',
+                  addressCountry: 'DO',
+                },
+              },
+              offers: {
+                '@type': 'Offer',
+                price: '1000',
+                priceCurrency: 'DOP',
+                url: 'https://www.forturd1.com',
+                availability: 'https://schema.org/InStock',
+              },
+            }),
+          }}
+        />
+      </head>
       <body className="font-sans antialiased" suppressHydrationWarning>
         {children}
         <WhatsAppBubble />
