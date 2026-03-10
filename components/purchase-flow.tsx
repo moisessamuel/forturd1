@@ -49,7 +49,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg' },
     { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg' },
     { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg' },
-    { id: 'apopular', nombre: 'Asociación Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '', tipoCuenta: '', image: '/images/banks/apopular.jpeg' },
+    { id: 'apopular', nombre: 'Asociación Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg' },
   ]
 
   const titular = {
