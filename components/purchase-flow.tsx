@@ -367,14 +367,25 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </p>
         </div>
 
-        {/* Cash payment text */}
+        {/* Cash payment banner */}
         <button
           onClick={() => setShowCashPanel(!showCashPanel)}
-          className="mb-4 w-full cursor-pointer"
+          className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
         >
           <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
             PARA PAGO EN EFECTIVO PRESIONE AQU&Iacute;
           </p>
+          <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
+            showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
+          }`}>
+            <Image
+              src="/images/banks/payment-header.jpeg"
+              alt="Pago en Efectivo"
+              width={400}
+              height={160}
+              className="h-auto w-72 object-cover sm:w-80"
+            />
+          </div>
         </button>
 
         {/* Cash info panel */}
