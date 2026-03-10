@@ -57,6 +57,54 @@ export interface Compra {
   updated_at: string
 }
 
+// New system types
+export interface Player {
+  id: string
+  phone_number: string
+  nombre: string
+  email: string | null
+  cedula: string | null
+  created_at: string
+}
+
+export interface QRCode {
+  id: string
+  qr_value: string
+  player_id: string
+  created_at: string
+}
+
+export interface PurchaseGroup {
+  id: string
+  player_id: string
+  qr_code_id: string
+  total_tickets: number
+  monto: number
+  moneda: string
+  banco: string | null
+  comprobante_url: string | null
+  referido_codigo: string | null
+  estado: EstadoCompra
+  created_at: string
+  fecha_aprobacion: string | null
+  // Joined fields
+  player?: Player
+  qr_code?: QRCode
+  tickets?: Ticket[]
+}
+
+export interface Ticket {
+  id: string
+  numero_boleto: string
+  purchase_group_id: string
+  player_id: string
+  status: 'pending' | 'verified' | 'rejected'
+  created_at: string
+  // Joined fields
+  player?: Player
+  purchase_group?: PurchaseGroup
+}
+
 export interface PurchaseFormData {
   cantidad: number
   nombre: string

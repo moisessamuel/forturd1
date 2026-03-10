@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { generateTicketNumber } from '@/lib/ticket'
+import { generateTicketNumbers } from '@/lib/ticket'
 import { getSession } from '@/lib/auth'
+import { randomUUID } from 'crypto'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,47 +13,46 @@ export async function GET(request: NextRequest) {
 
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
-    
+
     const estado = searchParams.get('estado')
-    const origen = searchParams.get('origen')
     const search = searchParams.get('search')
 
     let query = supabase
-      .from('compras')
-      .select('*')
+      .from('purchase_groups')
+      .select('*, player:players(*), tickets(*)')
       .order('created_at', { ascending: false })
 
     if (estado && estado !== 'todos') {
       query = query.eq('estado', estado)
     }
 
-    if (origen && origen !== 'todos') {
-      query = query.eq('origen', origen)
-    }
-
-    if (search) {
-      query = query.or(
-        `nombre_comprador.ilike.%${search}%,telefono.ilike.%${search}%,numero_boleto.ilike.%${search}%,cedula.ilike.%${search}%`
-      )
-    }
-
-    const { data: compras, error } = await query
+    const { data: groups, error } = await query
 
     if (error) {
-      console.error('Compras fetch error:', error)
-      return NextResponse.json(
-        { error: 'Error al obtener compras' },
-        { status: 500 }
-      )
+      console.error('Purchase groups fetch error:', error)
+      return NextResponse.json({ error: 'Error al obtener compras' }, { status: 500 })
     }
 
-    return NextResponse.json(compras)
+    // Filter by search if provided
+    let result = groups || []
+    if (search) {
+      const s = search.toLowerCase()
+      result = result.filter((g: Record<string, unknown>) => {
+        const player = g.player as Record<string, string> | null
+        const tickets = g.tickets as Array<Record<string, string>> | null
+        return (
+          player?.nombre?.toLowerCase().includes(s) ||
+          player?.phone_number?.toLowerCase().includes(s) ||
+          player?.cedula?.toLowerCase().includes(s) ||
+          tickets?.some((t) => t.numero_boleto?.toLowerCase().includes(s))
+        )
+      })
+    }
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Compras error:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
 
@@ -64,32 +64,12 @@ export async function POST(request: NextRequest) {
     // Get config for price
     const { data: config } = await supabase
       .from('config')
-      .select('precio_boleto_dop')
+      .select('precio_boleto_dop, precio_boleto_usd')
       .single()
 
     if (!config) {
-      return NextResponse.json(
-        { error: 'Configuración no encontrada' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Configuración no encontrada' }, { status: 500 })
     }
-
-    // Generate ticket number
-    const ticketNumber = await generateTicketNumber()
-
-    // Get USD price
-    const { data: fullConfig } = await supabase
-      .from('config')
-      .select('precio_boleto_usd')
-      .single()
-
-    // Calculate total based on currency
-    const isUsd = body.moneda === 'USD'
-    const precioUnitario = isUsd ? (fullConfig?.precio_boleto_usd || 20) : config.precio_boleto_dop
-    const monto = precioUnitario * body.cantidad
-
-    // Determine origin
-    const origen = body.referido_codigo ? 'referido' : 'directo'
 
     // Validate referral code if provided
     if (body.referido_codigo) {
@@ -101,48 +81,138 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (!referido) {
-        return NextResponse.json(
-          { error: 'Código de referido inválido' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Código de referido inválido' }, { status: 400 })
       }
     }
 
-    const { data: compra, error } = await supabase
-      .from('compras')
+    // Calculate total
+    const isUsd = body.moneda === 'USD'
+    const precioUnitario = isUsd ? (config.precio_boleto_usd || 20) : config.precio_boleto_dop
+    const monto = precioUnitario * body.cantidad
+
+    // 1. Find or create player by phone number
+    const phoneNumber = body.telefono.trim()
+    let player: { id: string } | null = null
+
+    const { data: existingPlayer } = await supabase
+      .from('players')
+      .select('id')
+      .eq('phone_number', phoneNumber)
+      .single()
+
+    if (existingPlayer) {
+      player = existingPlayer
+      // Update player info if changed
+      await supabase
+        .from('players')
+        .update({
+          nombre: body.nombre,
+          email: body.email || null,
+          cedula: body.cedula || null,
+        })
+        .eq('id', existingPlayer.id)
+    } else {
+      const { data: newPlayer, error: playerError } = await supabase
+        .from('players')
+        .insert({
+          phone_number: phoneNumber,
+          nombre: body.nombre,
+          email: body.email || null,
+          cedula: body.cedula || null,
+        })
+        .select('id')
+        .single()
+
+      if (playerError || !newPlayer) {
+        console.error('Player insert error:', playerError)
+        return NextResponse.json({ error: 'Error al crear jugador' }, { status: 500 })
+      }
+      player = newPlayer
+    }
+
+    // 2. Find or create permanent QR for this player
+    let qrCode: { id: string; qr_value: string } | null = null
+
+    const { data: existingQR } = await supabase
+      .from('qr_codes')
+      .select('id, qr_value')
+      .eq('player_id', player.id)
+      .single()
+
+    if (existingQR) {
+      qrCode = existingQR
+    } else {
+      const qrValue = `FRD-${randomUUID().slice(0, 8).toUpperCase()}`
+      const { data: newQR, error: qrError } = await supabase
+        .from('qr_codes')
+        .insert({
+          qr_value: qrValue,
+          player_id: player.id,
+        })
+        .select('id, qr_value')
+        .single()
+
+      if (qrError || !newQR) {
+        console.error('QR insert error:', qrError)
+        return NextResponse.json({ error: 'Error al crear QR' }, { status: 500 })
+      }
+      qrCode = newQR
+    }
+
+    // 3. Generate unique ticket numbers
+    const ticketNumbers = await generateTicketNumbers(body.cantidad)
+
+    // 4. Create purchase group
+    const { data: purchaseGroup, error: pgError } = await supabase
+      .from('purchase_groups')
       .insert({
-        numero_boleto: ticketNumber,
-        nombre_comprador: body.nombre,
-        telefono: body.telefono,
-        email: body.email || null,
-        cedula: body.cedula || null,
-        cantidad_boletos: body.cantidad,
+        player_id: player.id,
+        qr_code_id: qrCode.id,
+        total_tickets: body.cantidad,
         monto,
         moneda: body.moneda || 'DOP',
         banco: body.banco,
-        metodo_pago: 'transferencia',
-        referido_codigo: body.referido_codigo?.toUpperCase() || null,
         comprobante_url: body.comprobante_url || null,
+        referido_codigo: body.referido_codigo?.toUpperCase() || null,
         estado: 'pendiente',
-        origen,
       })
-      .select()
+      .select('id')
       .single()
 
-    if (error) {
-      console.error('Compra insert error:', error)
-      return NextResponse.json(
-        { error: 'Error al crear compra' },
-        { status: 500 }
-      )
+    if (pgError || !purchaseGroup) {
+      console.error('Purchase group insert error:', pgError)
+      return NextResponse.json({ error: 'Error al crear grupo de compra' }, { status: 500 })
     }
 
-    return NextResponse.json(compra)
+    // 5. Create all tickets
+    const ticketsToInsert = ticketNumbers.map((num) => ({
+      numero_boleto: num,
+      purchase_group_id: purchaseGroup.id,
+      player_id: player!.id,
+      status: 'pending',
+    }))
+
+    const { error: ticketsError } = await supabase
+      .from('tickets')
+      .insert(ticketsToInsert)
+
+    if (ticketsError) {
+      console.error('Tickets insert error:', ticketsError)
+      // Rollback: delete the purchase group
+      await supabase.from('purchase_groups').delete().eq('id', purchaseGroup.id)
+      return NextResponse.json({ error: 'Error al crear boletos' }, { status: 500 })
+    }
+
+    // Return the full purchase group with tickets and QR
+    const { data: fullPG } = await supabase
+      .from('purchase_groups')
+      .select('*, player:players(*), tickets(*), qr_code:qr_codes(*)')
+      .eq('id', purchaseGroup.id)
+      .single()
+
+    return NextResponse.json(fullPG)
   } catch (error) {
     console.error('Compra error:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

@@ -64,8 +64,9 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     comprobante: null,
     comprobanteUrl: '',
   })
-  const [ticketNumber, setTicketNumber] = useState('')
+  const [ticketNumbers, setTicketNumbers] = useState<string[]>([])
   const [compraId, setCompraId] = useState('')
+  const [qrValue, setQrValue] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [showImageMenu, setShowImageMenu] = useState(false)
@@ -191,8 +192,11 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
       }
 
       const compra = await response.json()
-      setTicketNumber(compra.numero_boleto)
+      // Extract ticket numbers from the new system
+      const tickets = compra.tickets || []
+      setTicketNumbers(tickets.map((t: { numero_boleto: string }) => t.numero_boleto))
       setCompraId(compra.id)
+      setQrValue(compra.qr_code?.qr_value || '')
       setStep(4)
       toast.success('¡Compra registrada exitosamente!')
     } catch (error) {
@@ -202,9 +206,10 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     }
   }
 
-  const copyTicketNumber = () => {
-    navigator.clipboard.writeText(ticketNumber)
-    toast.success('¡Número de boleto copiado!')
+  const copyTicketNumbers = () => {
+    const text = ticketNumbers.map(n => n.padStart(6, '0')).join(', ')
+    navigator.clipboard.writeText(text)
+    toast.success(ticketNumbers.length > 1 ? '¡Números de boletos copiados!' : '¡Número de boleto copiado!')
   }
 
   const renderStepIndicator = () => (
@@ -737,34 +742,41 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
 
           <Card className="mb-6 border-primary/50 bg-primary/10">
             <CardContent className="p-6">
-              <p className="mb-2 text-sm text-muted-foreground">TU NÚMERO DE BOLETO</p>
-              <div className="flex items-center justify-center gap-3">
-                <p className="font-mono text-3xl font-bold text-primary">
-                  # {ticketNumber.padStart(6, '0')}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={copyTicketNumber}
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <Copy className="h-5 w-5" />
-                </Button>
+              <p className="mb-2 text-sm text-muted-foreground">
+                {ticketNumbers.length > 1 ? 'TUS NÚMEROS DE BOLETOS' : 'TU NÚMERO DE BOLETO'}
+              </p>
+              <div className="space-y-2">
+                {ticketNumbers.map((num, idx) => (
+                  <div key={idx} className="flex items-center justify-center gap-2">
+                    <p className="font-mono text-2xl font-bold text-primary">
+                      # {num.padStart(6, '0')}
+                    </p>
+                  </div>
+                ))}
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyTicketNumbers}
+                className="mt-2 text-muted-foreground hover:text-foreground"
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar {ticketNumbers.length > 1 ? 'números' : 'número'}
+              </Button>
               <p className="mt-2 text-xs text-muted-foreground">
-                Guarda este número para verificar el estado de tu boleto
+                Guarda {ticketNumbers.length > 1 ? 'estos números' : 'este número'} para verificar el estado de tu boleto
               </p>
             </CardContent>
           </Card>
 
-          {/* QR Code */}
-          {compraId && (
+          {/* Permanent Player QR Code */}
+          {qrValue && (
             <Card className="mb-6 border-border/50 bg-card/50">
               <CardContent className="flex flex-col items-center p-6">
-                <p className="mb-3 text-sm font-medium text-muted-foreground">Escanea el código QR para ver tu boleto</p>
+                <p className="mb-3 text-sm font-medium text-muted-foreground">Tu QR permanente de jugador</p>
                 <div className="rounded-xl bg-white p-4">
                   <QRCodeSVG
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/boleto/${compraId}`}
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/jugador/${qrValue}`}
                     size={180}
                     bgColor="#ffffff"
                     fgColor="#000000"
@@ -772,8 +784,9 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                     includeMargin={false}
                   />
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Este QR contiene toda la información de tu compra
+                <p className="mt-2 font-mono text-sm font-bold text-primary">{qrValue}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Este QR es permanente. Usalo para ver todos tus boletos y compras futuras.
                 </p>
               </CardContent>
             </Card>

@@ -10,26 +10,20 @@ export async function GET(
     const { id } = await params
     const supabase = await createClient()
 
-    const { data: compra, error } = await supabase
-      .from('compras')
-      .select('*')
+    const { data: group, error } = await supabase
+      .from('purchase_groups')
+      .select('*, player:players(*), tickets(*), qr_code:qr_codes(*)')
       .eq('id', id)
       .single()
 
-    if (error || !compra) {
-      return NextResponse.json(
-        { error: 'Compra no encontrada' },
-        { status: 404 }
-      )
+    if (error || !group) {
+      return NextResponse.json({ error: 'Compra no encontrada' }, { status: 404 })
     }
 
-    return NextResponse.json(compra)
+    return NextResponse.json(group)
   } catch (error) {
     console.error('Compra fetch error:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
 
@@ -47,30 +41,37 @@ export async function PATCH(
     const supabase = await createClient()
     const body = await request.json()
 
-    const { data: compra, error } = await supabase
-      .from('compras')
-      .update({
-        estado: body.estado,
-        updated_at: new Date().toISOString(),
-      })
+    const newEstado = body.estado
+
+    // Update purchase group
+    const updateData: Record<string, unknown> = { estado: newEstado }
+    if (newEstado === 'aprobado') {
+      updateData.fecha_aprobacion = new Date().toISOString()
+    }
+
+    const { data: group, error } = await supabase
+      .from('purchase_groups')
+      .update(updateData)
       .eq('id', id)
-      .select()
+      .select('*, player:players(*), tickets(*), qr_code:qr_codes(*)')
       .single()
 
     if (error) {
-      console.error('Compra update error:', error)
-      return NextResponse.json(
-        { error: 'Error al actualizar compra' },
-        { status: 500 }
-      )
+      console.error('Purchase group update error:', error)
+      return NextResponse.json({ error: 'Error al actualizar compra' }, { status: 500 })
     }
 
-    return NextResponse.json(compra)
+    // Update all tickets status
+    const ticketStatus = newEstado === 'aprobado' ? 'verified' : newEstado === 'rechazado' ? 'rejected' : 'pending'
+
+    await supabase
+      .from('tickets')
+      .update({ status: ticketStatus })
+      .eq('purchase_group_id', id)
+
+    return NextResponse.json(group)
   } catch (error) {
     console.error('Compra update error:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
