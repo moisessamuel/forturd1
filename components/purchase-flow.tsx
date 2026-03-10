@@ -409,7 +409,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
         <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {paymentMethods.map((method) => (
             <div key={method.id}>
-              <p className="mb-1.5 text-center text-xs font-bold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 8px rgba(218, 165, 32, 0.5)' }}>
+              <p className="mb-2 text-center text-sm font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
                 {method.nombre}
               </p>
               <Card
@@ -424,13 +424,13 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                   setFormData(prev => ({ ...prev, banco: method.nombre }))
                 }}
               >
-                <CardContent className="p-0">
-                  <div className="relative aspect-square w-full overflow-hidden rounded-xl">
+                <CardContent className="flex items-center justify-center bg-white p-3">
+                  <div className="relative h-24 w-full overflow-hidden">
                     <Image
                       src={method.image}
                       alt={method.nombre}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                     />
                   </div>
                 </CardContent>
