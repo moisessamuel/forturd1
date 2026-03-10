@@ -776,7 +776,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 <p className="mb-3 text-sm font-medium text-muted-foreground">Tu QR permanente de jugador</p>
                 <div className="rounded-xl bg-white p-4">
                   <QRCodeSVG
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/jugador/${qrValue}`}
+                    value={`https://www.forturd1.com/jugador/${qrValue}`}
                     size={180}
                     bgColor="#ffffff"
                     fgColor="#000000"
