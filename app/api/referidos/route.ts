@@ -24,25 +24,34 @@ export async function GET() {
       )
     }
 
-    // Get sales stats for each referido
+    // Get sales stats for each referido from both old and new tables
     const referidosWithStats = await Promise.all(
       (referidos || []).map(async (referido) => {
-        const { data: compras } = await supabase
-          .from('compras')
-          .select('monto, estado')
-          .eq('referido_codigo', referido.codigo)
+        const [{ data: oldCompras }, { data: newGroups }] = await Promise.all([
+          supabase
+            .from('compras')
+            .select('monto, estado')
+            .eq('referido_codigo', referido.codigo),
+          supabase
+            .from('purchase_groups')
+            .select('monto, estado')
+            .eq('referido_codigo', referido.codigo),
+        ])
 
-        const ventasAprobadas = compras
+        const oldApproved = oldCompras
           ?.filter((c) => c.estado === 'aprobado')
           .reduce((sum, c) => sum + Number(c.monto), 0) || 0
 
-        const ventasTotales = compras?.reduce((sum, c) => sum + Number(c.monto), 0) || 0
+        const newApproved = newGroups
+          ?.filter((pg) => pg.estado === 'aprobado')
+          .reduce((sum, pg) => sum + Number(pg.monto), 0) || 0
+
+        const ventasAprobadas = oldApproved + newApproved
 
         return {
           ...referido,
           ventas_aprobadas: ventasAprobadas,
-          ventas_totales: ventasTotales,
-          comision: ventasAprobadas * 0.1, // 10% commission
+          comision: ventasAprobadas * 0.1,
         }
       })
     )

@@ -1,31 +1,52 @@
 import { createClient } from '@/lib/supabase/server'
 
-export async function generateTicketNumber(): Promise<string> {
+export async function generateTicketNumbers(count: number): Promise<string[]> {
   const supabase = await createClient()
+
+  // Get config for max range
+  const { data: config } = await supabase
+    .from('config')
+    .select('total_boletos')
+    .single()
+  const maxRange = config?.total_boletos || 200000
   
-  // Get all existing ticket numbers to avoid duplicates
-  const { data: existing } = await supabase
-    .from('compras')
-    .select('numero_boleto')
+  // Get ALL existing ticket numbers from both tables to avoid duplicates
+  const [{ data: oldTickets }, { data: newTickets }] = await Promise.all([
+    supabase.from('compras').select('numero_boleto'),
+    supabase.from('tickets').select('numero_boleto'),
+  ])
   
-  const usedNumbers = new Set(existing?.map(c => c.numero_boleto) || [])
-  
-  // Generate a random number between 1 and 200000 that hasn't been used
-  let ticketNumber: string
+  const usedNumbers = new Set([
+    ...(oldTickets?.map(c => c.numero_boleto) || []),
+    ...(newTickets?.map(t => t.numero_boleto) || []),
+  ])
+
+  const generated: string[] = []
   let attempts = 0
-  const maxAttempts = 1000
-  
-  do {
-    const randomNum = Math.floor(Math.random() * 200000) + 1
-    ticketNumber = randomNum.toString().padStart(6, '0')
+  const maxAttempts = count * 100
+
+  while (generated.length < count) {
+    const randomNum = Math.floor(Math.random() * maxRange) + 1
+    const ticketNumber = randomNum.toString().padStart(6, '0')
     attempts++
-    
+
     if (attempts > maxAttempts) {
-      throw new Error('No se pudo generar un número de boleto único')
+      throw new Error('No se pudo generar números de boleto únicos. Es posible que no haya suficientes boletos disponibles.')
     }
-  } while (usedNumbers.has(ticketNumber))
-  
-  return ticketNumber
+
+    if (!usedNumbers.has(ticketNumber) && !generated.includes(ticketNumber)) {
+      generated.push(ticketNumber)
+      usedNumbers.add(ticketNumber)
+    }
+  }
+
+  return generated
+}
+
+// Keep backward compatibility
+export async function generateTicketNumber(): Promise<string> {
+  const numbers = await generateTicketNumbers(1)
+  return numbers[0]
 }
 
 export function formatTicketDisplay(ticketNumber: string): string {

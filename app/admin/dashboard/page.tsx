@@ -40,7 +40,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import type { Compra, Referido, Config } from '@/lib/types'
+import type { Referido, Config, PurchaseGroup } from '@/lib/types'
 import Image from 'next/image'
 
 interface AdminStats {
@@ -58,14 +58,14 @@ export default function AdminDashboard() {
   const [username, setUsername] = useState('')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [config, setConfig] = useState<Config | null>(null)
-  const [compras, setCompras] = useState<Compra[]>([])
+  const [compras, setCompras] = useState<PurchaseGroup[]>([])
   const [referidos, setReferidos] = useState<Referido[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('')
   const [estadoFilter, setEstadoFilter] = useState<'todos' | 'pendiente' | 'aprobado' | 'rechazado'>('todos')
-  const [origenFilter, setOrigenFilter] = useState<'todos' | 'directo' | 'referido'>('todos')
+  
   
   // Config form
   const [totalBoletos, setTotalBoletos] = useState('')
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
       const [statsRes, configRes, comprasRes, referidosRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/config'),
-        fetch(`/api/compras?estado=${estadoFilter}&origen=${origenFilter}&search=${searchTerm}`),
+        fetch(`/api/compras?estado=${estadoFilter}&search=${searchTerm}`),
         fetch('/api/referidos'),
       ])
 
@@ -120,7 +120,7 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [estadoFilter, origenFilter, searchTerm])
+  }, [estadoFilter, searchTerm])
 
   useEffect(() => {
     // Check session
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
     setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  const pendingPayments = compras.filter((c) => c.estado === 'pendiente')
+  const pendingPayments = compras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
 
   if (isLoading) {
     return (
@@ -505,34 +505,38 @@ export default function AdminDashboard() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      pendingPayments.map((compra) => (
-                        <TableRow key={compra.id}>
+                      pendingPayments.map((pg: PurchaseGroup) => (
+                        <TableRow key={pg.id}>
                           <TableCell>
-                            <Badge variant="outline" className="bg-primary/20 text-primary">
-                              # {compra.numero_boleto.padStart(6, '0')}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1">
+                              {pg.tickets?.map((t) => (
+                                <Badge key={t.id} variant="outline" className="bg-primary/20 text-primary text-xs">
+                                  #{t.numero_boleto.padStart(6, '0')}
+                                </Badge>
+                              ))}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge className="bg-green-600 text-white">
-                              {compra.nombre_comprador.split(' ').map(n => n[0]).join('').toUpperCase()}
+                              {pg.player?.nombre?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{compra.telefono}</TableCell>
-                          <TableCell>{compra.cantidad_boletos}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(compra.monto)}</TableCell>
+                          <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
+                          <TableCell>{pg.total_tickets}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(pg.monto)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="bg-green-500/20 text-green-500">
-                              {compra.banco}
+                              {pg.banco}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {compra.referido_codigo ? (
-                              <Badge variant="outline">{compra.referido_codigo}</Badge>
+                            {pg.referido_codigo ? (
+                              <Badge variant="outline">{pg.referido_codigo}</Badge>
                             ) : '-'}
                           </TableCell>
-                          <TableCell className="text-xs">{formatDate(compra.created_at)}</TableCell>
+                          <TableCell className="text-xs">{formatDate(pg.created_at)}</TableCell>
                           <TableCell>
-                            {compra.comprobante_url && (
+                            {pg.comprobante_url && (
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button variant="ghost" size="sm">
@@ -545,7 +549,7 @@ export default function AdminDashboard() {
                                   </DialogHeader>
                                   <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                                     <Image
-                                      src={compra.comprobante_url}
+                                      src={pg.comprobante_url}
                                       alt="Comprobante"
                                       fill
                                       className="object-contain"
@@ -560,7 +564,7 @@ export default function AdminDashboard() {
                               <Button
                                 size="sm"
                                 className="bg-green-600 text-white hover:bg-green-700"
-                                onClick={() => handleUpdateCompraEstado(compra.id, 'aprobado')}
+                                onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
                               >
                                 <Check className="mr-1 h-4 w-4" />
                                 Aprobar
@@ -568,7 +572,7 @@ export default function AdminDashboard() {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                onClick={() => handleUpdateCompraEstado(compra.id, 'rechazado')}
+                                onClick={() => handleUpdateCompraEstado(pg.id, 'rechazado')}
                               >
                                 <X className="mr-1 h-4 w-4" />
                                 Rechazar
@@ -607,10 +611,10 @@ export default function AdminDashboard() {
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">COMPRAS APROBADAS</p>
                     <p className="text-2xl font-bold text-green-500">
-                      {compras.filter(c => c.estado === 'aprobado').length}
+                      {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(compras.filter(c => c.estado === 'aprobado').reduce((s, c) => s + c.monto, 0))}
+                      {formatCurrency(compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0))}
                     </p>
                   </CardContent>
                 </Card>
@@ -619,10 +623,10 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-2">
                       <Users className="h-5 w-5 text-blue-500" />
                       <div>
-                        <p className="text-xs text-muted-foreground">POR REFERIDO</p>
-                        <p className="text-2xl font-bold">{compras.filter(c => c.origen === 'referido').length}</p>
+                        <p className="text-xs text-muted-foreground">CON REFERIDO</p>
+                        <p className="text-2xl font-bold">{compras.filter((c: PurchaseGroup) => c.referido_codigo).length}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatCurrency(compras.filter(c => c.origen === 'referido').reduce((s, c) => s + c.monto, 0))}
+                          {formatCurrency(compras.filter((c: PurchaseGroup) => c.referido_codigo).reduce((s: number, c: PurchaseGroup) => s + c.monto, 0))}
                         </p>
                       </div>
                     </div>
@@ -631,9 +635,9 @@ export default function AdminDashboard() {
                 <Card className="border-border/50 bg-secondary/50">
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">COMPRA DIRECTA</p>
-                    <p className="text-2xl font-bold">{compras.filter(c => c.origen === 'directo').length}</p>
+                    <p className="text-2xl font-bold">{compras.filter((c: PurchaseGroup) => !c.referido_codigo).length}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(compras.filter(c => c.origen === 'directo').reduce((s, c) => s + c.monto, 0))}
+                      {formatCurrency(compras.filter((c: PurchaseGroup) => !c.referido_codigo).reduce((s: number, c: PurchaseGroup) => s + c.monto, 0))}
                     </p>
                   </CardContent>
                 </Card>
@@ -641,7 +645,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">BOLETOS VENDIDOS</p>
                     <p className="text-2xl font-bold text-primary">
-                      {compras.filter(c => c.estado === 'aprobado').reduce((s, c) => s + c.cantidad_boletos, 0)}
+                      {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
                     </p>
                     <p className="text-xs text-muted-foreground">boletos aprobados</p>
                   </CardContent>
@@ -659,19 +663,7 @@ export default function AdminDashboard() {
                     className="bg-input pl-9"
                   />
                 </div>
-                <div className="flex gap-2">
-                  {(['todos', 'referido', 'directo'] as const).map((filter) => (
-                    <Button
-                      key={filter}
-                      variant={origenFilter === filter ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setOrigenFilter(filter)}
-                      className={origenFilter === filter ? 'bg-primary text-primary-foreground' : ''}
-                    >
-                      {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                    </Button>
-                  ))}
-                </div>
+                
                 <div className="flex gap-2">
                   {(['todos', 'pendiente', 'aprobado', 'rechazado'] as const).map((filter) => (
                     <Button
@@ -692,14 +684,14 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Boleto #</TableHead>
+                      <TableHead>Boletos</TableHead>
                       <TableHead>Comprador</TableHead>
-                      <TableHead>Teléfono</TableHead>
-                      <TableHead>Cédula</TableHead>
-                      <TableHead>No. poder</TableHead>
+                      <TableHead>Telefono</TableHead>
+                      <TableHead>Cedula</TableHead>
+                      <TableHead>Qty</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
-                      <TableHead>Origen</TableHead>
+                      <TableHead>Referido</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Comprobante</TableHead>
@@ -713,48 +705,52 @@ export default function AdminDashboard() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      compras.map((compra) => (
-                        <TableRow key={compra.id}>
+                      compras.map((pg: PurchaseGroup) => (
+                        <TableRow key={pg.id}>
                           <TableCell>
-                            <Badge variant="outline" className="bg-primary/20 text-primary">
-                              # {compra.numero_boleto.padStart(6, '0')}
-                            </Badge>
+                            <div className="flex flex-wrap gap-1 max-w-48">
+                              {pg.tickets?.map((t) => (
+                                <Badge key={t.id} variant="outline" className="bg-primary/20 text-primary text-xs">
+                                  #{t.numero_boleto.padStart(6, '0')}
+                                </Badge>
+                              ))}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge className="bg-green-600 text-white">
-                              {compra.nombre_comprador.split(' ').slice(0, 2).join(' ')}
+                              {pg.player?.nombre?.split(' ').slice(0, 2).join(' ') || 'N/A'}
                             </Badge>
                           </TableCell>
-                          <TableCell className="font-mono text-sm">{compra.telefono}</TableCell>
-                          <TableCell>{compra.cedula || '-'}</TableCell>
-                          <TableCell>{compra.cantidad_boletos}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(compra.monto)}</TableCell>
+                          <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
+                          <TableCell>{pg.player?.cedula || '-'}</TableCell>
+                          <TableCell>{pg.total_tickets}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(pg.monto)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="bg-green-500/20 text-green-500">
-                              {compra.banco}
+                              {pg.banco}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline">
-                              {compra.origen}
-                            </Badge>
+                            {pg.referido_codigo ? (
+                              <Badge variant="outline">{pg.referido_codigo}</Badge>
+                            ) : '-'}
                           </TableCell>
                           <TableCell>
                             <Badge
                               className={
-                                compra.estado === 'aprobado'
+                                pg.estado === 'aprobado'
                                   ? 'bg-green-500 text-white'
-                                  : compra.estado === 'rechazado'
+                                  : pg.estado === 'rechazado'
                                   ? 'bg-red-500 text-white'
                                   : 'bg-yellow-500 text-black'
                               }
                             >
-                              {compra.estado}
+                              {pg.estado}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-xs">{formatDate(compra.created_at)}</TableCell>
+                          <TableCell className="text-xs">{formatDate(pg.created_at)}</TableCell>
                           <TableCell>
-                            {compra.comprobante_url && (
+                            {pg.comprobante_url && (
                               <Dialog>
                                 <DialogTrigger asChild>
                                   <Button variant="ghost" size="sm">
@@ -767,7 +763,7 @@ export default function AdminDashboard() {
                                   </DialogHeader>
                                   <div className="relative aspect-video w-full overflow-hidden rounded-lg">
                                     <Image
-                                      src={compra.comprobante_url}
+                                      src={pg.comprobante_url}
                                       alt="Comprobante"
                                       fill
                                       className="object-contain"
@@ -889,36 +885,43 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {compras.slice(0, 20).map((compra) => (
-                      <TableRow key={compra.id}>
+                    {compras.slice(0, 20).map((pg: PurchaseGroup) => (
+                      <TableRow key={pg.id}>
                         <TableCell>
-                          <Badge variant="outline" className="bg-primary/20 text-primary">
-                            # {compra.numero_boleto.padStart(6, '0')}
-                          </Badge>
+                          <div className="flex flex-wrap gap-1">
+                            {pg.tickets?.slice(0, 3).map((t) => (
+                              <Badge key={t.id} variant="outline" className="bg-primary/20 text-primary text-xs">
+                                #{t.numero_boleto.padStart(6, '0')}
+                              </Badge>
+                            ))}
+                            {(pg.tickets?.length || 0) > 3 && (
+                              <Badge variant="outline" className="text-xs">+{(pg.tickets?.length || 0) - 3}</Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Badge className="bg-green-600 text-white">
-                            {compra.nombre_comprador.split(' ').slice(0, 2).join(' ')}
+                            {pg.player?.nombre?.split(' ').slice(0, 2).join(' ') || 'N/A'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-mono text-sm">{compra.telefono}</TableCell>
-                        <TableCell>{formatCurrency(compra.monto)}</TableCell>
+                        <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
+                        <TableCell>{formatCurrency(pg.monto)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-green-500/20 text-green-500">
-                            {compra.banco}
+                            {pg.banco}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
                             className={
-                              compra.estado === 'aprobado'
+                              pg.estado === 'aprobado'
                                 ? 'bg-green-500 text-white'
-                                : compra.estado === 'rechazado'
+                                : pg.estado === 'rechazado'
                                 ? 'bg-red-500 text-white'
                                 : 'bg-yellow-500 text-black'
                             }
                           >
-                            {compra.estado}
+                            {pg.estado}
                           </Badge>
                         </TableCell>
                       </TableRow>

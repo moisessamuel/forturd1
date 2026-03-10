@@ -17,7 +17,12 @@ export async function GET() {
       .select('total_boletos')
       .single()
 
-    // Get all compras
+    // Get purchase groups (new system)
+    const { data: purchaseGroups } = await supabase
+      .from('purchase_groups')
+      .select('monto, estado, total_tickets')
+
+    // Get old compras (legacy)
     const { data: compras } = await supabase
       .from('compras')
       .select('monto, estado, cantidad_boletos')
@@ -28,17 +33,24 @@ export async function GET() {
       .select('*', { count: 'exact', head: true })
       .eq('activo', true)
 
-    // Calculate stats
-    const ventasTotales = compras
-      ?.filter((c) => c.estado === 'aprobado')
-      .reduce((sum, c) => sum + Number(c.monto), 0) || 0
+    // Calculate stats from BOTH systems
+    const pgApproved = purchaseGroups?.filter((pg) => pg.estado === 'aprobado') || []
+    const oldApproved = compras?.filter((c) => c.estado === 'aprobado') || []
 
-    const pagosPendientes = compras?.filter((c) => c.estado === 'pendiente').length || 0
-    const transaccionesTotales = compras?.length || 0
+    const ventasTotales =
+      pgApproved.reduce((sum, pg) => sum + Number(pg.monto), 0) +
+      oldApproved.reduce((sum, c) => sum + Number(c.monto), 0)
 
-    const boletosAsignados = compras
-      ?.filter((c) => c.estado === 'aprobado')
-      .reduce((sum, c) => sum + c.cantidad_boletos, 0) || 0
+    const pagosPendientes =
+      (purchaseGroups?.filter((pg) => pg.estado === 'pendiente').length || 0) +
+      (compras?.filter((c) => c.estado === 'pendiente').length || 0)
+
+    const transaccionesTotales =
+      (purchaseGroups?.length || 0) + (compras?.length || 0)
+
+    const boletosAsignados =
+      pgApproved.reduce((sum, pg) => sum + pg.total_tickets, 0) +
+      oldApproved.reduce((sum, c) => sum + c.cantidad_boletos, 0)
 
     const boletosDisponibles = (config?.total_boletos || 200000) - boletosAsignados
 
@@ -53,9 +65,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Stats error:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }

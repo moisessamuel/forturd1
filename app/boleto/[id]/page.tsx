@@ -23,9 +23,13 @@ import {
   IdCard
 } from 'lucide-react'
 
-interface Compra {
-  id: string
+interface TicketInfo {
   numero_boleto: string
+  status: string
+}
+
+interface BoletoData {
+  id: string
   nombre_comprador: string
   telefono: string
   email: string | null
@@ -35,14 +39,16 @@ interface Compra {
   moneda: string
   banco: string
   estado: string
-  origen: string
   referido_codigo: string | null
   created_at: string
+  tickets: TicketInfo[]
+  qr_code?: { qr_value: string }
+  source: 'new' | 'legacy'
 }
 
 export default function BoletoPage() {
   const params = useParams()
-  const [compra, setCompra] = useState<Compra | null>(null)
+  const [compra, setCompra] = useState<BoletoData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -172,13 +178,19 @@ export default function BoletoPage() {
       </div>
 
       <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Ticket Number Header */}
+        {/* Ticket Numbers Header */}
         <Card className="mb-6 border-primary/50 bg-primary/10">
           <CardContent className="p-6 text-center">
-            <p className="mb-1 text-sm text-muted-foreground">NÚMERO DE BOLETO</p>
-            <p className="font-mono text-4xl font-bold text-primary">
-              # {compra.numero_boleto}
+            <p className="mb-2 text-sm text-muted-foreground">
+              {compra.tickets.length > 1 ? 'NÚMEROS DE BOLETOS' : 'NÚMERO DE BOLETO'}
             </p>
+            <div className="space-y-1">
+              {compra.tickets.map((t, i) => (
+                <p key={i} className="font-mono text-2xl font-bold text-primary">
+                  # {t.numero_boleto.padStart(6, '0')}
+                </p>
+              ))}
+            </div>
             <div className="mt-3">{getEstadoBadge(compra.estado)}</div>
           </CardContent>
         </Card>
@@ -270,15 +282,17 @@ export default function BoletoPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                  <Hash className="h-4 w-4 text-primary" />
+              {compra.referido_codigo && (
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                    <Hash className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Referido</p>
+                    <p className="font-medium">{compra.referido_codigo}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Origen</p>
-                  <p className="font-medium capitalize">{compra.origen}{compra.referido_codigo ? ` (${compra.referido_codigo})` : ''}</p>
-                </div>
-              </div>
+              )}
 
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
