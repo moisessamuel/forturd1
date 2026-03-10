@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     siteName: 'FortuRD',
     images: [
       {
-        url: '/images/og-image.png',
+        url: 'https://www.forturd1.com/images/og-image.png',
         width: 1200,
         height: 630,
         alt: 'FortuRD - BMW X6 y X7',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
     description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
-    images: ['/images/og-image.png'],
+    images: ['https://www.forturd1.com/images/og-image.png'],
   },
   icons: {
     icon: [
