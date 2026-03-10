@@ -395,11 +395,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </Card>
         )}
 
-        <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {paymentMethods.map((method) => (
             <div key={method.id}>
+              <p className="mb-1.5 text-center text-xs font-bold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 8px rgba(218, 165, 32, 0.5)' }}>
+                {method.nombre}
+              </p>
               <Card
-                className={`cursor-pointer border-2 transition-all overflow-hidden ${
+                className={`cursor-pointer border-2 transition-all overflow-hidden rounded-xl ${
                   expandedBanco === method.id
                     ? 'border-primary shadow-lg shadow-primary/20'
                     : 'border-border/50 hover:border-primary/50'
@@ -411,7 +414,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 }}
               >
                 <CardContent className="p-0">
-                  <div className="relative aspect-square w-full overflow-hidden">
+                  <div className="relative aspect-square w-full overflow-hidden rounded-xl">
                     <Image
                       src={method.image}
                       alt={method.nombre}
