@@ -367,53 +367,56 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </p>
         </div>
 
-        {/* Cash payment button */}
-        <div className="relative mb-6 flex flex-col items-center">
-          <p className="mb-2 text-center text-sm font-semibold text-primary" style={{ textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
-            Para pago en efectivo presione aquí
+        {/* Cash payment banner */}
+        <button
+          onClick={() => setShowCashPanel(!showCashPanel)}
+          className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
+        >
+          <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
+            PARA PAGO EN EFECTIVO PRESIONE AQU&Iacute;
           </p>
-          <button
-            onClick={() => setShowCashPanel(!showCashPanel)}
-            className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
-              showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
-            }`}
-          >
+          <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
+            showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
+          }`}>
             <Image
               src="/images/banks/payment-header.jpeg"
               alt="Pago en Efectivo"
-              width={280}
-              height={110}
-              className="h-24 w-56 object-cover"
+              width={400}
+              height={160}
+              className="h-auto w-72 object-cover sm:w-80"
             />
-          </button>
+          </div>
+        </button>
 
-          {/* Cash info panel */}
-          {showCashPanel && (
-            <Card className="mt-3 w-full border-primary/30 bg-card/90">
-              <CardContent className="p-4">
-                <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente más cercano y depositar solo con tu cédula.
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Si es depósito bancario vía cajero sin importar la hora, específicamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
-                </p>
-                <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-                  Una vez realizado el pago, deberá subir el comprobante seleccionando el banco donde realizó el depósito en los métodos de pago de abajo.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* Cash info panel */}
+        {showCashPanel && (
+          <Card className="mb-4 w-full border-primary/30 bg-card/90">
+            <CardContent className="p-4">
+              <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente m&aacute;s cercano y depositar solo con tu c&eacute;dula.
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Si es dep&oacute;sito bancario v&iacute;a cajero sin importar la hora, espec&iacute;ficamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
+              </p>
+              <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
+                Una vez realizado el pago, deber&aacute; subir el comprobante seleccionando el banco donde realiz&oacute; el dep&oacute;sito en los m&eacute;todos de pago de abajo.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
-        <div className="mb-6 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {paymentMethods.map((method) => (
             <div key={method.id}>
+              <p className="mb-2 text-center text-sm font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
+                {method.nombre}
+              </p>
               <Card
-                className={`cursor-pointer border-2 transition-all ${
+                className={`cursor-pointer border-2 transition-all overflow-hidden rounded-xl ${
                   expandedBanco === method.id
-                    ? 'border-primary bg-primary/10 shadow-lg shadow-primary/20'
-                    : 'border-border/50 bg-card/50 hover:border-primary/50'
+                    ? 'border-primary shadow-lg shadow-primary/20'
+                    : 'border-border/50 hover:border-primary/50'
                 }`}
                 onClick={() => {
                   setExpandedBanco(expandedBanco === method.id ? null : method.id)
@@ -421,17 +424,15 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                   setFormData(prev => ({ ...prev, banco: method.nombre }))
                 }}
               >
-                <CardContent className="flex flex-col items-center p-3">
-                  <div className="mb-2 flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-white">
+                <CardContent className="flex items-center justify-center bg-white p-3">
+                  <div className="relative h-24 w-full overflow-hidden">
                     <Image
                       src={method.image}
                       alt={method.nombre}
-                      width={56}
-                      height={56}
-                      className="h-12 w-12 object-contain"
+                      fill
+                      className="object-contain"
                     />
                   </div>
-                  <p className="text-center text-xs font-medium">{method.nombre}</p>
                 </CardContent>
               </Card>
 
@@ -540,12 +541,12 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             <Card className="mb-6 border-border/50 bg-secondary/50">
               <CardContent className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white">
-                    <Image
-                      src={paymentMethods.find(m => m.nombre === selectedBanco?.nombre)?.image || '/images/banks/bhd.jpeg'}
-                      alt={selectedBanco?.nombre || 'Banco'}
-                      width={40}
-                      height={40}
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
+                  <Image
+                    src={paymentMethods.find(m => m.nombre === selectedBanco?.nombre)?.image || '/images/banks/bhd.jpeg'}
+                    alt={selectedBanco?.nombre || 'Banco'}
+                    width={40}
+                    height={40}
                       className="h-8 w-8 object-contain"
                     />
                   </div>
@@ -776,7 +777,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 <p className="mb-3 text-sm font-medium text-muted-foreground">Tu QR permanente de jugador</p>
                 <div className="rounded-xl bg-white p-4">
                   <QRCodeSVG
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/jugador/${qrValue}`}
+                    value={`https://www.forturd1.com/jugador/${qrValue}`}
                     size={180}
                     bgColor="#ffffff"
                     fgColor="#000000"

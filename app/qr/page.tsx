@@ -13,7 +13,7 @@ export default function QRPage() {
   const qrRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setSiteUrl(window.location.origin)
+    setSiteUrl('https://www.forturd1.com')
   }, [])
 
   const handleDownload = () => {
@@ -225,7 +225,7 @@ export default function QRPage() {
           {/* QR Code */}
           <div ref={qrRef} className="rounded-2xl bg-white p-6 shadow-lg">
             <QRCodeSVG
-              value={siteUrl}
+              value={`${siteUrl}/verificar`}
               size={220}
               bgColor="#ffffff"
               fgColor="#000000"
@@ -235,7 +235,7 @@ export default function QRPage() {
           </div>
 
           {/* URL */}
-          <p className="mt-4 text-sm font-medium text-primary">{siteUrl}</p>
+          <p className="mt-4 text-sm font-medium text-primary">www.forturd1.com/verificar</p>
           <p className="mt-1 text-xs text-muted-foreground">Arranca tu sueño, Enciende tu fortuna</p>
 
           {/* Actions */}
