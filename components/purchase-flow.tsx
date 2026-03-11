@@ -29,6 +29,34 @@ interface FormData {
 }
 
 export function PurchaseFlow({ initialQuantity, referralCode, onClose }: PurchaseFlowProps) {
+  const copyToClipboard = (text: string, label: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success(`${label} copiado`)
+      }).catch(() => {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        toast.success(`${label} copiado`)
+      })
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      toast.success(`${label} copiado`)
+    }
+  }
+
   const [step, setStep] = useState<Step>(1)
   const [quantity] = useState(initialQuantity)
   const [precioBoleto, setPrecioBoleto] = useState(1000)
@@ -450,7 +478,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-foreground">{titular.cedula}</span>
                           <button
-                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(titular.cedula); toast.success('Cedula copiada') }}
+                            onClick={(e) => { e.stopPropagation(); copyToClipboard(titular.cedula, 'Cedula') }}
                             className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                           >
                             <Copy className="h-3.5 w-3.5" />
@@ -468,7 +496,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-primary">{method.cuenta}</span>
                               <button
-                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(method.cuenta || ''); toast.success('Cuenta copiada') }}
+                                onClick={(e) => { e.stopPropagation(); copyToClipboard(method.cuenta || '', 'Cuenta') }}
                                 className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                               >
                                 <Copy className="h-3.5 w-3.5" />
