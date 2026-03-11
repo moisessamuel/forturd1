@@ -443,15 +443,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Titular:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{titular.nombre}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(titular.nombre); toast.success('Nombre copiado') }}
-                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                        <span className="font-medium text-foreground">{titular.nombre}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Cedula:</span>
@@ -493,15 +485,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                       )}
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Monto:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">{formatCurrency(total)}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(String(total)); toast.success('Monto copiado') }}
-                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
+                        <span className="font-bold text-primary">{formatCurrency(total)}</span>
                       </div>
                       {method.isPaypal && (
                         <a
