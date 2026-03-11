@@ -29,6 +29,34 @@ interface FormData {
 }
 
 export function PurchaseFlow({ initialQuantity, referralCode, onClose }: PurchaseFlowProps) {
+  const copyToClipboard = (text: string, label: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success(`${label} copiado`)
+      }).catch(() => {
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+        toast.success(`${label} copiado`)
+      })
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      toast.success(`${label} copiado`)
+    }
+  }
+
   const [step, setStep] = useState<Step>(1)
   const [quantity] = useState(initialQuantity)
   const [precioBoleto, setPrecioBoleto] = useState(1000)
@@ -39,18 +67,20 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
   const [expandedBanco, setExpandedBanco] = useState<string | null>(null)
   const [showCashPanel, setShowCashPanel] = useState(false)
 
-  const paymentMethods = [
-    { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg' },
-    { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg' },
-    { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg' },
-    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en línea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg' },
-    { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg' },
-    { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg' },
-    { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg' },
-    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg' },
-    { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg' },
-    { id: 'apopular', nombre: 'Asociación Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg' },
+  const allPaymentMethods = [
+    { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
+    { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', monedas: ['DOP'] },
+    { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', monedas: ['DOP'] },
+    { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', monedas: ['DOP'] },
+    { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
+    { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
+    { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'] },
+    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
+    { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg', monedas: ['USD'] },
+    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
   ]
+
+  const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
 
   const titular = {
     nombre: 'Moisés Samuel Escaño Bravo',
@@ -436,54 +466,96 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 </CardContent>
               </Card>
 
-              {/* Payment Info Dropdown */}
+              {/* Payment Info Modal */}
               {expandedBanco === method.id && (
-                <Card className="mt-2 border-primary/30 bg-card/80">
-                  <CardContent className="p-4">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Titular:</span>
-                        <span className="font-medium text-foreground">{titular.nombre}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Cédula:</span>
-                        <span className="font-medium text-foreground">{titular.cedula}</span>
-                      </div>
-                      {method.cuenta && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Tipo:</span>
-                            <span className="font-medium text-foreground">{method.tipoCuenta}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Cuenta:</span>
-                            <span className="font-bold text-primary">{method.cuenta}</span>
-                          </div>
-                        </>
-                      )}
-                      {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Tipo:</span>
-                          <span className="font-medium text-foreground">{method.tipoCuenta}</span>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
+                  <Card className="relative w-full max-w-sm border-2 border-primary/50 bg-card shadow-2xl shadow-primary/20" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setExpandedBanco(null)}
+                      className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                    <CardContent className="px-6 pb-6 pt-8">
+                      <h3 className="mb-5 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
+                        {method.nombre}
+                      </h3>
+                      <div className="space-y-4 text-base">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm text-muted-foreground">Titular</span>
+                          <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
                         </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Monto:</span>
-                        <span className="font-bold text-primary">{formatCurrency(total)}</span>
-                      </div>
-                      {method.isPaypal && (
-                        <a
-                          href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * quantity}USD`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 font-medium text-white transition-colors hover:bg-blue-600"
+                        <div className="h-px w-full bg-border/50" />
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm text-muted-foreground">Cedula</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">{titular.cedula}</span>
+                            <button
+                              onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
+                              className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        {method.cuenta && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Tipo de Cuenta</span>
+                              <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                            </div>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Numero de Cuenta</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold text-primary">{method.cuenta}</span>
+                                <button
+                                  onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')}
+                                  className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Tipo</span>
+                              <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                            </div>
+                          </>
+                        )}
+                        <div className="h-px w-full bg-border/50" />
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm text-muted-foreground">Monto a Transferir</span>
+                          <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
+                        </div>
+                        {method.isPaypal && (
+                          <a
+                            href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * quantity}USD`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-600"
+                          >
+                            Pagar con PayPal
+                          </a>
+                        )}
+                        <button
+                          onClick={() => setStep(3)}
+                          disabled={!selectedBanco}
+                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3.5 text-base font-bold text-black uppercase tracking-wide transition-colors hover:bg-yellow-500 disabled:opacity-50"
                         >
-                          Pagar con PayPal
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                          <Upload className="h-5 w-5" />
+                          Ya transferi, subir comprobante
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           ))}
