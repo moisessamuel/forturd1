@@ -464,78 +464,96 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 </CardContent>
               </Card>
 
-              {/* Payment Info Dropdown */}
+              {/* Payment Info Modal */}
               {expandedBanco === method.id && (
-                <Card className="mt-2 border-primary/30 bg-card/90">
-                  <CardContent className="p-4">
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Titular:</span>
-                        <span className="font-medium text-foreground">{titular.nombre}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Cedula:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground">{titular.cedula}</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); copyToClipboard(titular.cedula, 'Cedula') }}
-                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </button>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
+                  <Card className="relative w-full max-w-sm border-2 border-primary/50 bg-card shadow-2xl shadow-primary/20" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => setExpandedBanco(null)}
+                      className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                    <CardContent className="px-6 pb-6 pt-8">
+                      <h3 className="mb-5 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
+                        {method.nombre}
+                      </h3>
+                      <div className="space-y-4 text-base">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm text-muted-foreground">Titular</span>
+                          <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
                         </div>
-                      </div>
-                      {method.cuenta && (
-                        <>
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Tipo:</span>
-                            <span className="font-medium text-foreground">{method.tipoCuenta}</span>
+                        <div className="h-px w-full bg-border/50" />
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm text-muted-foreground">Cedula</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground">{titular.cedula}</span>
+                            <button
+                              onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
+                              className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Cuenta:</span>
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-primary">{method.cuenta}</span>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); copyToClipboard(method.cuenta || '', 'Cuenta') }}
-                                className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                              >
-                                <Copy className="h-3.5 w-3.5" />
-                              </button>
+                        </div>
+                        {method.cuenta && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Tipo de Cuenta</span>
+                              <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
                             </div>
-                          </div>
-                        </>
-                      )}
-                      {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Tipo:</span>
-                          <span className="font-medium text-foreground">{method.tipoCuenta}</span>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Numero de Cuenta</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold text-primary">{method.cuenta}</span>
+                                <button
+                                  onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')}
+                                  className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                        {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Tipo</span>
+                              <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                            </div>
+                          </>
+                        )}
+                        <div className="h-px w-full bg-border/50" />
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-sm text-muted-foreground">Monto a Transferir</span>
+                          <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
                         </div>
-                      )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Monto:</span>
-                        <span className="font-bold text-primary">{formatCurrency(total)}</span>
-                      </div>
-                      {method.isPaypal && (
-                        <a
-                          href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * quantity}USD`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 font-medium text-white transition-colors hover:bg-blue-600"
+                        {method.isPaypal && (
+                          <a
+                            href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * quantity}USD`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-600"
+                          >
+                            Pagar con PayPal
+                          </a>
+                        )}
+                        <button
+                          onClick={() => setStep(3)}
+                          disabled={!selectedBanco}
+                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3.5 text-base font-bold text-black uppercase tracking-wide transition-colors hover:bg-yellow-500 disabled:opacity-50"
                         >
-                          Pagar con PayPal
-                        </a>
-                      )}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setStep(3) }}
-                        disabled={!selectedBanco}
-                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3 font-bold text-black uppercase tracking-wide transition-colors hover:bg-yellow-500 disabled:opacity-50"
-                      >
-                        <Upload className="h-4 w-4" />
-                        Ya transferi, subir comprobante
-                      </button>
-                    </div>
-                  </CardContent>
-                </Card>
+                          <Upload className="h-5 w-5" />
+                          Ya transferi, subir comprobante
+                        </button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               )}
             </div>
           ))}
