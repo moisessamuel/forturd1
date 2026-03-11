@@ -438,38 +438,70 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
 
               {/* Payment Info Dropdown */}
               {expandedBanco === method.id && (
-                <Card className="mt-2 border-primary/30 bg-card/80">
+                <Card className="mt-2 border-primary/30 bg-card/90">
                   <CardContent className="p-4">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Titular:</span>
-                        <span className="font-medium text-foreground">{titular.nombre}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground">{titular.nombre}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(titular.nombre); toast.success('Nombre copiado') }}
+                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Cédula:</span>
-                        <span className="font-medium text-foreground">{titular.cedula}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Cedula:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground">{titular.cedula}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(titular.cedula); toast.success('Cedula copiada') }}
+                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                       {method.cuenta && (
                         <>
-                          <div className="flex justify-between">
+                          <div className="flex items-center justify-between">
                             <span className="text-muted-foreground">Tipo:</span>
                             <span className="font-medium text-foreground">{method.tipoCuenta}</span>
                           </div>
-                          <div className="flex justify-between">
+                          <div className="flex items-center justify-between">
                             <span className="text-muted-foreground">Cuenta:</span>
-                            <span className="font-bold text-primary">{method.cuenta}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-primary">{method.cuenta}</span>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(method.cuenta || ''); toast.success('Cuenta copiada') }}
+                                className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </>
                       )}
                       {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
-                        <div className="flex justify-between">
+                        <div className="flex items-center justify-between">
                           <span className="text-muted-foreground">Tipo:</span>
                           <span className="font-medium text-foreground">{method.tipoCuenta}</span>
                         </div>
                       )}
-                      <div className="flex justify-between">
+                      <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Monto:</span>
-                        <span className="font-bold text-primary">{formatCurrency(total)}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-primary">{formatCurrency(total)}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(String(total)); toast.success('Monto copiado') }}
+                            className="rounded p-1 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                       {method.isPaypal && (
                         <a
@@ -481,6 +513,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                           Pagar con PayPal
                         </a>
                       )}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setStep(3) }}
+                        disabled={!selectedBanco}
+                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3 font-bold text-black uppercase tracking-wide transition-colors hover:bg-yellow-500 disabled:opacity-50"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Ya transferi, subir comprobante
+                      </button>
                     </div>
                   </CardContent>
                 </Card>
