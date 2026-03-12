@@ -1,21 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { MapPin, Search, CreditCard, Shield } from 'lucide-react'
-
-const SLIDE_IMAGES = [
-  { src: '/images/slide1.png', alt: 'FortuRD - Arranca tu sueno' },
-  { src: '/images/slide2.jpg', alt: 'BMW X6 - Premio FortuRD' },
-  { src: '/images/slide3.jpg', alt: 'BMW X6 y X7 en la calle de noche' },
-  { src: '/images/slide4.jpg', alt: 'BMW X6 frontal en showroom' },
-  { src: '/images/slide5.jpg', alt: 'FortuRD - BMW X6 y X7 Proximamente' },
-  { src: '/images/slide6.jpg', alt: 'BMW X6 y X7 frontal en estacionamiento' },
-  { src: '/images/slide7.jpg', alt: 'BMW X7 y X6 trasera en gasolinera' },
-  { src: '/images/slide8.jpg', alt: 'BMW X7 frontal en showroom' },
-  { src: '/images/slide9.jpg', alt: 'BMW X6 frontal en garage moderno' },
-  { src: '/images/slide10.jpg', alt: 'BMW X7 y X6 en tunel' },
-]
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -36,15 +23,6 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
   const [progress, setProgress] = useState(0)
   const [quantity, setQuantity] = useState('')
   const [referralCode, setReferralCode] = useState('')
-  const [currentSlide, setCurrentSlide] = useState(0)
-
-  // Auto-rotate slides every 2 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % SLIDE_IMAGES.length)
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [])
 
   useEffect(() => {
     fetch('/api/config')
@@ -83,34 +61,13 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
       {/* Hero Card */}
       <div className="mb-8 grid gap-8 lg:grid-cols-2">
         <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-          {SLIDE_IMAGES.map((slide, index) => (
-            <div
-              key={slide.src}
-              className="absolute inset-0 transition-opacity duration-700 ease-in-out"
-              style={{ opacity: currentSlide === index ? 1 : 0 }}
-            >
-              <Image
-                src={slide.src}
-                alt={slide.alt}
-                fill
-                className="object-cover"
-                priority={index === 0}
-              />
-            </div>
-          ))}
-          {/* Slide indicators */}
-          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-            {SLIDE_IMAGES.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  currentSlide === index ? 'w-6 bg-primary' : 'w-2 bg-foreground/40'
-                }`}
-                aria-label={`Ir a imagen ${index + 1}`}
-              />
-            ))}
-          </div>
+          <Image
+            src="/images/hero-portada.jpg"
+            alt="FortuRD - BMW X6 y BMW X7 - Arranca tu sueno, Enciende tu fortuna"
+            fill
+            className="object-cover"
+            priority
+          />
           <Badge className="absolute left-4 top-4 z-10 bg-green-600 text-white">
             EN CURSO
           </Badge>
