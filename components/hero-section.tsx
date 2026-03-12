@@ -5,9 +5,16 @@ import Image from 'next/image'
 import { MapPin, Search, CreditCard, Shield } from 'lucide-react'
 
 const SLIDE_IMAGES = [
-  { src: '/images/slide1.png', alt: 'FortuRD - Arranca tu sueño' },
+  { src: '/images/slide1.png', alt: 'FortuRD - Arranca tu sueno' },
   { src: '/images/slide2.jpg', alt: 'BMW X6 - Premio FortuRD' },
-  { src: '/images/slide3.jpg', alt: 'BMW X7 - Premio FortuRD' },
+  { src: '/images/slide3.jpg', alt: 'BMW X6 y X7 en la calle de noche' },
+  { src: '/images/slide4.jpg', alt: 'BMW X6 frontal en showroom' },
+  { src: '/images/slide5.jpg', alt: 'FortuRD - BMW X6 y X7 Proximamente' },
+  { src: '/images/slide6.jpg', alt: 'BMW X6 y X7 frontal en estacionamiento' },
+  { src: '/images/slide7.jpg', alt: 'BMW X7 y X6 trasera en gasolinera' },
+  { src: '/images/slide8.jpg', alt: 'BMW X7 frontal en showroom' },
+  { src: '/images/slide9.jpg', alt: 'BMW X6 frontal en garage moderno' },
+  { src: '/images/slide10.jpg', alt: 'BMW X7 y X6 en tunel' },
 ]
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
