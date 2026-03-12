@@ -1,8 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { MapPin, Search, CreditCard, Shield } from 'lucide-react'
+
+const GALLERY_IMAGES = [
+  { src: '/images/gallery1.jpg', alt: 'BMW X7 y X6 en tunel de noche' },
+  { src: '/images/gallery2.jpg', alt: 'BMW X7 y X6 trasera en gasolinera' },
+  { src: '/images/gallery3.jpg', alt: 'BMW X6 y X7 frontal en estacionamiento' },
+]
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -23,6 +29,14 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
   const [progress, setProgress] = useState(0)
   const [quantity, setQuantity] = useState('')
   const [referralCode, setReferralCode] = useState('')
+  const [currentGallery, setCurrentGallery] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentGallery((prev) => (prev + 1) % GALLERY_IMAGES.length)
+    }, 2500)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     fetch('/api/config')
@@ -73,6 +87,36 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
           </Badge>
         </div>
 
+        {/* Gallery carousel below portada on mobile, beside on desktop */}
+        <div className="relative aspect-[16/9] overflow-hidden rounded-xl lg:hidden">
+          {GALLERY_IMAGES.map((img, index) => (
+            <div
+              key={img.src}
+              className="absolute inset-0 transition-opacity duration-500 ease-in-out"
+              style={{ opacity: currentGallery === index ? 1 : 0 }}
+            >
+              <Image
+                src={img.src}
+                alt={img.alt}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ))}
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+            {GALLERY_IMAGES.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentGallery(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  currentGallery === index ? 'w-6 bg-primary' : 'w-2 bg-foreground/40'
+                }`}
+                aria-label={`Ir a imagen ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col justify-center">
           <h1 className="mb-2 text-2xl font-extrabold uppercase text-primary md:text-3xl lg:text-4xl">
             {'TU DECIDES TU SUERTE UNA X6 Y UNA X7 ESPERANDO DUEÑO.'}
@@ -108,6 +152,38 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
             <Shield className="h-4 w-4 text-green-500" />
             Compra mínima garantizada por sistema seguro
           </p>
+        </div>
+      </div>
+
+      {/* Gallery carousel - desktop only */}
+      <div className="mb-8 hidden overflow-hidden rounded-xl lg:block">
+        <div className="relative aspect-[21/9]">
+          {GALLERY_IMAGES.map((img, index) => (
+            <div
+              key={img.src}
+              className="absolute inset-0 transition-opacity duration-500 ease-in-out"
+              style={{ opacity: currentGallery === index ? 1 : 0 }}
+            >
+              <Image
+                src={img.src}
+                alt={img.alt}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ))}
+          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+            {GALLERY_IMAGES.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentGallery(index)}
+                className={`h-2.5 rounded-full transition-all duration-300 ${
+                  currentGallery === index ? 'w-8 bg-primary' : 'w-2.5 bg-foreground/40'
+                }`}
+                aria-label={`Ir a imagen ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
