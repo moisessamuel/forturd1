@@ -29,14 +29,15 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
   const [progress, setProgress] = useState(0)
   const [quantity, setQuantity] = useState('')
   const [referralCode, setReferralCode] = useState('')
-  const [currentGallery, setCurrentGallery] = useState(0)
+  const totalSlides = GALLERY_IMAGES.length + 1 // portada + gallery
+  const [currentSlide, setCurrentSlide] = useState(0) // 0 = portada, 1+ = gallery
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentGallery((prev) => (prev + 1) % GALLERY_IMAGES.length)
+      setCurrentSlide((prev) => (prev + 1) % totalSlides)
     }, 2500)
     return () => clearInterval(interval)
-  }, [])
+  }, [totalSlides])
 
   useEffect(() => {
     fetch('/api/config')
@@ -75,25 +76,25 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
       {/* Hero Card */}
       <div className="mb-8 grid gap-8 lg:grid-cols-2">
         <div className="relative aspect-[4/3] overflow-hidden rounded-xl">
-          <Image
-            src="/images/hero-portada.jpg"
-            alt="FortuRD - BMW X6 y BMW X7 - Arranca tu sueno, Enciende tu fortuna"
-            fill
-            className="object-cover"
-            priority
-          />
-          <Badge className="absolute left-4 top-4 z-10 bg-green-600 text-white">
-            EN CURSO
-          </Badge>
-        </div>
-
-        {/* Gallery carousel below portada on mobile, beside on desktop */}
-        <div className="relative aspect-[16/9] overflow-hidden rounded-xl lg:hidden">
+          {/* Portada - slide 0 */}
+          <div
+            className="absolute inset-0 transition-opacity duration-500 ease-in-out"
+            style={{ opacity: currentSlide === 0 ? 1 : 0 }}
+          >
+            <Image
+              src="/images/hero-portada.jpg"
+              alt="FortuRD - BMW X6 y BMW X7 - Arranca tu sueno, Enciende tu fortuna"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+          {/* Gallery images - slides 1, 2, 3 */}
           {GALLERY_IMAGES.map((img, index) => (
             <div
               key={img.src}
               className="absolute inset-0 transition-opacity duration-500 ease-in-out"
-              style={{ opacity: currentGallery === index ? 1 : 0 }}
+              style={{ opacity: currentSlide === index + 1 ? 1 : 0 }}
             >
               <Image
                 src={img.src}
@@ -103,18 +104,22 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
               />
             </div>
           ))}
+          {/* Slide indicators */}
           <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-            {GALLERY_IMAGES.map((_, index) => (
+            {Array.from({ length: totalSlides }).map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentGallery(index)}
+                onClick={() => setCurrentSlide(index)}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  currentGallery === index ? 'w-6 bg-primary' : 'w-2 bg-foreground/40'
+                  currentSlide === index ? 'w-6 bg-primary' : 'w-2 bg-foreground/40'
                 }`}
                 aria-label={`Ir a imagen ${index + 1}`}
               />
             ))}
           </div>
+          <Badge className="absolute left-4 top-4 z-10 bg-green-600 text-white">
+            EN CURSO
+          </Badge>
         </div>
 
         <div className="flex flex-col justify-center">
@@ -152,38 +157,6 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
             <Shield className="h-4 w-4 text-green-500" />
             Compra mínima garantizada por sistema seguro
           </p>
-        </div>
-      </div>
-
-      {/* Gallery carousel - desktop only */}
-      <div className="mb-8 hidden overflow-hidden rounded-xl lg:block">
-        <div className="relative aspect-[21/9]">
-          {GALLERY_IMAGES.map((img, index) => (
-            <div
-              key={img.src}
-              className="absolute inset-0 transition-opacity duration-500 ease-in-out"
-              style={{ opacity: currentGallery === index ? 1 : 0 }}
-            >
-              <Image
-                src={img.src}
-                alt={img.alt}
-                fill
-                className="object-cover"
-              />
-            </div>
-          ))}
-          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
-            {GALLERY_IMAGES.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentGallery(index)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  currentGallery === index ? 'w-8 bg-primary' : 'w-2.5 bg-foreground/40'
-                }`}
-                aria-label={`Ir a imagen ${index + 1}`}
-              />
-            ))}
-          </div>
         </div>
       </div>
 
