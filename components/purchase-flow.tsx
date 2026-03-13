@@ -246,7 +246,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
   }
 
   const copyTicketNumbers = () => {
-    const text = ticketNumbers.map(n => n.padStart(6, '0')).join(', ')
+    const text = ticketNumbers.map(n => n.padStart(5, '0')).join(', ')
     navigator.clipboard.writeText(text)
     toast.success(ticketNumbers.length > 1 ? '¡Números de boletos copiados!' : '¡Número de boleto copiado!')
   }
@@ -831,7 +831,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 {ticketNumbers.map((num, idx) => (
                   <div key={idx} className="flex items-center justify-center gap-2">
                     <p className="font-mono text-2xl font-bold text-primary">
-                      # {num.padStart(6, '0')}
+                      # {num.padStart(5, '0')}
                     </p>
                   </div>
                 ))}

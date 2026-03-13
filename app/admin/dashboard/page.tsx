@@ -511,7 +511,7 @@ export default function AdminDashboard() {
                             <div className="flex flex-wrap gap-1">
                               {pg.tickets?.map((t) => (
                                 <Badge key={t.id} variant="outline" className="bg-primary/20 text-primary text-xs">
-                                  #{t.numero_boleto.padStart(6, '0')}
+                                  #{t.numero_boleto.padStart(5, '0')}
                                 </Badge>
                               ))}
                             </div>
@@ -711,7 +711,7 @@ export default function AdminDashboard() {
                             <div className="flex flex-wrap gap-1 max-w-48">
                               {pg.tickets?.map((t) => (
                                 <Badge key={t.id} variant="outline" className="bg-primary/20 text-primary text-xs">
-                                  #{t.numero_boleto.padStart(6, '0')}
+                                  #{t.numero_boleto.padStart(5, '0')}
                                 </Badge>
                               ))}
                             </div>
@@ -906,7 +906,7 @@ export default function AdminDashboard() {
                           <div className="flex flex-wrap gap-1">
                             {pg.tickets?.slice(0, 3).map((t) => (
                               <Badge key={t.id} variant="outline" className="bg-primary/20 text-primary text-xs">
-                                #{t.numero_boleto.padStart(6, '0')}
+                                #{t.numero_boleto.padStart(5, '0')}
                               </Badge>
                             ))}
                             {(pg.tickets?.length || 0) > 3 && (

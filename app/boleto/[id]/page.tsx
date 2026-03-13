@@ -187,7 +187,7 @@ export default function BoletoPage() {
             <div className="space-y-1">
               {compra.tickets.map((t, i) => (
                 <p key={i} className="font-mono text-2xl font-bold text-primary">
-                  # {t.numero_boleto.padStart(6, '0')}
+                  # {t.numero_boleto.padStart(5, '0')}
                 </p>
               ))}
             </div>
