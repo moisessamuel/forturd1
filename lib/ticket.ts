@@ -27,7 +27,7 @@ export async function generateTicketNumbers(count: number): Promise<string[]> {
 
   while (generated.length < count) {
     const randomNum = Math.floor(Math.random() * maxRange) + 1
-    const ticketNumber = randomNum.toString().padStart(6, '0')
+    const ticketNumber = randomNum.toString().padStart(5, '0')
     attempts++
 
     if (attempts > maxAttempts) {

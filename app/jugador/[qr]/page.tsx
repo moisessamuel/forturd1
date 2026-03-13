@@ -209,7 +209,7 @@ export default function JugadorPage() {
                               : 'bg-yellow-500/20 text-yellow-500'
                           }`}
                         >
-                          #{ticket.numero_boleto.padStart(6, '0')}
+                          #{ticket.numero_boleto.padStart(5, '0')}
                         </span>
                       ))}
                     </div>

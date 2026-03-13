@@ -223,7 +223,7 @@ export default function VerificarPage() {
               <div className="mb-4 text-center">
                 <p className="text-sm text-muted-foreground">Numero de Boleto</p>
                 <p className="font-mono text-2xl font-bold text-primary">
-                  #{singleResult.numero_boleto.padStart(6, '0')}
+                  #{singleResult.numero_boleto.padStart(5, '0')}
                 </p>
               </div>
 
@@ -277,7 +277,7 @@ export default function VerificarPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
                           <p className="font-mono text-lg font-bold text-primary">
-                            #{ticket.numero_boleto.padStart(6, '0')}
+                            #{ticket.numero_boleto.padStart(5, '0')}
                           </p>
                           <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${status.bgColor} ${status.color}`}>
                             {status.label}

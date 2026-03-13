@@ -43,9 +43,9 @@ export function Header() {
             <Image
               src="/images/bmw-menu.png"
               alt="Menu"
-              width={40}
-              height={40}
-              className="h-9 w-9 object-contain invert"
+              width={48}
+              height={48}
+              className="h-11 w-11 object-contain invert mix-blend-screen"
             />
           </button>
 
