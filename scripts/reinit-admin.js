@@ -17,10 +17,11 @@ async function updatePassword() {
     const hash = await bcrypt.hash(newPassword, 10)
     console.log('New hash generated for gillette007')
 
+    // Update ALL admin users to new password
     const { data, error } = await supabase
       .from('admin_users')
       .update({ password_hash: hash })
-      .eq('username', 'admin')
+      .eq('username', 'pocoyo')
       .select()
 
     if (error) {
@@ -29,18 +30,13 @@ async function updatePassword() {
     }
 
     if (data && data.length > 0) {
-      console.log('Admin password updated successfully!')
+      console.log(`Updated ${data.length} admin user(s) with username "pocoyo" to new password gillette007`)
     } else {
-      console.log('No admin user found with username "admin". Inserting...')
-      const { error: insertError } = await supabase
-        .from('admin_users')
-        .insert({ username: 'admin', password_hash: hash })
-
-      if (insertError) {
-        console.error('Insert error:', insertError.message)
-      } else {
-        console.log('Admin user created with new password!')
-      }
+      console.log('No admin user found with username "pocoyo".')
+      
+      // List all admin users for debugging
+      const { data: allAdmins } = await supabase.from('admin_users').select('id, username')
+      console.log('All admin users:', JSON.stringify(allAdmins))
     }
   } catch (err) {
     console.error('Error:', err.message)
