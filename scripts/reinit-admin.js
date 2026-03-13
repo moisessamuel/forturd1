@@ -1,14 +1,50 @@
-// Re-initialize admin password via the init endpoint
-const BASE_URL = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+import bcrypt from 'bcryptjs'
+import { createClient } from '@supabase/supabase-js'
 
-async function reinit() {
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing SUPABASE env vars')
+  process.exit(1)
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey)
+const newPassword = 'gillette007'
+
+async function updatePassword() {
   try {
-    const res = await fetch(`${BASE_URL}/api/admin/init`)
-    const data = await res.json()
-    console.log('Result:', JSON.stringify(data, null, 2))
-  } catch (error) {
-    console.error('Error:', error.message)
+    const hash = await bcrypt.hash(newPassword, 10)
+    console.log('New hash generated for gillette007')
+
+    const { data, error } = await supabase
+      .from('admin_users')
+      .update({ password_hash: hash })
+      .eq('username', 'admin')
+      .select()
+
+    if (error) {
+      console.error('DB error:', error.message)
+      return
+    }
+
+    if (data && data.length > 0) {
+      console.log('Admin password updated successfully!')
+    } else {
+      console.log('No admin user found with username "admin". Inserting...')
+      const { error: insertError } = await supabase
+        .from('admin_users')
+        .insert({ username: 'admin', password_hash: hash })
+
+      if (insertError) {
+        console.error('Insert error:', insertError.message)
+      } else {
+        console.log('Admin user created with new password!')
+      }
+    }
+  } catch (err) {
+    console.error('Error:', err.message)
   }
 }
 
-reinit()
+updatePassword()
