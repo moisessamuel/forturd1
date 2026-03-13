@@ -3,9 +3,6 @@ import bcrypt from 'bcryptjs'
 import { createClient } from '@/lib/supabase/server'
 import { createSession, setSessionCookie } from '@/lib/auth'
 
-const DEFAULT_USERNAME = 'pocoyo'
-const DEFAULT_PASSWORD = 'gillette007'
-
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json()
@@ -20,30 +17,11 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // Find admin user
-    let { data: admin, error } = await supabase
+    const { data: admin, error } = await supabase
       .from('admin_users')
       .select('*')
       .eq('username', username)
       .single()
-
-    // If admin doesn't exist and it's the default user, auto-create it
-    if ((error || !admin) && username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
-      const hash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
-      const { data: newAdmin, error: insertError } = await supabase
-        .from('admin_users')
-        .upsert({ username: DEFAULT_USERNAME, password_hash: hash }, { onConflict: 'username' })
-        .select()
-        .single()
-
-      if (insertError || !newAdmin) {
-        return NextResponse.json(
-          { error: 'Credenciales invalidas' },
-          { status: 401 }
-        )
-      }
-
-      admin = newAdmin
-    }
 
     if (!admin) {
       return NextResponse.json(
@@ -52,20 +30,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify password - if hash is not a valid bcrypt hash, re-hash it
+    // Verify password
     let isValid = false
     try {
       isValid = await bcrypt.compare(password, admin.password_hash)
     } catch {
-      // Invalid hash format, if default credentials match, fix the hash
-      if (username === DEFAULT_USERNAME && password === DEFAULT_PASSWORD) {
-        const newHash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
-        await supabase
-          .from('admin_users')
-          .update({ password_hash: newHash })
-          .eq('id', admin.id)
-        isValid = true
-      }
+      isValid = false
     }
 
     if (!isValid) {
