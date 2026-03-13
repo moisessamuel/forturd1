@@ -5,13 +5,99 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const boleto = searchParams.get('boleto')
+    const telefono = searchParams.get('telefono')
 
-    if (!boleto) {
-      return NextResponse.json({ error: 'Número de boleto requerido' }, { status: 400 })
+    if (!boleto && !telefono) {
+      return NextResponse.json({ error: 'Número de boleto o teléfono requerido' }, { status: 400 })
     }
 
     const supabase = await createClient()
-    const cleanBoleto = boleto.replace(/[^0-9]/g, '')
+
+    // Search by phone number - returns all tickets for that person
+    if (telefono) {
+      const cleanPhone = telefono.replace(/[^0-9+]/g, '')
+      const results: Array<{
+        numero_boleto: string
+        nombre: string
+        telefono: string
+        estado: string
+        cantidad_boletos: number
+        monto: number
+        moneda: string
+        fecha: string
+        banco: string
+        source: string
+      }> = []
+
+      // Search in players/tickets (new system)
+      const { data: player } = await supabase
+        .from('players')
+        .select('*')
+        .eq('phone_number', cleanPhone)
+        .single()
+
+      if (player) {
+        const { data: purchaseGroups } = await supabase
+          .from('purchase_groups')
+          .select('*, tickets(*)')
+          .eq('player_id', player.id)
+          .order('created_at', { ascending: false })
+
+        if (purchaseGroups) {
+          for (const pg of purchaseGroups) {
+            for (const ticket of (pg.tickets || [])) {
+              results.push({
+                numero_boleto: ticket.numero_boleto,
+                nombre: player.nombre,
+                telefono: player.phone_number,
+                estado: pg.estado || 'pendiente',
+                cantidad_boletos: pg.total_tickets || 1,
+                monto: pg.monto,
+                moneda: pg.moneda,
+                fecha: ticket.created_at,
+                banco: pg.banco || '',
+                source: 'new',
+              })
+            }
+          }
+        }
+      }
+
+      // Also search in legacy compras table
+      const { data: compras } = await supabase
+        .from('compras')
+        .select('*')
+        .eq('telefono', cleanPhone)
+        .order('fecha', { ascending: false })
+
+      if (compras) {
+        for (const compra of compras) {
+          if (compra.numero_boleto) {
+            results.push({
+              numero_boleto: compra.numero_boleto,
+              nombre: compra.nombre_comprador,
+              telefono: compra.telefono,
+              estado: compra.estado,
+              cantidad_boletos: compra.cantidad_boletos,
+              monto: compra.monto,
+              moneda: compra.moneda,
+              fecha: compra.created_at || compra.fecha,
+              banco: compra.banco || '',
+              source: 'legacy',
+            })
+          }
+        }
+      }
+
+      if (results.length === 0) {
+        return NextResponse.json({ error: 'No se encontraron boletos para este teléfono' }, { status: 404 })
+      }
+
+      return NextResponse.json({ telefono: cleanPhone, results })
+    }
+
+    // Search by ticket number - single result
+    const cleanBoleto = boleto!.replace(/[^0-9]/g, '')
 
     // Try new tickets table first
     const { data: ticket } = await supabase
@@ -24,11 +110,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         numero_boleto: ticket.numero_boleto,
         nombre: ticket.player?.nombre,
+        telefono: ticket.player?.phone_number || '',
         estado: ticket.purchase_group?.estado || 'pendiente',
         cantidad_boletos: ticket.purchase_group?.total_tickets || 1,
         monto: ticket.purchase_group?.monto,
         moneda: ticket.purchase_group?.moneda,
         fecha: ticket.created_at,
+        banco: ticket.purchase_group?.banco || '',
         source: 'new',
       })
     }
@@ -44,11 +132,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         numero_boleto: compra.numero_boleto,
         nombre: compra.nombre_comprador,
+        telefono: compra.telefono || '',
         estado: compra.estado,
         cantidad_boletos: compra.cantidad_boletos,
         monto: compra.monto,
         moneda: compra.moneda,
         fecha: compra.created_at,
+        banco: compra.banco || '',
         source: 'legacy',
       })
     }

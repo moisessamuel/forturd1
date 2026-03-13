@@ -853,7 +853,22 @@ export default function AdminDashboard() {
                             {formatCurrency(referido.comision || 0)}
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm" className="text-red-500">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                              onClick={async () => {
+                                if (!confirm(`Seguro que deseas eliminar al referido "${referido.nombre_agente}" (${referido.codigo})?`)) return
+                                try {
+                                  const res = await fetch(`/api/referidos?id=${referido.id}`, { method: 'DELETE' })
+                                  if (!res.ok) throw new Error('Error al eliminar')
+                                  toast.success('Referido eliminado')
+                                  fetchData()
+                                } catch {
+                                  toast.error('Error al eliminar referido')
+                                }
+                              }}
+                            >
                               <X className="h-4 w-4" />
                             </Button>
                           </TableCell>
