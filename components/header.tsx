@@ -45,7 +45,7 @@ export function Header() {
               alt="Menu"
               width={48}
               height={48}
-              className="h-11 w-11 object-contain invert"
+              className="h-11 w-11 object-contain invert mix-blend-screen"
             />
           </button>
 
