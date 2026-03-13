@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 export function WhatsAppBubble() {
   const [showTooltip, setShowTooltip] = useState(false)
 
-  const whatsappNumber = '18298059020'
+  const whatsappNumber = '18092725841'
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=Hola%2C%20necesito%20ayuda%20con%20FortuRD`
 
   return (
