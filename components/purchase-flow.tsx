@@ -82,10 +82,19 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
 
   const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
 
-  const titular = {
+  const titularEduardo = {
     nombre: 'Eduardo Enrique Rodriguez Montas',
     cedula: '402-1466583-4',
   }
+  const titularMoises = {
+    nombre: 'Moises Samuel Escano Bravo',
+    cedula: '402-3305853-2',
+  }
+  const getTitular = (bancoId: string) => {
+    if (bancoId === 'bhd' || bancoId === 'popular') return titularEduardo
+    return titularMoises
+  }
+  const titular = selectedBanco ? getTitular(selectedBanco.id) : titularMoises
   const [formData, setFormData] = useState<FormData>({
     nombre: '',
     telefono: '',
