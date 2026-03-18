@@ -42,11 +42,34 @@ export async function PATCH(
     const body = await request.json()
 
     const newEstado = body.estado
+    const motivo = body.motivo
+
+    // If reverting to pendiente, get current state first and log it
+    if (newEstado === 'pendiente' && motivo) {
+      const { data: currentGroup } = await supabase
+        .from('purchase_groups')
+        .select('estado')
+        .eq('id', id)
+        .single()
+
+      if (currentGroup) {
+        await supabase.from('audit_log').insert({
+          purchase_group_id: id,
+          admin_username: session.username || 'admin',
+          estado_anterior: currentGroup.estado,
+          estado_nuevo: 'pendiente',
+          motivo,
+        })
+      }
+    }
 
     // Update purchase group
     const updateData: Record<string, unknown> = { estado: newEstado }
     if (newEstado === 'aprobado') {
       updateData.fecha_aprobacion = new Date().toISOString()
+    }
+    if (newEstado === 'pendiente') {
+      updateData.fecha_aprobacion = null
     }
 
     const { data: group, error } = await supabase
