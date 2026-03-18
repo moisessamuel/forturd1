@@ -500,19 +500,23 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                           <span className="text-sm text-muted-foreground">Titular</span>
                           <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
                         </div>
-                        <div className="h-px w-full bg-border/50" />
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="text-sm text-muted-foreground">Cedula</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">{titular.cedula}</span>
-                            <button
-                              onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
-                              className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                        {method.id !== 'zelle' && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Cedula</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground">{titular.cedula}</span>
+                                <button
+                                  onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
+                                  className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                         {method.cuenta && (
                           <>
                             <div className="h-px w-full bg-border/50" />
