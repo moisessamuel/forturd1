@@ -65,7 +65,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
   const [bancos, setBancos] = useState<Banco[]>([])
   const [selectedBanco, setSelectedBanco] = useState<Banco | null>(null)
   const [expandedBanco, setExpandedBanco] = useState<string | null>(null)
-
+  const [showCashPanel, setShowCashPanel] = useState(false)
 
   const allPaymentMethods = [
     { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '29147320016', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
@@ -406,26 +406,44 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </p>
         </div>
 
-        {/* Instrucciones Pago en Efectivo */}
-        <Card className="mb-6 border-primary/30 bg-card/90">
-          <CardContent className="p-4">
-            <div className="mb-3 flex items-center gap-3">
-              <Image src="/images/banks/efectivo.png" alt="Pago en Efectivo" width={50} height={50} className="object-contain" />
-              <p className="text-base font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
-                Pago en Efectivo
+        {/* Cash payment banner */}
+        <button
+          onClick={() => setShowCashPanel(!showCashPanel)}
+          className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
+        >
+          <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
+            {'PARA PAGO EN EFECTIVO PRESIONE AQUI'}
+          </p>
+          <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
+            showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
+          }`}>
+            <Image
+              src="/images/banks/payment-header.jpeg"
+              alt="Pago en Efectivo"
+              width={400}
+              height={160}
+              className="h-auto w-72 object-cover sm:w-80"
+            />
+          </div>
+        </button>
+
+        {/* Cash info panel */}
+        {showCashPanel && (
+          <Card className="mb-4 w-full border-primary/30 bg-card/90">
+            <CardContent className="p-4">
+              <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
               </p>
-            </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
-            </p>
-            <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-              Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago de abajo.
-            </p>
-          </CardContent>
-        </Card>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
+              </p>
+              <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
+                Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago de abajo.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {paymentMethods.map((method) => (
