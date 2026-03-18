@@ -18,10 +18,12 @@ import {
   Hash,
   ChevronDown,
   ChevronUp,
-  AlertTriangle
+  AlertTriangle,
+  RotateCcw
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -82,6 +84,11 @@ export default function AdminDashboard() {
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
   
+  // Revert state
+  const [revertingId, setRevertingId] = useState<string | null>(null)
+  const [revertMotivo, setRevertMotivo] = useState('')
+  const [isReverting, setIsReverting] = useState(false)
+
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
     config: true,
@@ -207,6 +214,32 @@ export default function AdminDashboard() {
       fetchData()
     } catch {
       toast.error('Error al actualizar el estado')
+    }
+  }
+
+  const handleRevertToPending = async () => {
+    if (!revertingId || !revertMotivo.trim()) {
+      toast.error('Debe ingresar un motivo de reversion')
+      return
+    }
+    setIsReverting(true)
+    try {
+      const response = await fetch(`/api/compras/${revertingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'pendiente', motivo: revertMotivo.trim() }),
+      })
+
+      if (!response.ok) throw new Error('Error reverting compra')
+
+      toast.success('Compra revertida a pendiente')
+      setRevertingId(null)
+      setRevertMotivo('')
+      fetchData()
+    } catch {
+      toast.error('Error al revertir la compra')
+    } finally {
+      setIsReverting(false)
     }
   }
 
@@ -718,12 +751,13 @@ export default function AdminDashboard() {
                       <TableHead>Estado</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Comprobante</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {compras.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={11} className="text-center text-muted-foreground">
+                        <TableCell colSpan={12} className="text-center text-muted-foreground">
                           {searchTerm ? 'No se encontraron resultados' : 'No hay compras registradas'}
                         </TableCell>
                       </TableRow>
@@ -794,6 +828,18 @@ export default function AdminDashboard() {
                                   </div>
                                 </DialogContent>
                               </Dialog>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-yellow-600 text-yellow-500 hover:bg-yellow-600/20"
+                                onClick={() => { setRevertingId(pg.id); setRevertMotivo('') }}
+                              >
+                                <RotateCcw className="mr-1 h-3 w-3" /> Revertir
+                              </Button>
                             )}
                           </TableCell>
                         </TableRow>
@@ -920,6 +966,7 @@ export default function AdminDashboard() {
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Estado</TableHead>
+                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -962,6 +1009,18 @@ export default function AdminDashboard() {
                             {pg.estado}
                           </Badge>
                         </TableCell>
+                        <TableCell>
+                          {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-yellow-600 text-yellow-500 hover:bg-yellow-600/20"
+                              onClick={() => { setRevertingId(pg.id); setRevertMotivo('') }}
+                            >
+                              <RotateCcw className="mr-1 h-3 w-3" /> Revertir
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -971,6 +1030,48 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Modal de Reversion */}
+      <Dialog open={!!revertingId} onOpenChange={(open) => { if (!open) { setRevertingId(null); setRevertMotivo('') } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-yellow-500">
+              <RotateCcw className="h-5 w-5" />
+              Revertir a Pendiente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Esta accion revertira el estado de esta compra a pendiente para ser verificada nuevamente. Los boletos asociados tambien se revertiran.
+            </p>
+            <div>
+              <label className="mb-2 block text-sm font-medium">Motivo de reversion *</label>
+              <Textarea
+                placeholder="Ingrese el motivo por el cual revierte esta compra..."
+                value={revertMotivo}
+                onChange={(e) => setRevertMotivo(e.target.value)}
+                className="min-h-24"
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => { setRevertingId(null); setRevertMotivo('') }}
+                disabled={isReverting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                className="bg-yellow-600 text-black hover:bg-yellow-500"
+                onClick={handleRevertToPending}
+                disabled={isReverting || !revertMotivo.trim()}
+              >
+                {isReverting ? 'Revertiendo...' : 'Confirmar Reversion'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }
