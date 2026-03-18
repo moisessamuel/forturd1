@@ -65,7 +65,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
   const [bancos, setBancos] = useState<Banco[]>([])
   const [selectedBanco, setSelectedBanco] = useState<Banco | null>(null)
   const [expandedBanco, setExpandedBanco] = useState<string | null>(null)
-  const [showCashPanel, setShowCashPanel] = useState(false)
+
 
   const allPaymentMethods = [
     { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '29147320016', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
@@ -78,6 +78,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
     { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg', monedas: ['USD'] },
     { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
+    { id: 'efectivo', nombre: 'Pago en Efectivo', shortName: 'EF', color: 'text-yellow-500', bgColor: 'bg-yellow-500', cuenta: '', tipoCuenta: '', isEfectivo: true, image: '/images/banks/efectivo.png', monedas: ['DOP'] },
   ]
 
   const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
@@ -406,45 +407,6 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </p>
         </div>
 
-        {/* Cash payment banner */}
-        <button
-          onClick={() => setShowCashPanel(!showCashPanel)}
-          className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
-        >
-          <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
-            PARA PAGO EN EFECTIVO PRESIONE AQU&Iacute;
-          </p>
-          <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
-            showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
-          }`}>
-            <Image
-              src="/images/banks/payment-header.jpeg"
-              alt="Pago en Efectivo"
-              width={400}
-              height={160}
-              className="h-auto w-72 object-cover sm:w-80"
-            />
-          </div>
-        </button>
-
-        {/* Cash info panel */}
-        {showCashPanel && (
-          <Card className="mb-4 w-full border-primary/30 bg-card/90">
-            <CardContent className="p-4">
-              <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente m&aacute;s cercano y depositar solo con tu c&eacute;dula.
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Si es dep&oacute;sito bancario v&iacute;a cajero sin importar la hora, espec&iacute;ficamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
-              </p>
-              <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-                Una vez realizado el pago, deber&aacute; subir el comprobante seleccionando el banco donde realiz&oacute; el dep&oacute;sito en los m&eacute;todos de pago de abajo.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
         <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
           {paymentMethods.map((method) => (
             <div key={method.id}>
@@ -489,6 +451,32 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                       <h3 className="mb-5 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
                         {method.nombre}
                       </h3>
+
+                      {method.isEfectivo ? (
+                        <div className="space-y-4 text-base">
+                          <div className="flex flex-col items-center gap-2">
+                            <Image src="/images/banks/efectivo.png" alt="Pago en Efectivo" width={160} height={160} className="object-contain" />
+                          </div>
+                          <div className="h-px w-full bg-border/50" />
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-sm text-muted-foreground">Monto a Depositar</span>
+                            <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
+                          </div>
+                          <div className="h-px w-full bg-border/50" />
+                          <p className="text-sm leading-relaxed text-muted-foreground">
+                            Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
+                          </p>
+                          <p className="text-sm leading-relaxed text-muted-foreground">
+                            Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
+                          </p>
+                          <div className="rounded-lg bg-primary/10 p-3">
+                            <p className="text-sm font-medium leading-relaxed text-primary">
+                              Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago.
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+
                       <div className="space-y-4 text-base">
                         <div className="flex flex-col items-center gap-1">
                           <span className="text-sm text-muted-foreground">Titular</span>
@@ -529,7 +517,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                             </div>
                           </>
                         )}
-                        {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
+                        {method.tipoCuenta && !method.cuenta && !method.isPaypal && !method.isEfectivo && (
                           <>
                             <div className="h-px w-full bg-border/50" />
                             <div className="flex flex-col items-center gap-1">
@@ -562,6 +550,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                           Ya transferi, subir comprobante
                         </button>
                       </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
