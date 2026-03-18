@@ -75,7 +75,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
     { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
     { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'] },
-    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
+    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
     { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg', monedas: ['USD'] },
     { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
   ]
@@ -90,8 +90,13 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     nombre: 'Moises Samuel Escano Bravo',
     cedula: '402-3305853-2',
   }
+  const titularRobinson = {
+    nombre: 'Robinson Yunior Guzman Veras',
+    cedula: '+1 (504) 777-1271',
+  }
   const getTitular = (bancoId: string) => {
     if (bancoId === 'bhd' || bancoId === 'popular') return titularEduardo
+    if (bancoId === 'zelle') return titularRobinson
     return titularMoises
   }
   const titular = selectedBanco ? getTitular(selectedBanco.id) : titularMoises
