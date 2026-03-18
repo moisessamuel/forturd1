@@ -75,7 +75,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
     { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
     { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'] },
-    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '', tipoCuenta: '', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
+    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
     { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg', monedas: ['USD'] },
     { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
   ]
@@ -90,8 +90,13 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     nombre: 'Moises Samuel Escano Bravo',
     cedula: '402-3305853-2',
   }
+  const titularRobinson = {
+    nombre: 'Robinson Yunior Guzman Veras',
+    cedula: '+1 (504) 777-1271',
+  }
   const getTitular = (bancoId: string) => {
     if (bancoId === 'bhd' || bancoId === 'popular') return titularEduardo
+    if (bancoId === 'zelle') return titularRobinson
     return titularMoises
   }
   const titular = selectedBanco ? getTitular(selectedBanco.id) : titularMoises
@@ -412,7 +417,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
         >
           <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
-            PARA PAGO EN EFECTIVO PRESIONE AQU&Iacute;
+            {'PARA PAGO EN EFECTIVO PRESIONE AQUI'}
           </p>
           <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
             showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
@@ -433,13 +438,13 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
             <CardContent className="p-4">
               <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente m&aacute;s cercano y depositar solo con tu c&eacute;dula.
+                Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
               </p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Si es dep&oacute;sito bancario v&iacute;a cajero sin importar la hora, espec&iacute;ficamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
+                Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
               </p>
               <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-                Una vez realizado el pago, deber&aacute; subir el comprobante seleccionando el banco donde realiz&oacute; el dep&oacute;sito en los m&eacute;todos de pago de abajo.
+                Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago de abajo.
               </p>
             </CardContent>
           </Card>
@@ -489,24 +494,29 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                       <h3 className="mb-5 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
                         {method.nombre}
                       </h3>
+
                       <div className="space-y-4 text-base">
                         <div className="flex flex-col items-center gap-1">
                           <span className="text-sm text-muted-foreground">Titular</span>
                           <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
                         </div>
-                        <div className="h-px w-full bg-border/50" />
-                        <div className="flex flex-col items-center gap-1">
-                          <span className="text-sm text-muted-foreground">Cedula</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground">{titular.cedula}</span>
-                            <button
-                              onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
-                              className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                        {method.id !== 'zelle' && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Cedula</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground">{titular.cedula}</span>
+                                <button
+                                  onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
+                                  className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                         {method.cuenta && (
                           <>
                             <div className="h-px w-full bg-border/50" />

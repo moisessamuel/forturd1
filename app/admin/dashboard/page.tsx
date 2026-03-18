@@ -45,6 +45,8 @@ import Image from 'next/image'
 
 interface AdminStats {
   ventas_totales: number
+  ventas_dop: number
+  ventas_usd: number
   agentes_activos: number
   pagos_pendientes: number
   transacciones_totales: number
@@ -241,7 +243,10 @@ export default function AdminDashboard() {
     }
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number, moneda: string = 'DOP') => {
+    if (moneda === 'USD') {
+      return `US$ ${new Intl.NumberFormat('en-US').format(amount)}`
+    }
     return `${new Intl.NumberFormat('es-DO').format(amount)} DOP`
   }
 
@@ -429,7 +434,10 @@ export default function AdminDashboard() {
                     <DollarSign className="h-8 w-8 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground">Ventas Totales</p>
-                      <p className="text-xl font-bold">{formatCurrency(stats?.ventas_totales || 0)}</p>
+                      <p className="text-lg font-bold">{formatCurrency(stats?.ventas_dop || 0, 'DOP')}</p>
+                      {(stats?.ventas_usd || 0) > 0 && (
+                        <p className="text-lg font-bold text-green-400">{formatCurrency(stats?.ventas_usd || 0, 'USD')}</p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -523,7 +531,7 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
                           <TableCell>{pg.total_tickets}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(pg.monto)}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(pg.monto, pg.moneda)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="bg-green-500/20 text-green-500">
                               {pg.banco}
@@ -614,8 +622,13 @@ export default function AdminDashboard() {
                       {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0))}
+                      {formatCurrency(compras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                     </p>
+                    {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length > 0 && (
+                      <p className="text-xs text-green-400">
+                        {formatCurrency(compras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
                 <Card className="border-border/50 bg-secondary/50">
@@ -626,8 +639,13 @@ export default function AdminDashboard() {
                         <p className="text-xs text-muted-foreground">CON REFERIDO</p>
                         <p className="text-2xl font-bold">{compras.filter((c: PurchaseGroup) => c.referido_codigo).length}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatCurrency(compras.filter((c: PurchaseGroup) => c.referido_codigo).reduce((s: number, c: PurchaseGroup) => s + c.monto, 0))}
+                          {formatCurrency(compras.filter((c: PurchaseGroup) => c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                         </p>
+                        {compras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').length > 0 && (
+                          <p className="text-xs text-green-400">
+                            {formatCurrency(compras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -637,8 +655,13 @@ export default function AdminDashboard() {
                     <p className="text-xs text-muted-foreground">COMPRA DIRECTA</p>
                     <p className="text-2xl font-bold">{compras.filter((c: PurchaseGroup) => !c.referido_codigo).length}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(compras.filter((c: PurchaseGroup) => !c.referido_codigo).reduce((s: number, c: PurchaseGroup) => s + c.monto, 0))}
+                      {formatCurrency(compras.filter((c: PurchaseGroup) => !c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                     </p>
+                    {compras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').length > 0 && (
+                      <p className="text-xs text-green-400">
+                        {formatCurrency(compras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
                 <Card className="border-border/50 bg-secondary/50">
@@ -724,7 +747,7 @@ export default function AdminDashboard() {
                           <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
                           <TableCell>{pg.player?.cedula || '-'}</TableCell>
                           <TableCell>{pg.total_tickets}</TableCell>
-                          <TableCell className="font-medium">{formatCurrency(pg.monto)}</TableCell>
+                          <TableCell className="font-medium">{formatCurrency(pg.monto, pg.moneda)}</TableCell>
                           <TableCell>
                             <Badge variant="outline" className="bg-green-500/20 text-green-500">
                               {pg.banco}
@@ -920,7 +943,7 @@ export default function AdminDashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
-                        <TableCell>{formatCurrency(pg.monto)}</TableCell>
+                        <TableCell>{formatCurrency(pg.monto, pg.moneda)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="bg-green-500/20 text-green-500">
                             {pg.banco}
