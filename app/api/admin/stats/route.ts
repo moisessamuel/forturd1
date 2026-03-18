@@ -20,12 +20,12 @@ export async function GET() {
     // Get purchase groups (new system)
     const { data: purchaseGroups } = await supabase
       .from('purchase_groups')
-      .select('monto, estado, total_tickets')
+      .select('monto, estado, total_tickets, moneda')
 
     // Get old compras (legacy)
     const { data: compras } = await supabase
       .from('compras')
-      .select('monto, estado, cantidad_boletos')
+      .select('monto, estado, cantidad_boletos, moneda')
 
     // Get active referidos count
     const { count: agentesActivos } = await supabase
@@ -40,6 +40,14 @@ export async function GET() {
     const ventasTotales =
       pgApproved.reduce((sum, pg) => sum + Number(pg.monto), 0) +
       oldApproved.reduce((sum, c) => sum + Number(c.monto), 0)
+
+    const ventasDOP =
+      pgApproved.filter((pg) => (pg.moneda || 'DOP') === 'DOP').reduce((sum, pg) => sum + Number(pg.monto), 0) +
+      oldApproved.filter((c) => (c.moneda || 'DOP') === 'DOP').reduce((sum, c) => sum + Number(c.monto), 0)
+
+    const ventasUSD =
+      pgApproved.filter((pg) => pg.moneda === 'USD').reduce((sum, pg) => sum + Number(pg.monto), 0) +
+      oldApproved.filter((c) => c.moneda === 'USD').reduce((sum, c) => sum + Number(c.monto), 0)
 
     const pagosPendientes =
       (purchaseGroups?.filter((pg) => pg.estado === 'pendiente').length || 0) +
@@ -56,6 +64,8 @@ export async function GET() {
 
     return NextResponse.json({
       ventas_totales: ventasTotales,
+      ventas_dop: ventasDOP,
+      ventas_usd: ventasUSD,
       agentes_activos: agentesActivos || 0,
       pagos_pendientes: pagosPendientes,
       transacciones_totales: transaccionesTotales,
