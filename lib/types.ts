@@ -31,6 +31,8 @@ export interface Referido {
   id: string
   nombre_agente: string
   codigo: string
+  cedula: string | null
+  telefono: string | null
   activo: boolean
   created_at: string
 }

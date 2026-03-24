@@ -77,7 +77,10 @@ export default function AdminDashboard() {
   // New referido form
   const [newReferidoNombre, setNewReferidoNombre] = useState('')
   const [newReferidoCodigo, setNewReferidoCodigo] = useState('')
+  const [newReferidoCedula, setNewReferidoCedula] = useState('')
+  const [newReferidoTelefono, setNewReferidoTelefono] = useState('')
   const [isCreatingReferido, setIsCreatingReferido] = useState(false)
+  const [referidoSearch, setReferidoSearch] = useState('')
   
   // Reset confirmation
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -255,6 +258,8 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           nombre_agente: newReferidoNombre,
           codigo: newReferidoCodigo,
+          cedula: newReferidoCedula,
+          telefono: newReferidoTelefono,
         }),
       })
 
@@ -266,6 +271,8 @@ export default function AdminDashboard() {
       toast.success('Referido creado exitosamente')
       setNewReferidoNombre('')
       setNewReferidoCodigo('')
+      setNewReferidoCedula('')
+      setNewReferidoTelefono('')
       fetchData()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al crear referido')
@@ -913,26 +920,51 @@ export default function AdminDashboard() {
               {/* Create new referido */}
               <div className="mb-4 rounded-lg border border-border/50 bg-secondary/50 p-4">
                 <p className="mb-3 text-sm font-medium">CREAR NUEVO ENLACE</p>
-                <div className="flex gap-2">
+                <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <Input
                     placeholder="Nombre del Agente"
                     value={newReferidoNombre}
                     onChange={(e) => setNewReferidoNombre(e.target.value)}
-                    className="flex-1 bg-input"
+                    className="bg-input"
                   />
                   <Input
                     placeholder="Codigo (ej. JUAN10)"
                     value={newReferidoCodigo}
                     onChange={(e) => setNewReferidoCodigo(e.target.value.toUpperCase())}
-                    className="w-40 bg-input"
+                    className="bg-input"
                   />
-                  <Button
-                    onClick={handleCreateReferido}
-                    disabled={isCreatingReferido}
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Input
+                    placeholder="Cedula o Pasaporte"
+                    value={newReferidoCedula}
+                    onChange={(e) => setNewReferidoCedula(e.target.value)}
+                    className="bg-input"
+                  />
+                  <Input
+                    placeholder="Telefono"
+                    value={newReferidoTelefono}
+                    onChange={(e) => setNewReferidoTelefono(e.target.value)}
+                    className="bg-input"
+                  />
+                </div>
+                <Button
+                  onClick={handleCreateReferido}
+                  disabled={isCreatingReferido}
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700 sm:w-auto"
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Crear Referido
+                </Button>
+              </div>
+
+              {/* Search referidos */}
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre o codigo..."
+                    value={referidoSearch}
+                    onChange={(e) => setReferidoSearch(e.target.value)}
+                    className="bg-input pl-9"
+                  />
                 </div>
               </div>
 
@@ -943,6 +975,8 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>Agente</TableHead>
                       <TableHead>{'Codigo'}</TableHead>
+                      <TableHead>{'Cedula / Pasaporte'}</TableHead>
+                      <TableHead>{'Telefono'}</TableHead>
                       <TableHead>Ventas Aprobadas</TableHead>
                       <TableHead>Ventas (DOP)</TableHead>
                       <TableHead>{'Comision (10%)'}</TableHead>
@@ -950,19 +984,32 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {referidos.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          No hay referidos registrados
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      referidos.map((referido: Referido & { ventas_aprobadas?: number; comision?: number }) => (
+                    {(() => {
+                      const filtered = referidos.filter((r: Referido) => {
+                        if (!referidoSearch.trim()) return true
+                        const term = referidoSearch.toLowerCase()
+                        return (
+                          r.nombre_agente.toLowerCase().includes(term) ||
+                          r.codigo.toLowerCase().includes(term)
+                        )
+                      })
+                      if (filtered.length === 0) {
+                        return (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground">
+                              {referidoSearch.trim() ? 'No se encontraron referidos' : 'No hay referidos registrados'}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      }
+                      return filtered.map((referido: Referido & { ventas_aprobadas?: number; comision?: number }) => (
                         <TableRow key={referido.id}>
                           <TableCell>{referido.nombre_agente}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{referido.codigo}</Badge>
                           </TableCell>
+                          <TableCell className="text-sm">{referido.cedula || '-'}</TableCell>
+                          <TableCell className="text-sm">{referido.telefono || '-'}</TableCell>
                           <TableCell>{referido.ventas_aprobadas || 0}</TableCell>
                           <TableCell>{formatCurrency(referido.ventas_aprobadas || 0)}</TableCell>
                           <TableCell className="text-green-500">
@@ -990,7 +1037,7 @@ export default function AdminDashboard() {
                           </TableCell>
                         </TableRow>
                       ))
-                    )}
+                    })()}
                   </TableBody>
                 </Table>
               </div>
