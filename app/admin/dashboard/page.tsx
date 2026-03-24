@@ -57,6 +57,7 @@ interface AdminStats {
   total_boletos: number
 }
 
+// v1.2 - Added referido cedula, telefono, search
 export default function AdminDashboard() {
   const router = useRouter()
   const [username, setUsername] = useState('')
@@ -70,7 +71,6 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [estadoFilter, setEstadoFilter] = useState<'todos' | 'pendiente' | 'aprobado' | 'rechazado'>('todos')
   
-  
   // Config form
   const [totalBoletos, setTotalBoletos] = useState('')
   const [isSavingConfig, setIsSavingConfig] = useState(false)
@@ -78,17 +78,20 @@ export default function AdminDashboard() {
   // New referido form
   const [newReferidoNombre, setNewReferidoNombre] = useState('')
   const [newReferidoCodigo, setNewReferidoCodigo] = useState('')
+  const [newReferidoCedula, setNewReferidoCedula] = useState('')
+  const [newReferidoTelefono, setNewReferidoTelefono] = useState('')
   const [isCreatingReferido, setIsCreatingReferido] = useState(false)
+  const [referidoSearch, setReferidoSearch] = useState('')
   
   // Reset confirmation
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
-  
-  // Revert state
+
+  // Revert to pending
   const [revertingId, setRevertingId] = useState<string | null>(null)
   const [revertMotivo, setRevertMotivo] = useState('')
   const [isReverting, setIsReverting] = useState(false)
-
+  
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
     config: true,
@@ -132,7 +135,6 @@ export default function AdminDashboard() {
   }, [estadoFilter, searchTerm])
 
   useEffect(() => {
-    // Check session
     fetch('/api/admin/session')
       .then(async (res) => {
         if (!res.ok) {
@@ -151,7 +153,7 @@ export default function AdminDashboard() {
       await fetch('/api/admin/logout', { method: 'POST' })
       router.push('/admin')
     } catch {
-      toast.error('Error al cerrar sesión')
+      toast.error('Error al cerrar sesion')
     }
   }
 
@@ -191,10 +193,10 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error saving config')
 
-      toast.success('Configuración guardada')
+      toast.success('Configuracion guardada')
       fetchData()
     } catch {
-      toast.error('Error al guardar configuración')
+      toast.error('Error al guardar configuracion')
     } finally {
       setIsSavingConfig(false)
     }
@@ -219,7 +221,7 @@ export default function AdminDashboard() {
 
   const handleRevertToPending = async () => {
     if (!revertingId || !revertMotivo.trim()) {
-      toast.error('Debe ingresar un motivo de reversion')
+      toast.error('Debe ingresar un motivo para la reversion')
       return
     }
     setIsReverting(true)
@@ -230,7 +232,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ estado: 'pendiente', motivo: revertMotivo.trim() }),
       })
 
-      if (!response.ok) throw new Error('Error reverting compra')
+      if (!response.ok) throw new Error('Error al revertir')
 
       toast.success('Compra revertida a pendiente')
       setRevertingId(null)
@@ -257,6 +259,8 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           nombre_agente: newReferidoNombre,
           codigo: newReferidoCodigo,
+          cedula: newReferidoCedula,
+          telefono: newReferidoTelefono,
         }),
       })
 
@@ -268,6 +272,8 @@ export default function AdminDashboard() {
       toast.success('Referido creado exitosamente')
       setNewReferidoNombre('')
       setNewReferidoCodigo('')
+      setNewReferidoCedula('')
+      setNewReferidoTelefono('')
       fetchData()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al crear referido')
@@ -318,7 +324,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Sesión: <span className="text-foreground">{username}</span>
+              {'Sesion: '}<span className="text-foreground">{username}</span>
             </span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
@@ -331,7 +337,7 @@ export default function AdminDashboard() {
       <div className="p-4 lg:p-6">
         {/* Title and actions */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-primary">Panel de Administración</h1>
+          <h1 className="text-2xl font-bold text-primary">{'Panel de Administracion'}</h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="mr-2 h-4 w-4" />
@@ -359,10 +365,10 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-red-500">ADVERTENCIA</h3>
               </div>
               <p className="mb-2 text-base font-medium text-foreground">
-                Esta acción es irreversible.
+                {'Esta accion es irreversible.'}
               </p>
               <p className="mb-6 text-sm text-muted-foreground">
-                {'Al restablecer el sistema, se eliminarán TODAS las compras, boletos asignados, comprobantes de pago y datos de referidos. Todo volverá a cero como si fuera un sistema nuevo. ¿Está seguro de continuar?'}
+                {'Al restablecer el sistema, se eliminaran TODAS las compras, boletos asignados, comprobantes de pago y datos de referidos. Todo volvera a cero como si fuera un sistema nuevo. Esta seguro de continuar?'}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -378,7 +384,56 @@ export default function AdminDashboard() {
                   onClick={handleReset}
                   disabled={isResetting}
                 >
-                  {isResetting ? 'Restableciendo...' : 'Sí, confirmo restablecer'}
+                  {isResetting ? 'Restableciendo...' : 'Si, confirmo restablecer'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Revert Confirmation Modal */}
+        {revertingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-yellow-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/10">
+                  <RotateCcw className="h-6 w-6 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold text-yellow-500">Revertir a Pendiente</h3>
+              </div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                {'Esta accion revertira el estado de esta compra a pendiente para ser verificada nuevamente. Los boletos asociados tambien volveran a estado pendiente.'}
+              </p>
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-medium text-foreground">
+                  {'Motivo de reversion *'}
+                </label>
+                <Textarea
+                  placeholder="Escriba el motivo por el cual revierte esta compra..."
+                  value={revertMotivo}
+                  onChange={(e) => setRevertMotivo(e.target.value)}
+                  className="bg-input"
+                  rows={3}
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setRevertingId(null)
+                    setRevertMotivo('')
+                  }}
+                  disabled={isReverting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-yellow-600 text-white hover:bg-yellow-700"
+                  onClick={handleRevertToPending}
+                  disabled={isReverting || !revertMotivo.trim()}
+                >
+                  {isReverting ? 'Revirtiendo...' : 'Confirmar Reversion'}
                 </Button>
               </div>
             </div>
@@ -394,7 +449,7 @@ export default function AdminDashboard() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-primary">
                 <Settings className="h-5 w-5" />
-                Configuración de Boletos
+                {'Configuracion de Boletos'}
               </span>
               {sectionsOpen.config ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
@@ -408,7 +463,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="font-medium">Total de boletos</p>
                       <p className="text-xs text-muted-foreground">
-                        Define el rango máximo de boletos (1 hasta N)
+                        {'Define el rango maximo de boletos (1 hasta N)'}
                       </p>
                     </div>
                   </div>
@@ -428,7 +483,7 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    Los números de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.
+                    {'Los numeros de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.'}
                   </p>
                 </div>
 
@@ -515,7 +570,7 @@ export default function AdminDashboard() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-primary">
                 <Clock className="h-5 w-5" />
-                Pagos Pendientes de Validación
+                {'Pagos Pendientes de Validacion'}
               </span>
               {sectionsOpen.pagos ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
@@ -526,9 +581,9 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Boleto #</TableHead>
+                      <TableHead>{'Boleto #'}</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>Teléfono</TableHead>
+                      <TableHead>{'Telefono'}</TableHead>
                       <TableHead>Boletos</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
@@ -713,7 +768,7 @@ export default function AdminDashboard() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar nombre, teléfono, boleto, cédula..."
+                    placeholder="Buscar nombre, telefono, boleto, cedula..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="bg-input pl-9"
@@ -833,12 +888,12 @@ export default function AdminDashboard() {
                           <TableCell>
                             {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
                               <Button
-                                variant="outline"
                                 size="sm"
-                                className="border-yellow-600 text-yellow-500 hover:bg-yellow-600/20"
-                                onClick={() => { setRevertingId(pg.id); setRevertMotivo('') }}
+                                className="bg-yellow-600 text-white hover:bg-yellow-700"
+                                onClick={() => setRevertingId(pg.id)}
                               >
-                                <RotateCcw className="mr-1 h-3 w-3" /> Revertir
+                                <RotateCcw className="mr-1 h-4 w-4" />
+                                Revertir
                               </Button>
                             )}
                           </TableCell>
@@ -860,32 +915,57 @@ export default function AdminDashboard() {
           {/* Referidos Section */}
           <Card className="border-border/50 bg-card">
             <CardHeader>
-              <CardTitle className="text-lg">Gestión de Referidos</CardTitle>
+              <CardTitle className="text-lg">{'Gestion de Referidos'}</CardTitle>
             </CardHeader>
             <CardContent>
               {/* Create new referido */}
               <div className="mb-4 rounded-lg border border-border/50 bg-secondary/50 p-4">
-                <p className="mb-3 text-sm font-medium">CREAR NUEVO ENLACE</p>
-                <div className="flex gap-2">
+                <p className="mb-3 text-sm font-medium">CREAR NUEVO REFERIDO</p>
+                <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <Input
                     placeholder="Nombre del Agente"
                     value={newReferidoNombre}
                     onChange={(e) => setNewReferidoNombre(e.target.value)}
-                    className="flex-1 bg-input"
+                    className="bg-input"
                   />
                   <Input
-                    placeholder="Código (ej. JUAN10)"
+                    placeholder="Codigo (ej. JUAN10)"
                     value={newReferidoCodigo}
                     onChange={(e) => setNewReferidoCodigo(e.target.value.toUpperCase())}
-                    className="w-40 bg-input"
+                    className="bg-input"
                   />
-                  <Button
-                    onClick={handleCreateReferido}
-                    disabled={isCreatingReferido}
-                    className="bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  <Input
+                    placeholder="Cedula o Pasaporte"
+                    value={newReferidoCedula}
+                    onChange={(e) => setNewReferidoCedula(e.target.value)}
+                    className="bg-input"
+                  />
+                  <Input
+                    placeholder="Telefono"
+                    value={newReferidoTelefono}
+                    onChange={(e) => setNewReferidoTelefono(e.target.value)}
+                    className="bg-input"
+                  />
+                </div>
+                <Button
+                  onClick={handleCreateReferido}
+                  disabled={isCreatingReferido}
+                  className="w-full bg-blue-600 text-white hover:bg-blue-700 sm:w-auto"
+                >
+                  <Plus className="mr-1 h-4 w-4" /> Crear Referido
+                </Button>
+              </div>
+
+              {/* Search referidos */}
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre o codigo..."
+                    value={referidoSearch}
+                    onChange={(e) => setReferidoSearch(e.target.value)}
+                    className="bg-input pl-9"
+                  />
                 </div>
               </div>
 
@@ -895,27 +975,42 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Agente</TableHead>
-                      <TableHead>Código</TableHead>
+                      <TableHead>{'Codigo'}</TableHead>
+                      <TableHead>{'Cedula / Pasaporte'}</TableHead>
+                      <TableHead>{'Telefono'}</TableHead>
                       <TableHead>Ventas Aprobadas</TableHead>
                       <TableHead>Ventas (DOP)</TableHead>
-                      <TableHead>Comisión (10%)</TableHead>
+                      <TableHead>{'Comision (10%)'}</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {referidos.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
-                          No hay referidos registrados
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      referidos.map((referido: Referido & { ventas_aprobadas?: number; comision?: number }) => (
+                    {(() => {
+                      const filtered = referidos.filter((r: Referido) => {
+                        if (!referidoSearch.trim()) return true
+                        const term = referidoSearch.toLowerCase()
+                        return (
+                          r.nombre_agente.toLowerCase().includes(term) ||
+                          r.codigo.toLowerCase().includes(term)
+                        )
+                      })
+                      if (filtered.length === 0) {
+                        return (
+                          <TableRow>
+                            <TableCell colSpan={8} className="text-center text-muted-foreground">
+                              {referidoSearch.trim() ? 'No se encontraron referidos' : 'No hay referidos registrados'}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      }
+                      return filtered.map((referido: Referido & { ventas_aprobadas?: number; comision?: number }) => (
                         <TableRow key={referido.id}>
                           <TableCell>{referido.nombre_agente}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{referido.codigo}</Badge>
                           </TableCell>
+                          <TableCell className="text-sm">{referido.cedula || '-'}</TableCell>
+                          <TableCell className="text-sm">{referido.telefono || '-'}</TableCell>
                           <TableCell>{referido.ventas_aprobadas || 0}</TableCell>
                           <TableCell>{formatCurrency(referido.ventas_aprobadas || 0)}</TableCell>
                           <TableCell className="text-green-500">
@@ -943,7 +1038,7 @@ export default function AdminDashboard() {
                           </TableCell>
                         </TableRow>
                       ))
-                    )}
+                    })()}
                   </TableBody>
                 </Table>
               </div>
@@ -960,9 +1055,9 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Boleto #</TableHead>
+                      <TableHead>{'Boleto #'}</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>Teléfono</TableHead>
+                      <TableHead>{'Telefono'}</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Estado</TableHead>
@@ -1012,12 +1107,12 @@ export default function AdminDashboard() {
                         <TableCell>
                           {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
                             <Button
-                              variant="outline"
                               size="sm"
-                              className="border-yellow-600 text-yellow-500 hover:bg-yellow-600/20"
-                              onClick={() => { setRevertingId(pg.id); setRevertMotivo('') }}
+                              variant="ghost"
+                              className="text-yellow-500 hover:bg-yellow-500/10 hover:text-yellow-400"
+                              onClick={() => setRevertingId(pg.id)}
                             >
-                              <RotateCcw className="mr-1 h-3 w-3" /> Revertir
+                              <RotateCcw className="h-4 w-4" />
                             </Button>
                           )}
                         </TableCell>
@@ -1030,48 +1125,6 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
-
-      {/* Modal de Reversion */}
-      <Dialog open={!!revertingId} onOpenChange={(open) => { if (!open) { setRevertingId(null); setRevertMotivo('') } }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-yellow-500">
-              <RotateCcw className="h-5 w-5" />
-              Revertir a Pendiente
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Esta accion revertira el estado de esta compra a pendiente para ser verificada nuevamente. Los boletos asociados tambien se revertiran.
-            </p>
-            <div>
-              <label className="mb-2 block text-sm font-medium">Motivo de reversion *</label>
-              <Textarea
-                placeholder="Ingrese el motivo por el cual revierte esta compra..."
-                value={revertMotivo}
-                onChange={(e) => setRevertMotivo(e.target.value)}
-                className="min-h-24"
-              />
-            </div>
-            <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => { setRevertingId(null); setRevertMotivo('') }}
-                disabled={isReverting}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="bg-yellow-600 text-black hover:bg-yellow-500"
-                onClick={handleRevertToPending}
-                disabled={isReverting || !revertMotivo.trim()}
-              >
-                {isReverting ? 'Revertiendo...' : 'Confirmar Reversion'}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </main>
   )
 }

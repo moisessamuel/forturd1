@@ -129,6 +129,8 @@ export async function POST(request: NextRequest) {
       .insert({
         nombre_agente: body.nombre_agente,
         codigo: body.codigo.toUpperCase(),
+        cedula: body.cedula || null,
+        telefono: body.telefono || null,
         activo: true,
       })
       .select()
