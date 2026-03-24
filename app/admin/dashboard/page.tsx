@@ -919,7 +919,7 @@ export default function AdminDashboard() {
             <CardContent>
               {/* Create new referido */}
               <div className="mb-4 rounded-lg border border-border/50 bg-secondary/50 p-4">
-                <p className="mb-3 text-sm font-medium">CREAR NUEVO ENLACE</p>
+                <p className="mb-3 text-sm font-medium">CREAR NUEVO REFERIDO</p>
                 <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <Input
                     placeholder="Nombre del Agente"
