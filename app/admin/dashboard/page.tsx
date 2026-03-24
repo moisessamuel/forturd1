@@ -57,6 +57,7 @@ interface AdminStats {
   total_boletos: number
 }
 
+// v1.2 - Added referido cedula, telefono, search
 export default function AdminDashboard() {
   const router = useRouter()
   const [username, setUsername] = useState('')
