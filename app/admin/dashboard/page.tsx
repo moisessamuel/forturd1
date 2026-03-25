@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   
   // Config form
   const [totalBoletos, setTotalBoletos] = useState('')
+  const [manualProgress, setManualProgress] = useState(0)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
   
   // New referido form
@@ -124,6 +125,7 @@ export default function AdminDashboard() {
       setStats(statsData)
       setConfig(configData)
       setTotalBoletos(configData.total_boletos.toString())
+      setManualProgress(configData.manual_progress || 0)
       setCompras(comprasData)
       setReferidos(referidosData)
     } catch (error) {
@@ -188,6 +190,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           ...config,
           total_boletos: parseInt(totalBoletos),
+          manual_progress: manualProgress,
         }),
       })
 
@@ -485,6 +488,35 @@ export default function AdminDashboard() {
                   <p className="mt-2 text-xs text-muted-foreground">
                     {'Los numeros de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.'}
                   </p>
+                </div>
+
+                {/* Manual Progress Slider */}
+                <div className="mt-6 rounded-lg border border-primary/30 bg-primary/5 p-4">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-primary">Control de Progreso Manual</p>
+                      <p className="text-xs text-muted-foreground">
+                        Ajusta el porcentaje de progreso que se muestra en la pagina principal
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-green-500">{manualProgress.toFixed(2)}%</p>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={manualProgress}
+                    onChange={(e) => setManualProgress(parseFloat(e.target.value))}
+                    className="h-3 w-full cursor-pointer appearance-none rounded-lg bg-secondary accent-primary"
+                  />
+                  <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
