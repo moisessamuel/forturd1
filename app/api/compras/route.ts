@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateTicketNumbers } from '@/lib/ticket'
 import { getSession } from '@/lib/auth'
 import { randomUUID } from 'crypto'
+import { sendTicketPendingEmail } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   try {
@@ -209,6 +210,33 @@ export async function POST(request: NextRequest) {
       .select('*, player:players(*), tickets(*), qr_code:qr_codes(*)')
       .eq('id', purchaseGroup.id)
       .single()
+
+    // Send pending email notification if player has email
+    if (body.email) {
+      try {
+        const purchaseDate = new Date().toLocaleDateString('es-DO', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+
+        await sendTicketPendingEmail({
+          playerName: body.nombre,
+          playerEmail: body.email,
+          ticketNumbers,
+          totalAmount: monto,
+          moneda: body.moneda || 'DOP',
+          qrCodeUrl: '',
+          purchaseDate,
+        })
+        console.log(`[v0] Pending email sent to ${body.email}`)
+      } catch (emailError) {
+        console.error('[v0] Error sending pending email:', emailError)
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json(fullPG)
   } catch (error) {
