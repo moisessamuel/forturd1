@@ -96,8 +96,12 @@ export async function PATCH(
     // Send email notification when approved
     if (newEstado === 'aprobado' && group.player?.email) {
       try {
-        const ticketNumbers = group.tickets?.map((t: { ticket_number: string }) => t.ticket_number) || []
-        const qrCodeUrl = group.qr_code?.qr_image_url || ''
+        const ticketNumbers = group.tickets?.map((t: { numero_boleto: string }) => t.numero_boleto) || []
+        // Generate QR code image URL using Google Charts API
+        const qrValue = group.qr_code?.qr_value || ''
+        const qrCodeUrl = qrValue 
+          ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrValue)}`
+          : ''
         const purchaseDate = new Date(group.created_at).toLocaleDateString('es-DO', {
           year: 'numeric',
           month: 'long',
