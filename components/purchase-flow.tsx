@@ -76,7 +76,6 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
     { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'] },
     { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
-    { id: 'ath', nombre: 'ATH Movil', shortName: 'ATH', color: 'text-cyan-600', bgColor: 'bg-cyan-600', cuenta: '', tipoCuenta: '', image: '/images/banks/ath.jpeg', monedas: ['USD'] },
     { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
   ]
 
@@ -411,29 +410,31 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </p>
         </div>
 
-        {/* Cash payment banner */}
-        <button
-          onClick={() => setShowCashPanel(!showCashPanel)}
-          className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
-        >
-          <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
-            {'PARA PAGO EN EFECTIVO PRESIONE AQUI'}
-          </p>
-          <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
-            showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
-          }`}>
-            <Image
-              src="/images/banks/payment-header.jpeg"
-              alt="Pago en Efectivo"
-              width={400}
-              height={160}
-              className="h-auto w-72 object-cover sm:w-80"
-            />
-          </div>
-        </button>
+        {/* Cash payment banner - only show for DOP */}
+        {moneda === 'DOP' && (
+          <button
+            onClick={() => setShowCashPanel(!showCashPanel)}
+            className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
+          >
+            <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
+              {'PARA PAGO EN EFECTIVO PRESIONE AQUI'}
+            </p>
+            <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
+              showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
+            }`}>
+              <Image
+                src="/images/banks/payment-header.jpeg"
+                alt="Pago en Efectivo"
+                width={400}
+                height={160}
+                className="h-auto w-72 object-cover sm:w-80"
+              />
+            </div>
+          </button>
+        )}
 
-        {/* Cash info panel */}
-        {showCashPanel && (
+        {/* Cash info panel - only show for DOP */}
+        {moneda === 'DOP' && showCashPanel && (
           <Card className="mb-4 w-full border-primary/30 bg-card/90">
             <CardContent className="p-4">
               <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
