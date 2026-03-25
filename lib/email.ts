@@ -102,19 +102,6 @@ export async function sendTicketApprovalEmail(data: TicketEmailData) {
             </td>
           </tr>
           
-          <!-- QR Code -->
-          ${qrCodeUrl ? `
-          <tr>
-            <td style="padding: 0 30px 30px; text-align: center;">
-              <div style="background-color: #1a1a1a; border-radius: 12px; padding: 24px; border: 1px solid #333;">
-                <h3 style="margin: 0 0 20px; color: #DAA520; font-size: 18px;">Codigo QR de Validacion</h3>
-                <img src="${qrCodeUrl}" alt="QR Code" style="width: 200px; height: 200px; border-radius: 8px; background: #fff; padding: 10px;" />
-                <p style="margin: 15px 0 0; color: #888; font-size: 12px;">Presenta este codigo para validar tu compra</p>
-              </div>
-            </td>
-          </tr>
-          ` : ''}
-          
           <!-- Footer -->
           <tr>
             <td style="background-color: #0a0a0a; padding: 30px; text-align: center; border-top: 1px solid #222;">
