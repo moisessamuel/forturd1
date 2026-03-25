@@ -59,6 +59,7 @@ export async function PUT(request: NextRequest) {
         precio_boleto_dop: body.precio_boleto_dop,
         precio_boleto_usd: body.precio_boleto_usd,
         comision_referido: body.comision_referido,
+        manual_progress: body.manual_progress ?? 0,
         updated_at: new Date().toISOString(),
       })
       .eq('id', currentConfig.id)

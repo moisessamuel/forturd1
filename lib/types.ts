@@ -4,6 +4,7 @@ export interface Config {
   precio_boleto_dop: number
   precio_boleto_usd: number
   comision_referido: number
+  manual_progress: number
   created_at: string
   updated_at: string
 }
