@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth'
+import { resend, FROM_EMAIL } from '@/lib/resend'
+import { TicketApprovedEmail } from '@/lib/emails/ticket-approved'
 
 export async function GET(
   request: NextRequest,
@@ -91,6 +93,39 @@ export async function PATCH(
       .from('tickets')
       .update({ status: ticketStatus })
       .eq('purchase_group_id', id)
+
+    // Send email notification when approved
+    if (newEstado === 'aprobado' && group.player?.email) {
+      try {
+        const ticketNumbers = group.tickets?.map((t: { ticket_number: string }) => t.ticket_number) || []
+        const qrCodeUrl = group.qr_code?.qr_image_url || ''
+        const purchaseDate = new Date(group.created_at).toLocaleDateString('es-DO', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+
+        await resend.emails.send({
+          from: FROM_EMAIL,
+          to: group.player.email,
+          subject: 'Tu compra de boletos FortuRD ha sido aprobada',
+          react: TicketApprovedEmail({
+            playerName: group.player.nombre,
+            ticketNumbers,
+            totalAmount: group.monto,
+            moneda: group.moneda || 'DOP',
+            qrCodeUrl,
+            purchaseDate,
+          }),
+        })
+        console.log(`Email sent to ${group.player.email} for purchase ${id}`)
+      } catch (emailError) {
+        console.error('Error sending approval email:', emailError)
+        // Don't fail the request if email fails
+      }
+    }
 
     return NextResponse.json(group)
   } catch (error) {
