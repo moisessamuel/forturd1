@@ -141,9 +141,9 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
             </p>
             <p className="mb-1 text-sm font-semibold text-primary">Fechas de entrega:</p>
             <ul className="space-y-1 text-sm text-foreground/80">
-              <li>1er premio: del 15/06/2026 al 15/07/2026</li>
-              <li>2do premio: del 15/07/2026 al 15/08/2026</li>
-              <li>3er premio: del 15/08/2026 al 15/09/2026</li>
+              <li>1er premio: entre 15/06/2026 al 15/07/2026</li>
+              <li>2do premio: entre 15/07/2026 al 15/08/2026</li>
+              <li>3er premio: entre 15/08/2026 al 15/09/2026</li>
             </ul>
           </div>
 
