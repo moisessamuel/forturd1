@@ -93,9 +93,14 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     nombre: 'Robinson Yunior Guzman Veras',
     cedula: '+1 (504) 777-1271',
   }
+  const titularCashApp = {
+    nombre: 'Rosio Guzman',
+    cedula: '',
+  }
   const getTitular = (bancoId: string) => {
     if (bancoId === 'bhd' || bancoId === 'popular') return titularEduardo
     if (bancoId === 'zelle') return titularRobinson
+    if (bancoId === 'cashapp') return titularCashApp
     return titularMoises
   }
   const titular = selectedBanco ? getTitular(selectedBanco.id) : titularMoises
@@ -501,7 +506,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                           <span className="text-sm text-muted-foreground">Titular</span>
                           <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
                         </div>
-                        {method.id !== 'zelle' && (
+                        {method.id !== 'zelle' && method.id !== 'cashapp' && (
                           <>
                             <div className="h-px w-full bg-border/50" />
                             <div className="flex flex-col items-center gap-1">
