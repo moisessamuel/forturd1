@@ -523,6 +523,23 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                             </div>
                           </>
                         )}
+                        {method.id === 'cashapp' && (
+                          <>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">User</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold text-primary">$FortunaRD</span>
+                                <button
+                                  onClick={() => copyToClipboard('$FortunaRD', 'User')}
+                                  className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
                         {method.cuenta && (
                           <>
                             <div className="h-px w-full bg-border/50" />
