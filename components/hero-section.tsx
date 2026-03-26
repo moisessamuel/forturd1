@@ -137,7 +137,7 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
           <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4">
             <p className="mb-2 font-semibold text-primary">Importante sobre los premios:</p>
             <p className="mb-3 text-sm text-foreground/80">
-              Los dos vehiculos seran otorgados como premios independientes. Cada premio tendra su propio ganador. Tercer premio sorpresa, el cual sera anunciado oportunamente.
+              Los dos vehiculos seran otorgados como premios independientes. Cada premio tendra su propio ganador. Tercer premio sorpresa, el cual sera anunciado proximamente.
             </p>
             <p className="mb-1 text-sm font-semibold text-primary">Fechas de entrega:</p>
             <ul className="space-y-1 text-sm text-foreground/80">
