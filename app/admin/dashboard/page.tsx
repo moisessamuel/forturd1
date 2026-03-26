@@ -19,7 +19,8 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -92,6 +93,10 @@ export default function AdminDashboard() {
   const [revertingId, setRevertingId] = useState<string | null>(null)
   const [revertMotivo, setRevertMotivo] = useState('')
   const [isReverting, setIsReverting] = useState(false)
+  
+  // Delete purchase
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -245,6 +250,27 @@ export default function AdminDashboard() {
       toast.error('Error al revertir la compra')
     } finally {
       setIsReverting(false)
+    }
+  }
+
+  const handleDeletePurchase = async () => {
+    if (!deletingId) return
+    
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/compras/${deletingId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Error al eliminar')
+
+      toast.success('Compra eliminada completamente. Los numeros de boletos estan disponibles nuevamente.')
+      setDeletingId(null)
+      fetchData()
+    } catch {
+      toast.error('Error al eliminar la compra')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -437,6 +463,49 @@ export default function AdminDashboard() {
                   disabled={isReverting || !revertMotivo.trim()}
                 >
                   {isReverting ? 'Revirtiendo...' : 'Confirmar Reversion'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deletingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-red-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                  <Trash2 className="h-6 w-6 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-red-500">Eliminar Compra</h3>
+              </div>
+              <p className="mb-2 text-sm text-muted-foreground">
+                {'Esta accion eliminara permanentemente:'}
+              </p>
+              <ul className="mb-4 ml-4 list-disc text-sm text-muted-foreground">
+                <li>La compra y todos sus datos</li>
+                <li>Los boletos asociados (quedaran disponibles para otros)</li>
+                <li>El QR de validacion</li>
+                <li>Los datos del jugador (si no tiene otras compras)</li>
+              </ul>
+              <p className="mb-4 text-sm font-semibold text-red-400">
+                {'Esta accion no se puede deshacer.'}
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setDeletingId(null)}
+                  disabled={isDeleting}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                  onClick={handleDeletePurchase}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Eliminando...' : 'Eliminar Permanentemente'}
                 </Button>
               </div>
             </div>
@@ -918,16 +987,26 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                            <div className="flex gap-2">
+                              {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                                <Button
+                                  size="sm"
+                                  className="bg-yellow-600 text-white hover:bg-yellow-700"
+                                  onClick={() => setRevertingId(pg.id)}
+                                >
+                                  <RotateCcw className="mr-1 h-4 w-4" />
+                                  Revertir
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
-                                className="bg-yellow-600 text-white hover:bg-yellow-700"
-                                onClick={() => setRevertingId(pg.id)}
+                                variant="outline"
+                                className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
+                                onClick={() => setDeletingId(pg.id)}
                               >
-                                <RotateCcw className="mr-1 h-4 w-4" />
-                                Revertir
+                                <Trash2 className="h-4 w-4" />
                               </Button>
-                            )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))

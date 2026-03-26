@@ -132,3 +132,92 @@ export async function PATCH(
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const supabase = await createClient()
+
+    // Get the purchase group with related data
+    const { data: group, error: fetchError } = await supabase
+      .from('purchase_groups')
+      .select('*, player:players(*), tickets(*), qr_code:qr_codes(*)')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !group) {
+      return NextResponse.json({ error: 'Compra no encontrada' }, { status: 404 })
+    }
+
+    const playerId = group.player_id
+
+    // Delete tickets first (they reference purchase_group)
+    const { error: ticketsError } = await supabase
+      .from('tickets')
+      .delete()
+      .eq('purchase_group_id', id)
+
+    if (ticketsError) {
+      console.error('Error deleting tickets:', ticketsError)
+      return NextResponse.json({ error: 'Error al eliminar boletos' }, { status: 500 })
+    }
+
+    // Delete QR code if exists
+    if (group.qr_code) {
+      await supabase
+        .from('qr_codes')
+        .delete()
+        .eq('purchase_group_id', id)
+    }
+
+    // Delete audit logs if any
+    await supabase
+      .from('audit_log')
+      .delete()
+      .eq('purchase_group_id', id)
+
+    // Delete the purchase group
+    const { error: pgError } = await supabase
+      .from('purchase_groups')
+      .delete()
+      .eq('id', id)
+
+    if (pgError) {
+      console.error('Error deleting purchase group:', pgError)
+      return NextResponse.json({ error: 'Error al eliminar compra' }, { status: 500 })
+    }
+
+    // Check if player has other purchase groups
+    const { data: otherPurchases } = await supabase
+      .from('purchase_groups')
+      .select('id')
+      .eq('player_id', playerId)
+      .limit(1)
+
+    // If no other purchases, delete the player too
+    if (!otherPurchases || otherPurchases.length === 0) {
+      const { error: playerError } = await supabase
+        .from('players')
+        .delete()
+        .eq('id', playerId)
+
+      if (playerError) {
+        console.error('Error deleting player:', playerError)
+        // Don't fail the whole operation if player delete fails
+      }
+    }
+
+    return NextResponse.json({ success: true, message: 'Compra eliminada completamente' })
+  } catch (error) {
+    console.error('Compra delete error:', error)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+  }
+}
