@@ -130,9 +130,22 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
             <MapPin className="h-4 w-4" />
             <span>Santo Domingo, Distrito Nacional</span>
           </div>
-          <p className="mb-6 text-foreground/80">
+          <p className="mb-4 text-foreground/80">
 {'La BMW X6 es una SUV deportiva tipo coupé, conocida por su potencia y tecnología avanzada. La BMW X7 es una SUV ejecutiva de gran tamaño, diseñada para máximo confort.'}
           </p>
+          
+          <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <p className="mb-2 font-semibold text-primary">Importante sobre los premios:</p>
+            <p className="mb-3 text-sm text-foreground/80">
+              Los dos vehiculos seran otorgados como premios independientes. Cada premio tendra su propio ganador. Tercer premio sorpresa, el cual sera anunciado oportunamente.
+            </p>
+            <p className="mb-1 text-sm font-semibold text-primary">Fechas de entrega:</p>
+            <ul className="space-y-1 text-sm text-foreground/80">
+              <li>1er premio: del 15/06/2026 al 15/07/2026</li>
+              <li>2do premio: del 15/07/2026 al 15/08/2026</li>
+              <li>3er premio: del 15/08/2026 al 15/09/2026</li>
+            </ul>
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Card className="border-border/50 bg-card/50">
