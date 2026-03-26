@@ -137,14 +137,18 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
           <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 p-4">
             <p className="mb-2 font-semibold text-primary">Importante sobre los premios:</p>
             <p className="mb-3 text-sm text-foreground/80">
-              Los dos vehiculos seran otorgados como premios independientes. Cada premio tendra su propio ganador. Tercer premio sorpresa, el cual sera anunciado proximamente.
+              Los dos vehículos serán otorgados como premios independientes. Cada premio tendrá su propio ganador. Tercer premio sorpresa, el cual será anunciado próximamente.
             </p>
             <p className="mb-1 text-sm font-semibold text-primary">Fechas de entrega:</p>
-            <ul className="space-y-1 text-sm text-foreground/80">
+            <ul className="mb-3 space-y-1 text-sm text-foreground/80">
               <li>1er premio: entre 15/06/2026 al 15/07/2026</li>
               <li>2do premio: entre 15/07/2026 al 15/08/2026</li>
               <li>3er premio: entre 15/08/2026 al 15/09/2026</li>
             </ul>
+            <p className="mb-1 text-sm font-semibold text-primary">Selección del ganador:</p>
+            <p className="text-sm text-foreground/80">
+              El ganador será seleccionado de forma transparente mediante los números emitidos en el sorteo de la quiniela de la Lotería Nacional Gana Más.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
