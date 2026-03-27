@@ -714,9 +714,9 @@ export default function AdminDashboard() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge className="bg-green-600 text-white">
-                              {pg.player?.nombre?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '?'}
-                            </Badge>
+                            <span className="font-medium text-foreground">
+                              {pg.player?.nombre || '?'}
+                            </span>
                           </TableCell>
                           <TableCell className="font-mono text-sm">{pg.player?.phone_number}</TableCell>
                           <TableCell>{pg.total_tickets}</TableCell>
