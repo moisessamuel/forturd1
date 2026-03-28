@@ -15,7 +15,8 @@ export async function GET(request: NextRequest) {
 
     // Search by phone number - returns all tickets for that person
     if (telefono) {
-      const cleanPhone = telefono.replace(/[^0-9+]/g, '')
+      // Strip all non-digit characters for flexible matching
+      const digitsOnly = telefono.replace(/[^0-9]/g, '')
       const results: Array<{
         numero_boleto: string
         nombre: string
@@ -29,12 +30,55 @@ export async function GET(request: NextRequest) {
         source: string
       }> = []
 
-      // Search in players/tickets (new system)
-      const { data: player } = await supabase
+      // Search in players/tickets (new system) using flexible matching
+      // Try multiple approaches: exact, contains digits, with/without country code
+      let player = null
+      
+      // First try exact match
+      const { data: exactPlayer } = await supabase
         .from('players')
         .select('*')
-        .eq('phone_number', cleanPhone)
+        .eq('phone_number', telefono.trim())
         .single()
+      
+      player = exactPlayer
+
+      // If no exact match, try with cleaned phone (only digits and +)
+      if (!player) {
+        const cleanPhone = telefono.replace(/[^0-9+]/g, '')
+        const { data: cleanPlayer } = await supabase
+          .from('players')
+          .select('*')
+          .eq('phone_number', cleanPhone)
+          .single()
+        player = cleanPlayer
+      }
+
+      // If still no match, try searching with ILIKE for partial match
+      if (!player && digitsOnly.length >= 7) {
+        // Try matching last 10 digits (without country code)
+        const lastDigits = digitsOnly.slice(-10)
+        const { data: likeResults } = await supabase
+          .from('players')
+          .select('*')
+          .ilike('phone_number', `%${lastDigits}%`)
+        
+        if (likeResults && likeResults.length > 0) {
+          player = likeResults[0]
+        }
+      }
+
+      // If still no match, try just the digits
+      if (!player && digitsOnly.length >= 7) {
+        const { data: likeResults } = await supabase
+          .from('players')
+          .select('*')
+          .ilike('phone_number', `%${digitsOnly.slice(-7)}%`)
+        
+        if (likeResults && likeResults.length > 0) {
+          player = likeResults[0]
+        }
+      }
 
       if (player) {
         const { data: purchaseGroups } = await supabase
@@ -63,11 +107,12 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Also search in legacy compras table
+      // Also search in legacy compras table with flexible matching
+      const lastDigitsLegacy = digitsOnly.slice(-7)
       const { data: compras } = await supabase
         .from('compras')
         .select('*')
-        .eq('telefono', cleanPhone)
+        .ilike('telefono', `%${lastDigitsLegacy}%`)
         .order('fecha', { ascending: false })
 
       if (compras) {
