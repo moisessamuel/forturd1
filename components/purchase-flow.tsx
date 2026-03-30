@@ -154,16 +154,26 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Solo se permiten imágenes PNG, JPG o WEBP')
+    // Reset input value to allow selecting the same file again
+    e.target.value = ''
+
+    // More flexible file type validation for Android compatibility
+    // Some Android devices report different MIME types or empty types
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/heic', 'image/heif', 'application/octet-stream', '']
+    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.heic', '.heif']
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    
+    // Check by MIME type OR by extension (for Android compatibility)
+    const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)
+    
+    if (!isValidType) {
+      toast.error('Solo se permiten imagenes PNG, JPG, WEBP o HEIC')
       return
     }
 
     // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('El archivo excede el tamaño máximo de 10MB')
+      toast.error('El archivo excede el tamano maximo de 10MB')
       return
     }
 
@@ -771,6 +781,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
               )}
 
               {/* Hidden file inputs */}
+              {/* Camera input - using capture attribute for direct camera access */}
               <input
                 ref={cameraInputRef}
                 type="file"
@@ -779,22 +790,27 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={isUploading}
+                aria-label="Tomar foto"
               />
+              {/* Gallery input - no capture attribute to open gallery/file picker */}
               <input
                 ref={galleryInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif,image/*"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={isUploading}
+                aria-label="Seleccionar de galeria"
               />
+              {/* File input - allows images and PDFs */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,.pdf"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif,application/pdf,image/*,.png,.jpg,.jpeg,.webp,.heic,.pdf"
                 onChange={handleFileChange}
                 className="hidden"
                 disabled={isUploading}
+                aria-label="Seleccionar archivo"
               />
               {formData.comprobanteUrl && (
                 <div className="mt-4 flex items-center justify-center">
