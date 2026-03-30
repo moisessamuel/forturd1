@@ -10,11 +10,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No se proporcionó archivo' }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'application/pdf']
-    if (!allowedTypes.includes(file.type)) {
+    // More flexible file type validation for Android compatibility
+    // Some Android devices report different MIME types or empty/generic types
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/heic', 'image/heif', 'application/pdf', 'application/octet-stream', '']
+    const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp', '.heic', '.heif', '.pdf']
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'))
+    
+    // Check by MIME type OR by extension (for Android compatibility)
+    const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension)
+    
+    if (!isValidType) {
       return NextResponse.json(
-        { error: 'Tipo de archivo no permitido. Solo PNG, JPG, JPEG, WEBP, PDF' },
+        { error: 'Tipo de archivo no permitido. Solo PNG, JPG, JPEG, WEBP, HEIC, PDF' },
         { status: 400 }
       )
     }
