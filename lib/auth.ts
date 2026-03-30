@@ -8,10 +8,11 @@ const JWT_SECRET = new TextEncoder().encode(
 export interface AdminSession {
   userId: string
   username: string
+  role: string
 }
 
-export async function createSession(userId: string, username: string): Promise<string> {
-  const token = await new SignJWT({ userId, username })
+export async function createSession(userId: string, username: string, role: string = 'admin'): Promise<string> {
+  const token = await new SignJWT({ userId, username, role })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('24h')
@@ -26,6 +27,7 @@ export async function verifySession(token: string): Promise<AdminSession | null>
     return {
       userId: payload.userId as string,
       username: payload.username as string,
+      role: (payload.role as string) || 'admin',
     }
   } catch {
     return null
