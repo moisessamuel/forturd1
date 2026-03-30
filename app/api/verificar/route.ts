@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     if (telefono) {
       // Strip all non-digit characters for flexible matching
       const digitsOnly = telefono.replace(/[^0-9]/g, '')
+      const cleanPhone = telefono.replace(/[^0-9+]/g, '')
       const results: Array<{
         numero_boleto: string
         nombre: string
@@ -30,27 +31,30 @@ export async function GET(request: NextRequest) {
         source: string
       }> = []
 
+      console.log('[v0] Searching for phone:', telefono, 'digitsOnly:', digitsOnly, 'cleanPhone:', cleanPhone)
+
       // Search in players/tickets (new system) using flexible matching
       // Try multiple approaches: exact, contains digits, with/without country code
       let player = null
       
       // First try exact match
-      const { data: exactPlayer } = await supabase
+      const { data: exactPlayer, error: exactError } = await supabase
         .from('players')
         .select('*')
         .eq('phone_number', telefono.trim())
         .single()
       
+      console.log('[v0] Exact match result:', exactPlayer, 'error:', exactError)
       player = exactPlayer
 
       // If no exact match, try with cleaned phone (only digits and +)
       if (!player) {
-        const cleanPhone = telefono.replace(/[^0-9+]/g, '')
-        const { data: cleanPlayer } = await supabase
+        const { data: cleanPlayer, error: cleanError } = await supabase
           .from('players')
           .select('*')
           .eq('phone_number', cleanPhone)
           .single()
+        console.log('[v0] Clean phone match result:', cleanPlayer, 'error:', cleanError)
         player = cleanPlayer
       }
 
@@ -58,27 +62,34 @@ export async function GET(request: NextRequest) {
       if (!player && digitsOnly.length >= 7) {
         // Try matching last 10 digits (without country code)
         const lastDigits = digitsOnly.slice(-10)
-        const { data: likeResults } = await supabase
+        console.log('[v0] Trying ILIKE with last 10 digits:', lastDigits)
+        const { data: likeResults, error: likeError } = await supabase
           .from('players')
           .select('*')
           .ilike('phone_number', `%${lastDigits}%`)
         
+        console.log('[v0] ILIKE 10 digits result:', likeResults, 'error:', likeError)
         if (likeResults && likeResults.length > 0) {
           player = likeResults[0]
         }
       }
 
-      // If still no match, try just the digits
+      // If still no match, try just the last 7 digits
       if (!player && digitsOnly.length >= 7) {
-        const { data: likeResults } = await supabase
+        const last7 = digitsOnly.slice(-7)
+        console.log('[v0] Trying ILIKE with last 7 digits:', last7)
+        const { data: likeResults, error: likeError } = await supabase
           .from('players')
           .select('*')
-          .ilike('phone_number', `%${digitsOnly.slice(-7)}%`)
+          .ilike('phone_number', `%${last7}%`)
         
+        console.log('[v0] ILIKE 7 digits result:', likeResults, 'error:', likeError)
         if (likeResults && likeResults.length > 0) {
           player = likeResults[0]
         }
       }
+
+      console.log('[v0] Final player found:', player)
 
       if (player) {
         const { data: purchaseGroups } = await supabase
@@ -134,11 +145,13 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      console.log('[v0] Total results found:', results.length)
+
       if (results.length === 0) {
         return NextResponse.json({ error: 'No se encontraron boletos para este teléfono' }, { status: 404 })
       }
 
-      return NextResponse.json({ telefono: cleanPhone, results })
+      return NextResponse.json({ telefono: telefono, results })
     }
 
     // Search by ticket number - single result
