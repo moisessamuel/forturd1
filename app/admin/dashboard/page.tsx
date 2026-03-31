@@ -772,24 +772,28 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                className="bg-green-600 text-white hover:bg-green-700"
-                                onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
-                              >
-                                <Check className="mr-1 h-4 w-4" />
-                                Aprobar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleUpdateCompraEstado(pg.id, 'rechazado')}
-                              >
-                                <X className="mr-1 h-4 w-4" />
-                                Rechazar
-                              </Button>
-                            </div>
+                            {userRole === 'admin' ? (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 text-white hover:bg-green-700"
+                                  onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Aprobar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleUpdateCompraEstado(pg.id, 'rechazado')}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Rechazar
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Solo lectura</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -1002,26 +1006,30 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                            {userRole === 'admin' ? (
+                              <div className="flex gap-2">
+                                {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-yellow-600 text-white hover:bg-yellow-700"
+                                    onClick={() => setRevertingId(pg.id)}
+                                  >
+                                    <RotateCcw className="mr-1 h-4 w-4" />
+                                    Revertir
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
-                                  className="bg-yellow-600 text-white hover:bg-yellow-700"
-                                  onClick={() => setRevertingId(pg.id)}
+                                  variant="outline"
+                                  className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
+                                  onClick={() => setDeletingId(pg.id)}
                                 >
-                                  <RotateCcw className="mr-1 h-4 w-4" />
-                                  Revertir
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
-                                onClick={() => setDeletingId(pg.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Solo lectura</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
