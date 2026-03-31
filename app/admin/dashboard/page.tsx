@@ -292,6 +292,7 @@ export default function AdminDashboard() {
           codigo: newReferidoCodigo,
           cedula: newReferidoCedula,
           telefono: newReferidoTelefono,
+          created_by: userRole === 'referido_plus' ? 'referido_plus_gamundi' : 'admin',
         }),
       })
 
@@ -1044,13 +1045,14 @@ export default function AdminDashboard() {
           )}
         </Card>
 
-        {/* Bottom two columns - Admin only for Referidos, everyone for Resumen */}
-        <div className={`grid gap-6 ${userRole === 'admin' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
-          {/* Referidos Section - Admin only */}
-          {userRole === 'admin' && (
+        {/* Bottom two columns */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Referidos Section - Admin and Referido Plus can see/create */}
           <Card className="border-border/50 bg-card">
             <CardHeader>
-              <CardTitle className="text-lg">{'Gestion de Referidos'}</CardTitle>
+              <CardTitle className="text-lg">
+                {userRole === 'referido_plus' ? 'Mis Referidos' : 'Gestion de Referidos'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {/* Create new referido */}
@@ -1121,7 +1123,12 @@ export default function AdminDashboard() {
                   </TableHeader>
                   <TableBody>
                     {(() => {
-                      const filtered = referidos.filter((r: Referido) => {
+                      // First filter by role - GAMUNDI only sees referidos they created
+                      const roleFiltered = userRole === 'referido_plus' 
+                        ? referidos.filter((r: Referido & { created_by?: string }) => r.created_by === 'referido_plus_gamundi')
+                        : referidos
+                      
+                      const filtered = roleFiltered.filter((r: Referido) => {
                         if (!referidoSearch.trim()) return true
                         const term = referidoSearch.toLowerCase()
                         return (
@@ -1179,7 +1186,6 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-          )}
 
           {/* All Transactions Section */}
           <Card className="border-border/50 bg-card">
