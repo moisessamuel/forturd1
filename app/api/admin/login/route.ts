@@ -45,8 +45,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create session
-    const token = await createSession(admin.id, admin.username)
+    // Create session with role
+    const token = await createSession(admin.id, admin.username, admin.role || 'admin')
     await setSessionCookie(token)
 
     return NextResponse.json({
@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: admin.id,
         username: admin.username,
+        role: admin.role || 'admin',
       },
     })
   } catch (error) {

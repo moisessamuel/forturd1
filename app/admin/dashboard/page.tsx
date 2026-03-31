@@ -62,6 +62,7 @@ interface AdminStats {
 export default function AdminDashboard() {
   const router = useRouter()
   const [username, setUsername] = useState('')
+  const [userRole, setUserRole] = useState<string>('admin')
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [config, setConfig] = useState<Config | null>(null)
   const [compras, setCompras] = useState<PurchaseGroup[]>([])
@@ -150,6 +151,7 @@ export default function AdminDashboard() {
         }
         const data = await res.json()
         setUsername(data.user.username)
+        setUserRole(data.user.role || 'admin')
         fetchData()
       })
       .catch(() => router.push('/admin'))
@@ -332,7 +334,12 @@ export default function AdminDashboard() {
     setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  const pendingPayments = compras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
+  // Filter compras based on user role - referido_plus only sees their referral purchases
+  const filteredCompras = userRole === 'referido_plus' 
+    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'GAMUNDI')
+    : compras
+
+  const pendingPayments = filteredCompras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
 
   if (isLoading) {
     return (
@@ -348,8 +355,10 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-primary" />
-            <span className="font-medium">ADMINISTRADOR DEL PANEL</span>
+            <div className={`h-3 w-3 rounded-full ${userRole === 'referido_plus' ? 'bg-green-500' : 'bg-primary'}`} />
+            <span className="font-medium">
+              {userRole === 'referido_plus' ? 'REFERIDO PLUS GAMUNDI' : 'ADMINISTRADOR DEL PANEL'}
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
@@ -366,20 +375,24 @@ export default function AdminDashboard() {
       <div className="p-4 lg:p-6">
         {/* Title and actions */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-primary">{'Panel de Administracion'}</h1>
+          <h1 className={`text-2xl font-bold ${userRole === 'referido_plus' ? 'text-green-500' : 'text-primary'}`}>
+            {userRole === 'referido_plus' ? 'Panel Referido Plus Gamundi' : 'Panel de Administracion'}
+          </h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Actualizar
             </Button>
-            <Button 
-              variant="outline" 
-              className="text-red-500 border-red-500/50 hover:bg-red-500/10"
-              onClick={() => setShowResetConfirm(true)}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Restablecer
-            </Button>
+            {userRole === 'admin' && (
+              <Button 
+                variant="outline" 
+                className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                onClick={() => setShowResetConfirm(true)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Restablecer
+              </Button>
+            )}
           </div>
         </div>
 
@@ -512,7 +525,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Config Section */}
+        {/* Config Section - Admin only */}
+        {userRole === 'admin' && (
         <Card className="mb-6 border-border/50 bg-card">
           <CardHeader 
             className="cursor-pointer"
@@ -661,6 +675,7 @@ export default function AdminDashboard() {
             </CardContent>
           )}
         </Card>
+        )}
 
         {/* Pending Payments Section */}
         <Card className="mb-6 border-border/50 bg-card">
@@ -757,24 +772,28 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                className="bg-green-600 text-white hover:bg-green-700"
-                                onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
-                              >
-                                <Check className="mr-1 h-4 w-4" />
-                                Aprobar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleUpdateCompraEstado(pg.id, 'rechazado')}
-                              >
-                                <X className="mr-1 h-4 w-4" />
-                                Rechazar
-                              </Button>
-                            </div>
+                            {userRole === 'admin' ? (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 text-white hover:bg-green-700"
+                                  onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Aprobar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleUpdateCompraEstado(pg.id, 'rechazado')}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Rechazar
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Solo lectura</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -808,14 +827,14 @@ export default function AdminDashboard() {
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">COMPRAS APROBADAS</p>
                     <p className="text-2xl font-bold text-green-500">
-                      {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
+                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(compras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                      {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                     </p>
-                    {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length > 0 && (
+                    {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length > 0 && (
                       <p className="text-xs text-green-400">
-                        {formatCurrency(compras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                        {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
                       </p>
                     )}
                   </CardContent>
@@ -826,13 +845,13 @@ export default function AdminDashboard() {
                       <Users className="h-5 w-5 text-blue-500" />
                       <div>
                         <p className="text-xs text-muted-foreground">CON REFERIDO</p>
-                        <p className="text-2xl font-bold">{compras.filter((c: PurchaseGroup) => c.referido_codigo).length}</p>
+                        <p className="text-2xl font-bold">{filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo).length}</p>
                         <p className="text-xs text-muted-foreground">
-                          {formatCurrency(compras.filter((c: PurchaseGroup) => c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                          {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                         </p>
-                        {compras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').length > 0 && (
+                        {filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').length > 0 && (
                           <p className="text-xs text-green-400">
-                            {formatCurrency(compras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                            {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
                           </p>
                         )}
                       </div>
@@ -842,13 +861,13 @@ export default function AdminDashboard() {
                 <Card className="border-border/50 bg-secondary/50">
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">COMPRA DIRECTA</p>
-                    <p className="text-2xl font-bold">{compras.filter((c: PurchaseGroup) => !c.referido_codigo).length}</p>
+                    <p className="text-2xl font-bold">{filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo).length}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(compras.filter((c: PurchaseGroup) => !c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                      {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                     </p>
-                    {compras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').length > 0 && (
+                    {filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').length > 0 && (
                       <p className="text-xs text-green-400">
-                        {formatCurrency(compras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                        {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
                       </p>
                     )}
                   </CardContent>
@@ -857,7 +876,7 @@ export default function AdminDashboard() {
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">BOLETOS VENDIDOS</p>
                     <p className="text-2xl font-bold text-primary">
-                      {compras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
+                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
                     </p>
                     <p className="text-xs text-muted-foreground">boletos aprobados</p>
                   </CardContent>
@@ -911,14 +930,14 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {compras.length === 0 ? (
+                    {filteredCompras.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={12} className="text-center text-muted-foreground">
                           {searchTerm ? 'No se encontraron resultados' : 'No hay compras registradas'}
                         </TableCell>
                       </TableRow>
                     ) : (
-                      compras.map((pg: PurchaseGroup) => (
+                      filteredCompras.map((pg: PurchaseGroup) => (
                         <TableRow key={pg.id}>
                           <TableCell>
                             <div className="flex flex-wrap gap-1 max-w-48">
@@ -987,26 +1006,30 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                            {userRole === 'admin' ? (
+                              <div className="flex gap-2">
+                                {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-yellow-600 text-white hover:bg-yellow-700"
+                                    onClick={() => setRevertingId(pg.id)}
+                                  >
+                                    <RotateCcw className="mr-1 h-4 w-4" />
+                                    Revertir
+                                  </Button>
+                                )}
                                 <Button
                                   size="sm"
-                                  className="bg-yellow-600 text-white hover:bg-yellow-700"
-                                  onClick={() => setRevertingId(pg.id)}
+                                  variant="outline"
+                                  className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
+                                  onClick={() => setDeletingId(pg.id)}
                                 >
-                                  <RotateCcw className="mr-1 h-4 w-4" />
-                                  Revertir
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
-                                onClick={() => setDeletingId(pg.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Solo lectura</span>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -1015,15 +1038,16 @@ export default function AdminDashboard() {
                 </Table>
               </div>
               <p className="mt-2 text-right text-xs text-muted-foreground">
-                {compras.length} resultados
+                {filteredCompras.length} resultados
               </p>
             </CardContent>
           )}
         </Card>
 
-        {/* Bottom two columns */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Referidos Section */}
+        {/* Bottom two columns - Admin only for Referidos, everyone for Resumen */}
+        <div className={`grid gap-6 ${userRole === 'admin' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
+          {/* Referidos Section - Admin only */}
+          {userRole === 'admin' && (
           <Card className="border-border/50 bg-card">
             <CardHeader>
               <CardTitle className="text-lg">{'Gestion de Referidos'}</CardTitle>
@@ -1155,6 +1179,7 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* All Transactions Section */}
           <Card className="border-border/50 bg-card">
@@ -1176,7 +1201,7 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {compras.slice(0, 20).map((pg: PurchaseGroup) => (
+                    {filteredCompras.slice(0, 20).map((pg: PurchaseGroup) => (
                       <TableRow key={pg.id}>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
