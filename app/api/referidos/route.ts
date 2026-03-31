@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
         cedula: body.cedula || null,
         telefono: body.telefono || null,
         activo: true,
+        created_by: body.created_by || 'admin',
       })
       .select()
       .single()
