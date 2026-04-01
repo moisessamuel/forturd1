@@ -335,10 +335,23 @@ export default function AdminDashboard() {
     setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  // Filter compras based on user role - referido_plus only sees their referral purchases
+  // Get all referido codes created by GAMUNDI
+  const gamundiReferidoCodes = referidos
+    .filter((r: Referido & { created_by?: string }) => r.created_by === 'referido_plus_gamundi')
+    .map((r: Referido) => r.codigo.toUpperCase())
+  
+  // Filter compras based on user role
+  // referido_plus: only sees purchases from GAMUNDI's referidos
+  // admin: excludes purchases from GAMUNDI's referidos (they have their own panel)
   const filteredCompras = userRole === 'referido_plus' 
-    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'GAMUNDI')
-    : compras
+    ? compras.filter((c: PurchaseGroup) => {
+        const code = c.referido?.codigo?.toUpperCase() || c.referido_codigo?.toUpperCase() || ''
+        return code === 'GAMUNDI' || gamundiReferidoCodes.includes(code)
+      })
+    : compras.filter((c: PurchaseGroup) => {
+        const code = c.referido?.codigo?.toUpperCase() || c.referido_codigo?.toUpperCase() || ''
+        return code !== 'GAMUNDI' && !gamundiReferidoCodes.includes(code)
+      })
 
   const pendingPayments = filteredCompras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
 
@@ -678,7 +691,8 @@ export default function AdminDashboard() {
         </Card>
         )}
 
-        {/* Pending Payments Section */}
+        {/* Pending Payments Section - Admin only */}
+        {userRole === 'admin' && (
         <Card className="mb-6 border-border/50 bg-card">
           <CardHeader 
             className="cursor-pointer"
@@ -805,6 +819,7 @@ export default function AdminDashboard() {
             </CardContent>
           )}
         </Card>
+        )}
 
         {/* Compras Section */}
         <Card className="mb-6 border-border/50 bg-card">
@@ -1045,8 +1060,8 @@ export default function AdminDashboard() {
           )}
         </Card>
 
-        {/* Bottom two columns */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Bottom two columns - full width for referido_plus since Transactions is hidden */}
+        <div className={`grid gap-6 ${userRole === 'admin' ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
           {/* Referidos Section - Admin and Referido Plus can see/create */}
           <Card className="border-border/50 bg-card">
             <CardHeader>
@@ -1187,7 +1202,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          {/* All Transactions Section */}
+          {/* All Transactions Section - Admin only */}
+          {userRole === 'admin' && (
           <Card className="border-border/50 bg-card">
             <CardHeader>
               <CardTitle className="text-lg">Todas las Transacciones</CardTitle>
@@ -1265,6 +1281,7 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </main>
