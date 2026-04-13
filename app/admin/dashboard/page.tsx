@@ -335,9 +335,11 @@ export default function AdminDashboard() {
     setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  // Filter compras based on user role - referido_plus only sees their referral purchases
+  // Filter compras based on user role
   const filteredCompras = userRole === 'referido_plus' 
     ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'GAMUNDI')
+    : userRole === 'boleto_fisico'
+    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'BOLETOFISICO')
     : compras
 
   const pendingPayments = filteredCompras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
@@ -356,9 +358,9 @@ export default function AdminDashboard() {
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className={`h-3 w-3 rounded-full ${userRole === 'referido_plus' ? 'bg-green-500' : 'bg-primary'}`} />
+            <div className={`h-3 w-3 rounded-full ${userRole === 'referido_plus' ? 'bg-green-500' : userRole === 'boleto_fisico' ? 'bg-cyan-500' : 'bg-primary'}`} />
             <span className="font-medium">
-              {userRole === 'referido_plus' ? 'REFERIDO PLUS GAMUNDI' : 'ADMINISTRADOR DEL PANEL'}
+              {userRole === 'referido_plus' ? 'REFERIDO PLUS GAMUNDI' : userRole === 'boleto_fisico' ? 'PANEL DE BOLETOS FISICOS' : 'ADMINISTRADOR DEL PANEL'}
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -376,8 +378,8 @@ export default function AdminDashboard() {
       <div className="p-4 lg:p-6">
         {/* Title and actions */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className={`text-2xl font-bold ${userRole === 'referido_plus' ? 'text-green-500' : 'text-primary'}`}>
-            {userRole === 'referido_plus' ? 'Panel Referido Plus Gamundi' : 'Panel de Administracion'}
+          <h1 className={`text-2xl font-bold ${userRole === 'referido_plus' ? 'text-green-500' : userRole === 'boleto_fisico' ? 'text-cyan-500' : 'text-primary'}`}>
+            {userRole === 'referido_plus' ? 'Panel Referido Plus Gamundi' : userRole === 'boleto_fisico' ? 'Panel de Boletos Fisicos' : 'Panel de Administracion'}
           </h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefresh}>
@@ -678,8 +680,8 @@ export default function AdminDashboard() {
         </Card>
         )}
 
-        {/* Pending Payments Section - Admin only */}
-        {userRole === 'admin' && (
+        {/* Pending Payments Section - Admin and Boleto Fisico */}
+        {(userRole === 'admin' || userRole === 'boleto_fisico') && (
         <Card className="mb-6 border-border/50 bg-card">
           <CardHeader 
             className="cursor-pointer"
@@ -774,7 +776,7 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {userRole === 'admin' ? (
+                            {(userRole === 'admin' || userRole === 'boleto_fisico') ? (
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
@@ -1009,7 +1011,7 @@ export default function AdminDashboard() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {userRole === 'admin' ? (
+                            {(userRole === 'admin' || userRole === 'boleto_fisico') ? (
                               <div className="flex gap-2">
                                 {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
                                   <Button
@@ -1047,7 +1049,8 @@ export default function AdminDashboard() {
           )}
         </Card>
 
-        {/* Bottom two columns */}
+        {/* Bottom two columns - hidden for boleto_fisico */}
+        {userRole !== 'boleto_fisico' && (
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Referidos Section - Admin and Referido Plus can see/create */}
           <Card className="border-border/50 bg-card">
@@ -1270,6 +1273,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+        )}
       </div>
     </main>
   )
