@@ -1557,46 +1557,65 @@ export default function AdminDashboard() {
                 </Card>
                 <Card className="border-border/50 bg-secondary/50">
                   <CardContent className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-blue-500" />
-                      <div>
-                        <p className="text-xs text-muted-foreground">CON REFERIDO</p>
-                        <p className="text-2xl font-bold">{filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo).length}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
-                        </p>
-                        {filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').length > 0 && (
-                          <p className="text-xs text-green-400">
-                            {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">COMPRA DIRECTA</p>
-                    <p className="text-2xl font-bold">{filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo).length}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'BOLETOS PENDIENTES' : 'CON REFERIDO'}</p>
+                    <p className="text-2xl font-bold text-yellow-500">
+                      {userRole === 'boleto_fisico'
+                        ? flattenedTickets.filter(t => t.estado === 'pendiente').length
+                        : filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo).length}
                     </p>
-                    {filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').length > 0 && (
-                      <p className="text-xs text-green-400">
-                        {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                    <p className="text-xs text-muted-foreground">
+                      {userRole === 'boleto_fisico'
+                        ? formatCurrency(flattenedTickets.filter(t => t.estado === 'pendiente' && (t.moneda || 'DOP') === 'DOP').reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
+                        : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                    </p>
+                    {(userRole === 'boleto_fisico'
+                      ? flattenedTickets.filter(t => t.estado === 'pendiente' && t.moneda === 'USD').length > 0
+                      : filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').length > 0) && (
+                      <p className="text-xs text-yellow-400">
+                        {userRole === 'boleto_fisico'
+                          ? formatCurrency(flattenedTickets.filter(t => t.estado === 'pendiente' && t.moneda === 'USD').reduce((s, t) => s + t.monto_unitario, 0), 'USD')
+                          : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
                       </p>
                     )}
                   </CardContent>
                 </Card>
                 <Card className="border-border/50 bg-secondary/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">BOLETOS VENDIDOS</p>
+                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'BOLETOS RECHAZADOS' : 'COMPRA DIRECTA'}</p>
+                    <p className="text-2xl font-bold text-red-500">
+                      {userRole === 'boleto_fisico'
+                        ? flattenedTickets.filter(t => t.estado === 'rechazado').length
+                        : filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo).length}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {userRole === 'boleto_fisico'
+                        ? formatCurrency(flattenedTickets.filter(t => t.estado === 'rechazado' && (t.moneda || 'DOP') === 'DOP').reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
+                        : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                    </p>
+                    {(userRole === 'boleto_fisico'
+                      ? flattenedTickets.filter(t => t.estado === 'rechazado' && t.moneda === 'USD').length > 0
+                      : filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').length > 0) && (
+                      <p className="text-xs text-red-400">
+                        {userRole === 'boleto_fisico'
+                          ? formatCurrency(flattenedTickets.filter(t => t.estado === 'rechazado' && t.moneda === 'USD').reduce((s, t) => s + t.monto_unitario, 0), 'USD')
+                          : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+                <Card className="border-border/50 bg-secondary/50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'TOTAL BOLETOS' : 'BOLETOS VENDIDOS'}</p>
                     <p className="text-2xl font-bold text-primary">
                       {userRole === 'boleto_fisico'
-                        ? flattenedTickets.filter(t => t.estado === 'aprobado').length
+                        ? flattenedTickets.length
                         : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
                     </p>
-                    <p className="text-xs text-muted-foreground">boletos aprobados</p>
+                    <p className="text-xs text-muted-foreground">
+                      {userRole === 'boleto_fisico'
+                        ? formatCurrency(flattenedTickets.reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
+                        : 'boletos aprobados'}
+                    </p>
                   </CardContent>
                 </Card>
               </div>
