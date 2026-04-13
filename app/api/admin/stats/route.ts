@@ -62,6 +62,19 @@ export async function GET() {
 
     const boletosDisponibles = (config?.total_boletos || 200000) - boletosAsignados
 
+    // Stats for boleto_fisico panel - count all tickets with BOLETOSFISICOS referido
+    const pgBoletosFisicos = purchaseGroups?.filter((pg) => 
+      pg.referido_codigo?.toUpperCase() === 'BOLETOSFISICOS'
+    ) || []
+    
+    const boletosFisicosTotal = pgBoletosFisicos.reduce((sum, pg) => sum + pg.total_tickets, 0)
+    const boletosFisicosAsignados = pgBoletosFisicos
+      .filter(pg => pg.estado === 'aprobado')
+      .reduce((sum, pg) => sum + pg.total_tickets, 0)
+    const boletosFisicosPendientes = pgBoletosFisicos
+      .filter(pg => pg.estado === 'pendiente')
+      .reduce((sum, pg) => sum + pg.total_tickets, 0)
+
     return NextResponse.json({
       ventas_totales: ventasTotales,
       ventas_dop: ventasDOP,
@@ -72,6 +85,10 @@ export async function GET() {
       boletos_asignados: boletosAsignados,
       boletos_disponibles: boletosDisponibles,
       total_boletos: config?.total_boletos || 200000,
+      // Boletos fisicos specific stats
+      boletos_fisicos_total: boletosFisicosTotal,
+      boletos_fisicos_asignados: boletosFisicosAsignados,
+      boletos_fisicos_pendientes: boletosFisicosPendientes,
     })
   } catch (error) {
     console.error('Stats error:', error)
