@@ -20,7 +20,9 @@ import {
   ChevronUp,
   AlertTriangle,
   RotateCcw,
-  Trash2
+  Trash2,
+  Pencil,
+  Ticket
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -85,6 +87,9 @@ export default function AdminDashboard() {
   const [newReferidoTelefono, setNewReferidoTelefono] = useState('')
   const [isCreatingReferido, setIsCreatingReferido] = useState(false)
   const [referidoSearch, setReferidoSearch] = useState('')
+  
+  // Pending ticket search (for boleto_fisico panel)
+  const [pendingTicketSearch, setPendingTicketSearch] = useState('')
   
   // Reset confirmation
   const [showResetConfirm, setShowResetConfirm] = useState(false)
@@ -335,12 +340,9 @@ export default function AdminDashboard() {
     setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }))
   }
 
-  // Filter compras based on user role
-  const filteredCompras = userRole === 'referido_plus' 
-    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'GAMUNDI')
-    : userRole === 'boleto_fisico'
-    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'BOLETOFISICO')
-    : compras
+  // Backend already filters by role, so we use compras directly
+  // This is a fallback filter in case backend filtering isn't applied
+  const filteredCompras = compras
 
   const pendingPayments = filteredCompras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
 
@@ -697,6 +699,116 @@ export default function AdminDashboard() {
           </CardHeader>
           {sectionsOpen.pagos && (
             <CardContent>
+              {/* Pending Ticket Search - Only for boleto_fisico */}
+              {userRole === 'boleto_fisico' && (
+                <div className="mb-4 rounded-lg border border-cyan-500/30 bg-cyan-500/5 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Ticket className="h-5 w-5 text-cyan-500" />
+                    <p className="font-medium text-cyan-500">Buscador de Boletos Pendientes</p>
+                  </div>
+                  <p className="mb-3 text-xs text-muted-foreground">
+                    Busca boletos pendientes por numero para verificar rapidamente
+                  </p>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por numero de boleto (ej: 12345)..."
+                      value={pendingTicketSearch}
+                      onChange={(e) => setPendingTicketSearch(e.target.value)}
+                      className="bg-input pl-9"
+                    />
+                  </div>
+                  {pendingTicketSearch.trim() && (
+                    <div className="mt-3">
+                      {(() => {
+                        const searchNum = pendingTicketSearch.trim().toLowerCase()
+                        const foundPending = pendingPayments.filter((pg: PurchaseGroup) =>
+                          pg.tickets?.some((t) => t.numero_boleto.toLowerCase().includes(searchNum))
+                        )
+                        if (foundPending.length === 0) {
+                          return (
+                            <p className="text-sm text-muted-foreground">
+                              No se encontraron boletos pendientes con ese numero
+                            </p>
+                          )
+                        }
+                        return (
+                          <div className="space-y-2">
+                            <p className="text-sm text-cyan-500">
+                              Encontrados: {foundPending.length} boleto(s) pendiente(s)
+                            </p>
+                            {foundPending.map((pg: PurchaseGroup) => (
+                              <div key={pg.id} className="rounded border border-border/50 bg-card p-3">
+                                <div className="mb-2 flex flex-wrap gap-1">
+                                  {pg.tickets?.map((t) => (
+                                    <Badge
+                                      key={t.id}
+                                      variant="outline"
+                                      className={
+                                        t.numero_boleto.toLowerCase().includes(searchNum)
+                                          ? 'bg-cyan-500/30 text-cyan-500 border-cyan-500'
+                                          : 'bg-primary/20 text-primary'
+                                      }
+                                    >
+                                      #{t.numero_boleto.padStart(5, '0')}
+                                    </Badge>
+                                  ))}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-4 text-sm">
+                                  <span><strong>Nombre:</strong> {pg.player?.nombre || 'N/A'}</span>
+                                  <span><strong>Telefono:</strong> {pg.player?.phone_number || 'N/A'}</span>
+                                  <span><strong>Monto:</strong> {formatCurrency(pg.monto, pg.moneda)}</span>
+                                </div>
+                                <div className="mt-2 flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 text-white hover:bg-green-700"
+                                    onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
+                                  >
+                                    <Check className="mr-1 h-4 w-4" />
+                                    Aprobar
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => handleUpdateCompraEstado(pg.id, 'rechazado')}
+                                  >
+                                    <X className="mr-1 h-4 w-4" />
+                                    Rechazar
+                                  </Button>
+                                  {pg.comprobante_url && (
+                                    <Dialog>
+                                      <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                          <Eye className="mr-1 h-4 w-4" /> Ver Comprobante
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-2xl">
+                                        <DialogHeader>
+                                          <DialogTitle>Comprobante de Pago</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                                          <Image
+                                            src={pg.comprobante_url}
+                                            alt="Comprobante"
+                                            fill
+                                            className="object-contain"
+                                          />
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>

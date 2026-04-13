@@ -17,10 +17,11 @@ export async function GET(request: NextRequest) {
 
     const estado = searchParams.get('estado')
     const search = searchParams.get('search')
+    const userRole = session.role || 'admin'
 
     let query = supabase
       .from('purchase_groups')
-      .select('*, player:players(*), tickets(*)')
+      .select('*, player:players(*), tickets(*), referido:referidos(codigo)')
       .order('created_at', { ascending: false })
 
     if (estado && estado !== 'todos') {
@@ -34,8 +35,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error al obtener compras' }, { status: 500 })
     }
 
-    // Filter by search if provided
+    // Filter by role - Backend separation of BOLETOFISICO tickets
     let result = groups || []
+    
+    if (userRole === 'boleto_fisico') {
+      // Physical tickets panel: Only show BOLETOFISICO referral tickets
+      result = result.filter((g: Record<string, unknown>) => {
+        const refCodigo = g.referido_codigo as string | null
+        return refCodigo?.toUpperCase() === 'BOLETOFISICO'
+      })
+    } else if (userRole === 'admin') {
+      // Admin panel: Exclude BOLETOFISICO referral tickets
+      result = result.filter((g: Record<string, unknown>) => {
+        const refCodigo = g.referido_codigo as string | null
+        return refCodigo?.toUpperCase() !== 'BOLETOFISICO'
+      })
+    } else if (userRole === 'referido_plus') {
+      // Referido Plus: Only show GAMUNDI referral tickets
+      result = result.filter((g: Record<string, unknown>) => {
+        const refCodigo = g.referido_codigo as string | null
+        return refCodigo?.toUpperCase() === 'GAMUNDI'
+      })
+    }
+
+    // Filter by search if provided
     if (search) {
       const s = search.toLowerCase()
       result = result.filter((g: Record<string, unknown>) => {
