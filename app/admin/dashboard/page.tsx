@@ -1513,6 +1513,48 @@ export default function AdminDashboard() {
         </Card>
         )}
 
+        {/* Boletos Inventory Panel - For admin and boleto_fisico */}
+        {(userRole === 'admin' || userRole === 'boleto_fisico') && (
+          <div className="mb-6">
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <Ticket className="h-4 w-4" />
+              {userRole === 'boleto_fisico' ? 'INVENTARIO DE BOLETOS FISICOS' : 'INVENTARIO GENERAL DE BOLETOS'}
+            </h3>
+            <div className="grid grid-cols-3 gap-4">
+              <Card className="border-border/50 bg-secondary/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground">TOTAL</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {userRole === 'boleto_fisico' 
+                      ? flattenedTickets.length.toLocaleString()
+                      : (stats?.total_boletos || 0).toLocaleString()}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 bg-secondary/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground">ASIGNADOS</p>
+                  <p className="text-2xl font-bold text-blue-500">
+                    {userRole === 'boleto_fisico'
+                      ? flattenedTickets.filter(t => t.estado === 'aprobado').length.toLocaleString()
+                      : (stats?.boletos_asignados || 0).toLocaleString()}
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/50 bg-secondary/50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-muted-foreground">DISPONIBLES</p>
+                  <p className="text-2xl font-bold text-green-500">
+                    {userRole === 'boleto_fisico'
+                      ? (flattenedTickets.length - flattenedTickets.filter(t => t.estado === 'aprobado').length).toLocaleString()
+                      : (stats?.boletos_disponibles || 0).toLocaleString()}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
         {/* Compras Section */}
         <Card className="mb-6 border-border/50 bg-card">
           <CardHeader 
