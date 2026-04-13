@@ -338,14 +338,18 @@ export default function AdminDashboard() {
   }
 
   // Filter compras based on user role
-  // Admin: excludes BOLETOFISICO (those go to the physical tickets panel)
-  // referido_plus: only sees GAMUNDI referrals
-  // boleto_fisico: only sees BOLETOFISICO referrals
+  // Helper: check if a purchase belongs to the "boleto fisico" panel
+  const isBoletoFisicoCompra = (c: PurchaseGroup) => {
+    const refCode = (c.referido_codigo || '').toUpperCase()
+    const buyerName = (c.player?.nombre || '').toLowerCase()
+    return refCode === 'BOLETOFISICO' || buyerName.includes('boleto fisico') || buyerName.includes('boletofisico')
+  }
+
   const filteredCompras = userRole === 'referido_plus' 
-    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'GAMUNDI')
+    ? compras.filter((c: PurchaseGroup) => (c.referido_codigo || '').toUpperCase() === 'GAMUNDI')
     : userRole === 'boleto_fisico'
-    ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'BOLETOFISICO')
-    : compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() !== 'BOLETOFISICO')
+    ? compras.filter((c: PurchaseGroup) => isBoletoFisicoCompra(c))
+    : compras.filter((c: PurchaseGroup) => !isBoletoFisicoCompra(c))
 
   // Filter pending payments with optional search by ticket number
   const pendingPayments = filteredCompras
