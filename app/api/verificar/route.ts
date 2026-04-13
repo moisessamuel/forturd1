@@ -92,6 +92,36 @@ export async function GET(request: NextRequest) {
       console.log('[v0] Final player found:', player)
 
       if (player) {
+        // Search tickets directly where this player is the ticket_player (individual edits)
+        const { data: directTickets } = await supabase
+          .from('tickets')
+          .select('*, purchase_group:purchase_groups(*)')
+          .eq('player_id', player.id)
+          .order('created_at', { ascending: false })
+
+        if (directTickets) {
+          for (const ticket of directTickets) {
+            const pg = ticket.purchase_group
+            const totalTickets = pg?.total_tickets || 1
+            const individualMonto = (pg?.monto || 0) / totalTickets
+            const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+            
+            results.push({
+              numero_boleto: ticket.numero_boleto,
+              nombre: player.nombre,
+              telefono: player.phone_number,
+              estado: ticketStatus,
+              cantidad_boletos: 1, // Individual ticket
+              monto: individualMonto,
+              moneda: pg?.moneda || 'DOP',
+              fecha: ticket.created_at,
+              banco: pg?.banco || '',
+              source: 'new',
+            })
+          }
+        }
+
+        // Also search where this player is the purchase_group player (original purchases)
         const { data: purchaseGroups } = await supabase
           .from('purchase_groups')
           .select('*, tickets(*)')
@@ -101,13 +131,22 @@ export async function GET(request: NextRequest) {
         if (purchaseGroups) {
           for (const pg of purchaseGroups) {
             for (const ticket of (pg.tickets || [])) {
+              // Skip if ticket has its own player (already added above with different info)
+              // We check if the ticket was already added by comparing numero_boleto
+              const alreadyAdded = results.some(r => r.numero_boleto === ticket.numero_boleto)
+              if (alreadyAdded) continue
+              
+              const totalTickets = pg.total_tickets || 1
+              const individualMonto = pg.monto / totalTickets
+              const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+              
               results.push({
                 numero_boleto: ticket.numero_boleto,
                 nombre: player.nombre,
                 telefono: player.phone_number,
-                estado: pg.estado || 'pendiente',
-                cantidad_boletos: pg.total_tickets || 1,
-                monto: pg.monto,
+                estado: ticketStatus,
+                cantidad_boletos: 1, // Individual ticket
+                monto: individualMonto,
                 moneda: pg.moneda,
                 fecha: ticket.created_at,
                 banco: pg.banco || '',
@@ -157,22 +196,35 @@ export async function GET(request: NextRequest) {
     // Search by ticket number - single result
     const cleanBoleto = boleto!.replace(/[^0-9]/g, '')
 
-    // Try new tickets table first
+    // Try new tickets table first - include ticket_player for individual edits
     const { data: ticket } = await supabase
       .from('tickets')
-      .select('*, player:players(*), purchase_group:purchase_groups(*)')
+      .select('*, ticket_player:players!tickets_player_id_fkey(*), purchase_group:purchase_groups(*, group_player:players(*))')
       .eq('numero_boleto', cleanBoleto)
       .single()
 
     if (ticket) {
+      // Use individual ticket player if exists, otherwise fall back to purchase group player
+      const ticketPlayer = ticket.ticket_player
+      const groupPlayer = ticket.purchase_group?.group_player
+      const playerInfo = ticketPlayer || groupPlayer
+      
+      // Calculate individual ticket amount
+      const totalTickets = ticket.purchase_group?.total_tickets || 1
+      const totalMonto = ticket.purchase_group?.monto || 0
+      const individualMonto = totalMonto / totalTickets
+      
+      // Determine ticket-specific status from ticket.status field
+      const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+      
       return NextResponse.json({
         numero_boleto: ticket.numero_boleto,
-        nombre: ticket.player?.nombre,
-        telefono: ticket.player?.phone_number || '',
-        estado: ticket.purchase_group?.estado || 'pendiente',
-        cantidad_boletos: ticket.purchase_group?.total_tickets || 1,
-        monto: ticket.purchase_group?.monto,
-        moneda: ticket.purchase_group?.moneda,
+        nombre: playerInfo?.nombre || 'N/A',
+        telefono: playerInfo?.phone_number || '',
+        estado: ticketStatus,
+        cantidad_boletos: 1, // Each ticket is individual
+        monto: individualMonto,
+        moneda: ticket.purchase_group?.moneda || 'DOP',
         fecha: ticket.created_at,
         banco: ticket.purchase_group?.banco || '',
         source: 'new',
