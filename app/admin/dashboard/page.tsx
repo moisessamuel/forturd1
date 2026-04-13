@@ -28,6 +28,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -120,6 +121,12 @@ export default function AdminDashboard() {
   // Reset for boleto_fisico
   const [showResetBoletoFisico, setShowResetBoletoFisico] = useState(false)
   const [isResettingBoletoFisico, setIsResettingBoletoFisico] = useState(false)
+
+  // Bulk selection and editing (for boleto_fisico panel)
+  const [selectedTickets, setSelectedTickets] = useState<Set<string>>(new Set())
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false)
+  const [bulkEditData, setBulkEditData] = useState({ nombre: '', phone_number: '', email: '' })
+  const [isBulkEditing, setIsBulkEditing] = useState(false)
   
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -429,6 +436,65 @@ export default function AdminDashboard() {
     }
   }
 
+  // Bulk edit selected tickets
+  const handleBulkEditTickets = async () => {
+    if (selectedTickets.size === 0) return
+    if (!bulkEditData.nombre.trim() || !bulkEditData.phone_number.trim()) {
+      toast.error('Nombre y telefono son requeridos')
+      return
+    }
+
+    setIsBulkEditing(true)
+    try {
+      const response = await fetch('/api/tickets/bulk-edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticketIds: Array.from(selectedTickets),
+          nombre: bulkEditData.nombre,
+          phone_number: bulkEditData.phone_number,
+          email: bulkEditData.email || null,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Error al actualizar')
+
+      toast.success(`${selectedTickets.size} boletos actualizados correctamente`)
+      setSelectedTickets(new Set())
+      setShowBulkEditModal(false)
+      setBulkEditData({ nombre: '', phone_number: '', email: '' })
+      fetchData()
+    } catch {
+      toast.error('Error al actualizar los boletos')
+    } finally {
+      setIsBulkEditing(false)
+    }
+  }
+
+  // Toggle ticket selection
+  const toggleTicketSelection = (ticketId: string) => {
+    setSelectedTickets(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(ticketId)) {
+        newSet.delete(ticketId)
+      } else {
+        newSet.add(ticketId)
+      }
+      return newSet
+    })
+  }
+
+  // Select all visible tickets
+  const selectAllTickets = (tickets: FlattenedTicket[]) => {
+    const allIds = tickets.map(t => t.id)
+    setSelectedTickets(new Set(allIds))
+  }
+
+  // Clear selection
+  const clearSelection = () => {
+    setSelectedTickets(new Set())
+  }
+
   const handleCreateReferido = async () => {
     if (!newReferidoNombre || !newReferidoCodigo) {
       toast.error('Por favor completa todos los campos')
@@ -688,6 +754,79 @@ export default function AdminDashboard() {
                   disabled={isResetting}
                 >
                   {isResetting ? 'Restableciendo...' : 'Si, confirmo restablecer'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Edit Modal (for boleto_fisico) */}
+        {showBulkEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-cyan-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10">
+                  <Pencil className="h-6 w-6 text-cyan-500" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-cyan-500">Editar Boletos Seleccionados</h3>
+                  <p className="text-sm text-muted-foreground">{selectedTickets.size} boletos seleccionados</p>
+                </div>
+              </div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Los boletos seleccionados seran asignados a un nuevo comprador con la informacion que ingreses.
+                El monto se calculara automaticamente (RD$1,000 por boleto).
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Nombre *</label>
+                  <Input
+                    value={bulkEditData.nombre}
+                    onChange={(e) => setBulkEditData({ ...bulkEditData, nombre: e.target.value })}
+                    placeholder="Nombre completo del comprador"
+                    className="bg-input"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Telefono *</label>
+                  <Input
+                    value={bulkEditData.phone_number}
+                    onChange={(e) => setBulkEditData({ ...bulkEditData, phone_number: e.target.value })}
+                    placeholder="Numero de telefono"
+                    className="bg-input"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electronico</label>
+                  <Input
+                    value={bulkEditData.email}
+                    onChange={(e) => setBulkEditData({ ...bulkEditData, email: e.target.value })}
+                    placeholder="correo@ejemplo.com (opcional)"
+                    className="bg-input"
+                  />
+                </div>
+              </div>
+              <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                <p className="text-sm">
+                  <span className="text-muted-foreground">Monto total: </span>
+                  <span className="font-bold text-primary">{formatCurrency(selectedTickets.size * 1000, 'DOP')}</span>
+                </p>
+              </div>
+              <div className="mt-6 flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowBulkEditModal(false)}
+                  disabled={isBulkEditing}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-cyan-600 text-white hover:bg-cyan-700"
+                  onClick={handleBulkEditTickets}
+                  disabled={isBulkEditing}
+                >
+                  {isBulkEditing ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
               </div>
             </div>
@@ -1489,11 +1628,60 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Bulk action bar for boleto_fisico */}
+              {userRole === 'boleto_fisico' && (
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-secondary/30 p-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="select-all"
+                      checked={selectedTickets.size === filteredFlattenedTickets.length && filteredFlattenedTickets.length > 0}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          selectAllTickets(filteredFlattenedTickets)
+                        } else {
+                          clearSelection()
+                        }
+                      }}
+                    />
+                    <label htmlFor="select-all" className="text-sm text-muted-foreground">
+                      Seleccionar todos
+                    </label>
+                  </div>
+                  {selectedTickets.size > 0 && (
+                    <>
+                      <Badge variant="outline" className="bg-primary/20 text-primary">
+                        {selectedTickets.size} seleccionados
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
+                        onClick={() => {
+                          setBulkEditData({ nombre: '', phone_number: '', email: '' })
+                          setShowBulkEditModal(true)
+                        }}
+                      >
+                        <Pencil className="mr-1 h-4 w-4" />
+                        Editar Seleccionados
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={clearSelection}
+                      >
+                        Limpiar seleccion
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Table */}
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      {userRole === 'boleto_fisico' && <TableHead className="w-10"></TableHead>}
                       <TableHead>{userRole === 'boleto_fisico' ? 'Boleto #' : 'Boletos'}</TableHead>
                       <TableHead>Comprador</TableHead>
                       <TableHead>Telefono</TableHead>
@@ -1513,13 +1701,19 @@ export default function AdminDashboard() {
                     {userRole === 'boleto_fisico' ? (
                       filteredFlattenedTickets.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={10} className="text-center text-muted-foreground">
+                          <TableCell colSpan={11} className="text-center text-muted-foreground">
                             {searchTerm ? 'No se encontraron resultados' : 'No hay compras registradas'}
                           </TableCell>
                         </TableRow>
                       ) : (
                         filteredFlattenedTickets.map((ticket: FlattenedTicket) => (
-                          <TableRow key={ticket.id}>
+                          <TableRow key={ticket.id} className={selectedTickets.has(ticket.id) ? 'bg-primary/5' : ''}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedTickets.has(ticket.id)}
+                                onCheckedChange={() => toggleTicketSelection(ticket.id)}
+                              />
+                            </TableCell>
                             <TableCell>
                               <Badge variant="outline" className="bg-primary/20 text-primary text-xs">
                                 #{ticket.numero_boleto.padStart(5, '0')}
