@@ -113,6 +113,10 @@ export default function AdminDashboard() {
   const [deletingTicketId, setDeletingTicketId] = useState<string | null>(null)
   const [isDeletingTicket, setIsDeletingTicket] = useState(false)
 
+  // Revert individual ticket (for boleto_fisico panel)
+  const [revertingTicketId, setRevertingTicketId] = useState<string | null>(null)
+  const [isRevertingTicket, setIsRevertingTicket] = useState(false)
+
   // Reset for boleto_fisico
   const [showResetBoletoFisico, setShowResetBoletoFisico] = useState(false)
   const [isResettingBoletoFisico, setIsResettingBoletoFisico] = useState(false)
@@ -383,6 +387,48 @@ export default function AdminDashboard() {
     }
   }
 
+  // Update individual ticket status (for boleto_fisico panel)
+  const handleUpdateTicketEstado = async (ticketId: string, estado: 'aprobado' | 'rechazado') => {
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado }),
+      })
+
+      if (!response.ok) throw new Error('Error al actualizar')
+
+      toast.success(`Boleto ${estado === 'aprobado' ? 'aprobado' : 'rechazado'}`)
+      fetchData()
+    } catch {
+      toast.error('Error al actualizar el estado del boleto')
+    }
+  }
+
+  // Revert individual ticket to pending (for boleto_fisico panel)
+  const handleRevertTicket = async () => {
+    if (!revertingTicketId) return
+    
+    setIsRevertingTicket(true)
+    try {
+      const response = await fetch(`/api/tickets/${revertingTicketId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estado: 'pendiente' }),
+      })
+
+      if (!response.ok) throw new Error('Error al revertir')
+
+      toast.success('Boleto revertido a pendiente')
+      setRevertingTicketId(null)
+      fetchData()
+    } catch {
+      toast.error('Error al revertir el boleto')
+    } finally {
+      setIsRevertingTicket(false)
+    }
+  }
+
   const handleCreateReferido = async () => {
     if (!newReferidoNombre || !newReferidoCodigo) {
       toast.error('Por favor completa todos los campos')
@@ -472,7 +518,8 @@ export default function AdminDashboard() {
           banco: pg.banco,
           comprobante_url: pg.comprobante_url,
           referido_codigo: pg.referido_codigo,
-          estado: pg.estado,
+          // Use individual ticket status, converted to estado format
+          estado: t.status === 'verified' ? 'aprobado' : t.status === 'rejected' ? 'rechazado' : 'pendiente',
           fecha_compra: pg.created_at,
           // Use ticket's individual player if exists, otherwise use purchase group player
           nombre: t.ticket_player?.nombre || pg.player?.nombre || '',
@@ -813,6 +860,40 @@ export default function AdminDashboard() {
                   disabled={isReverting || !revertMotivo.trim()}
                 >
                   {isReverting ? 'Revirtiendo...' : 'Confirmar Reversion'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Revert Individual Ticket Modal (for boleto_fisico panel) */}
+        {revertingTicketId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-yellow-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/10">
+                  <RotateCcw className="h-6 w-6 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-bold text-yellow-500">Revertir Boleto a Pendiente</h3>
+              </div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Esta accion revertira el estado de este boleto individual a pendiente para ser verificado nuevamente.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setRevertingTicketId(null)}
+                  disabled={isRevertingTicket}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-yellow-600 text-white hover:bg-yellow-700"
+                  onClick={handleRevertTicket}
+                  disabled={isRevertingTicket}
+                >
+                  {isRevertingTicket ? 'Revirtiendo...' : 'Confirmar'}
                 </Button>
               </div>
             </div>
@@ -1177,7 +1258,7 @@ export default function AdminDashboard() {
                                 <Button
                                   size="sm"
                                   className="bg-green-600 text-white hover:bg-green-700"
-                                  onClick={() => handleUpdateCompraEstado(ticket.purchase_group_id, 'aprobado')}
+                                  onClick={() => handleUpdateTicketEstado(ticket.id, 'aprobado')}
                                 >
                                   <Check className="mr-1 h-4 w-4" />
                                   Aprobar
@@ -1185,7 +1266,7 @@ export default function AdminDashboard() {
                                 <Button
                                   size="sm"
                                   variant="destructive"
-                                  onClick={() => handleUpdateCompraEstado(ticket.purchase_group_id, 'rechazado')}
+                                  onClick={() => handleUpdateTicketEstado(ticket.id, 'rechazado')}
                                 >
                                   <X className="mr-1 h-4 w-4" />
                                   Rechazar
@@ -1519,7 +1600,7 @@ export default function AdminDashboard() {
                                   <Button
                                     size="sm"
                                     className="bg-yellow-600 text-white hover:bg-yellow-700"
-                                    onClick={() => setRevertingId(ticket.purchase_group_id)}
+                                    onClick={() => setRevertingTicketId(ticket.id)}
                                   >
                                     <RotateCcw className="mr-1 h-4 w-4" />
                                     Revertir
