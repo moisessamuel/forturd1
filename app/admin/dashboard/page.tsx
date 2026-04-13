@@ -431,6 +431,7 @@ export default function AdminDashboard() {
     : compras.filter((c: PurchaseGroup) => !isBoletoFisicoCompra(c))
 
   // For boleto_fisico panel: flatten tickets so each appears as individual row
+  // Use ticket_player if available (individual edit), otherwise fallback to purchase group player
   const flattenedTickets: FlattenedTicket[] = userRole === 'boleto_fisico' 
     ? filteredCompras.flatMap((pg: PurchaseGroup) => 
         (pg.tickets || []).map((t) => ({
@@ -447,9 +448,10 @@ export default function AdminDashboard() {
           referido_codigo: pg.referido_codigo,
           estado: pg.estado,
           fecha_compra: pg.created_at,
-          nombre: pg.player?.nombre || '',
-          phone_number: pg.player?.phone_number || '',
-          email: pg.player?.email || null,
+          // Use ticket's individual player if exists, otherwise use purchase group player
+          nombre: t.ticket_player?.nombre || pg.player?.nombre || '',
+          phone_number: t.ticket_player?.phone_number || pg.player?.phone_number || '',
+          email: t.ticket_player?.email || pg.player?.email || null,
         }))
       )
     : []
@@ -1198,20 +1200,6 @@ export default function AdminDashboard() {
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
-                                  variant="outline"
-                                  className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
-                                  onClick={() => setEditingPlayer({
-                                    id: pg.player?.id || '',
-                                    nombre: pg.player?.nombre || '',
-                                    phone_number: pg.player?.phone_number || '',
-                                    email: pg.player?.email || '',
-                                  })}
-                                >
-                                  <Pencil className="mr-1 h-4 w-4" />
-                                  Editar
-                                </Button>
-                                <Button
-                                  size="sm"
                                   className="bg-green-600 text-white hover:bg-green-700"
                                   onClick={() => handleUpdateCompraEstado(pg.id, 'aprobado')}
                                 >
@@ -1567,19 +1555,6 @@ export default function AdminDashboard() {
                           <TableCell>
                             {(userRole === 'admin' || userRole === 'boleto_fisico') ? (
                               <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
-                                  onClick={() => setEditingPlayer({
-                                    id: pg.player?.id || '',
-                                    nombre: pg.player?.nombre || '',
-                                    phone_number: pg.player?.phone_number || '',
-                                    email: pg.player?.email || '',
-                                  })}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
                                 {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
                                   <Button
                                     size="sm"
