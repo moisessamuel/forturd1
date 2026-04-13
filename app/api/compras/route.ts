@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('purchase_groups')
-      .select('*, player:players(*), tickets(*)')
+      .select('*, player:players(*), tickets(*, ticket_player:players(*))')
       .order('created_at', { ascending: false })
 
     if (estado && estado !== 'todos') {

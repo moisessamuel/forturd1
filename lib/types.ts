@@ -105,6 +105,7 @@ export interface Ticket {
   created_at: string
   // Joined fields
   player?: Player
+  ticket_player?: Player // Individual player for this specific ticket (used in boleto_fisico panel)
   purchase_group?: PurchaseGroup
 }
 

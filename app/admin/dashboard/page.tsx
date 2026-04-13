@@ -431,6 +431,7 @@ export default function AdminDashboard() {
     : compras.filter((c: PurchaseGroup) => !isBoletoFisicoCompra(c))
 
   // For boleto_fisico panel: flatten tickets so each appears as individual row
+  // Use ticket_player if available (individual edit), otherwise fallback to purchase group player
   const flattenedTickets: FlattenedTicket[] = userRole === 'boleto_fisico' 
     ? filteredCompras.flatMap((pg: PurchaseGroup) => 
         (pg.tickets || []).map((t) => ({
@@ -447,9 +448,10 @@ export default function AdminDashboard() {
           referido_codigo: pg.referido_codigo,
           estado: pg.estado,
           fecha_compra: pg.created_at,
-          nombre: pg.player?.nombre || '',
-          phone_number: pg.player?.phone_number || '',
-          email: pg.player?.email || null,
+          // Use ticket's individual player if exists, otherwise use purchase group player
+          nombre: t.ticket_player?.nombre || pg.player?.nombre || '',
+          phone_number: t.ticket_player?.phone_number || pg.player?.phone_number || '',
+          email: t.ticket_player?.email || pg.player?.email || null,
         }))
       )
     : []
