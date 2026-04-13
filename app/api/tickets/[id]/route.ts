@@ -98,3 +98,71 @@ export async function PATCH(
     )
   }
 }
+
+// DELETE - Delete individual ticket and free up the ticket number
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: ticketId } = await params
+
+    if (!ticketId) {
+      return NextResponse.json({ error: 'Ticket ID required' }, { status: 400 })
+    }
+
+    // Get ticket info including purchase group
+    const { data: ticket, error: ticketError } = await supabase
+      .from('tickets')
+      .select('*, purchase_group:purchase_groups(*)')
+      .eq('id', ticketId)
+      .single()
+
+    if (ticketError || !ticket) {
+      return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+    }
+
+    const purchaseGroup = ticket.purchase_group
+
+    // Delete the ticket
+    const { error: deleteTicketError } = await supabase
+      .from('tickets')
+      .delete()
+      .eq('id', ticketId)
+
+    if (deleteTicketError) throw deleteTicketError
+
+    // Update purchase group total_tickets count
+    const newTotalTickets = (purchaseGroup.total_tickets || 1) - 1
+    const newMonto = purchaseGroup.monto - (purchaseGroup.monto / purchaseGroup.total_tickets)
+
+    if (newTotalTickets <= 0) {
+      // If no more tickets, delete the entire purchase group
+      const { error: deletePgError } = await supabase
+        .from('purchase_groups')
+        .delete()
+        .eq('id', purchaseGroup.id)
+
+      if (deletePgError) throw deletePgError
+    } else {
+      // Update the purchase group with new totals
+      const { error: updatePgError } = await supabase
+        .from('purchase_groups')
+        .update({
+          total_tickets: newTotalTickets,
+          monto: newMonto,
+        })
+        .eq('id', purchaseGroup.id)
+
+      if (updatePgError) throw updatePgError
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting ticket:', error)
+    return NextResponse.json(
+      { error: 'Error al eliminar el boleto' },
+      { status: 500 }
+    )
+  }
+}

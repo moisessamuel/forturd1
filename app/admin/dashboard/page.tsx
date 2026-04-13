@@ -109,6 +109,10 @@ export default function AdminDashboard() {
   const [editingTicket, setEditingTicket] = useState<{ ticketId: string; purchaseGroupId: string; nombre: string; phone_number: string; email: string } | null>(null)
   const [isEditingTicket, setIsEditingTicket] = useState(false)
 
+  // Delete individual ticket (for boleto_fisico panel)
+  const [deletingTicketId, setDeletingTicketId] = useState<string | null>(null)
+  const [isDeletingTicket, setIsDeletingTicket] = useState(false)
+
   // Reset for boleto_fisico
   const [showResetBoletoFisico, setShowResetBoletoFisico] = useState(false)
   const [isResettingBoletoFisico, setIsResettingBoletoFisico] = useState(false)
@@ -354,6 +358,28 @@ export default function AdminDashboard() {
       toast.error('Error al eliminar la compra')
     } finally {
       setIsDeleting(false)
+    }
+  }
+
+  // Delete individual ticket (for boleto_fisico panel)
+  const handleDeleteTicket = async () => {
+    if (!deletingTicketId) return
+    
+    setIsDeletingTicket(true)
+    try {
+      const response = await fetch(`/api/tickets/${deletingTicketId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Error al eliminar')
+
+      toast.success('Boleto eliminado. El numero esta disponible nuevamente.')
+      setDeletingTicketId(null)
+      fetchData()
+    } catch {
+      toast.error('Error al eliminar el boleto')
+    } finally {
+      setIsDeletingTicket(false)
     }
   }
 
@@ -793,7 +819,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Delete Confirmation Modal (for purchase groups - admin) */}
         {deletingId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <div className="mx-4 w-full max-w-md rounded-xl border border-red-500/30 bg-card p-6 shadow-2xl">
@@ -830,6 +856,43 @@ export default function AdminDashboard() {
                   disabled={isDeleting}
                 >
                   {isDeleting ? 'Eliminando...' : 'Eliminar Permanentemente'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Individual Ticket Modal (for boleto_fisico panel) */}
+        {deletingTicketId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-red-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                  <Trash2 className="h-6 w-6 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-red-500">Eliminar Boleto</h3>
+              </div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                Esta accion eliminara este boleto individual. El numero quedara disponible para otros.
+              </p>
+              <p className="mb-4 text-sm font-semibold text-red-400">
+                {'Esta accion no se puede deshacer.'}
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setDeletingTicketId(null)}
+                  disabled={isDeletingTicket}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                  onClick={handleDeleteTicket}
+                  disabled={isDeletingTicket}
+                >
+                  {isDeletingTicket ? 'Eliminando...' : 'Eliminar Boleto'}
                 </Button>
               </div>
             </div>
@@ -1466,7 +1529,7 @@ export default function AdminDashboard() {
                                   size="sm"
                                   variant="outline"
                                   className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
-                                  onClick={() => setDeletingId(ticket.purchase_group_id)}
+                                  onClick={() => setDeletingTicketId(ticket.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
