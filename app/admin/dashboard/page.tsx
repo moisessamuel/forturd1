@@ -1013,6 +1013,19 @@ export default function AdminDashboard() {
                           <TableCell>
                             {(userRole === 'admin' || userRole === 'boleto_fisico') ? (
                               <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
+                                  onClick={() => setEditingPlayer({
+                                    id: pg.player?.id || '',
+                                    nombre: pg.player?.nombre || '',
+                                    phone_number: pg.player?.phone_number || '',
+                                    email: pg.player?.email || '',
+                                  })}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
                                 {(pg.estado === 'aprobado' || pg.estado === 'rechazado') && (
                                   <Button
                                     size="sm"
