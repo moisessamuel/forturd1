@@ -196,17 +196,27 @@ export async function GET(request: NextRequest) {
     // Search by ticket number - single result
     const cleanBoleto = boleto!.replace(/[^0-9]/g, '')
 
-    // Try new tickets table first - include ticket_player for individual edits
+    // Try new tickets table first
     const { data: ticket } = await supabase
       .from('tickets')
-      .select('*, ticket_player:players!tickets_player_id_fkey(*), purchase_group:purchase_groups(*, group_player:players(*))')
+      .select('*, purchase_group:purchase_groups(*, player:players(*))')
       .eq('numero_boleto', cleanBoleto)
       .single()
 
     if (ticket) {
+      // Get the ticket's individual player if player_id differs from purchase group's player_id
+      let ticketPlayer = null
+      if (ticket.player_id && ticket.player_id !== ticket.purchase_group?.player_id) {
+        const { data: individualPlayer } = await supabase
+          .from('players')
+          .select('*')
+          .eq('id', ticket.player_id)
+          .single()
+        ticketPlayer = individualPlayer
+      }
+      
       // Use individual ticket player if exists, otherwise fall back to purchase group player
-      const ticketPlayer = ticket.ticket_player
-      const groupPlayer = ticket.purchase_group?.group_player
+      const groupPlayer = ticket.purchase_group?.player
       const playerInfo = ticketPlayer || groupPlayer
       
       // Calculate individual ticket amount

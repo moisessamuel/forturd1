@@ -587,10 +587,10 @@ export default function AdminDashboard() {
           // Use individual ticket status, converted to estado format
           estado: t.status === 'verified' ? 'aprobado' : t.status === 'rejected' ? 'rechazado' : 'pendiente',
           fecha_compra: pg.created_at,
-          // Use ticket's individual player if exists, otherwise use purchase group player
-          nombre: t.ticket_player?.nombre || pg.player?.nombre || '',
-          phone_number: t.ticket_player?.phone_number || pg.player?.phone_number || '',
-          email: t.ticket_player?.email || pg.player?.email || null,
+          // Use purchase group player info (individual edits are reflected via API updates)
+          nombre: pg.player?.nombre || '',
+          phone_number: pg.player?.phone_number || '',
+          email: pg.player?.email || null,
         }))
       )
     : []
