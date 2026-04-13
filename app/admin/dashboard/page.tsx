@@ -44,7 +44,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import type { Referido, Config, PurchaseGroup } from '@/lib/types'
+import type { Referido, Config, PurchaseGroup, FlattenedTicket } from '@/lib/types'
 import Image from 'next/image'
 
 interface AdminStats {
@@ -104,6 +104,10 @@ export default function AdminDashboard() {
   // Edit player data (for boleto_fisico panel)
   const [editingPlayer, setEditingPlayer] = useState<{ id: string; nombre: string; phone_number: string; email: string } | null>(null)
   const [isEditingPlayer, setIsEditingPlayer] = useState(false)
+
+  // Edit individual ticket (for boleto_fisico - each ticket can have different buyer info)
+  const [editingTicket, setEditingTicket] = useState<{ ticketId: string; purchaseGroupId: string; nombre: string; phone_number: string; email: string } | null>(null)
+  const [isEditingTicket, setIsEditingTicket] = useState(false)
 
   // Reset for boleto_fisico
   const [showResetBoletoFisico, setShowResetBoletoFisico] = useState(false)
@@ -220,6 +224,31 @@ export default function AdminDashboard() {
       toast.error('Error al actualizar los datos')
     } finally {
       setIsEditingPlayer(false)
+    }
+  }
+
+  // Update individual ticket buyer info (for boleto_fisico panel)
+  const handleUpdateTicket = async () => {
+    if (!editingTicket) return
+    setIsEditingTicket(true)
+    try {
+      const res = await fetch(`/api/tickets/${editingTicket.ticketId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: editingTicket.nombre,
+          phone_number: editingTicket.phone_number,
+          email: editingTicket.email || null,
+        }),
+      })
+      if (!res.ok) throw new Error('Error al actualizar')
+      toast.success('Datos del boleto actualizados')
+      setEditingTicket(null)
+      fetchData()
+    } catch {
+      toast.error('Error al actualizar los datos del boleto')
+    } finally {
+      setIsEditingTicket(false)
     }
   }
 
@@ -401,7 +430,50 @@ export default function AdminDashboard() {
     ? compras.filter((c: PurchaseGroup) => isBoletoFisicoCompra(c))
     : compras.filter((c: PurchaseGroup) => !isBoletoFisicoCompra(c))
 
-  // Filter pending payments with optional search by ticket number
+  // For boleto_fisico panel: flatten tickets so each appears as individual row
+  const flattenedTickets: FlattenedTicket[] = userRole === 'boleto_fisico' 
+    ? filteredCompras.flatMap((pg: PurchaseGroup) => 
+        (pg.tickets || []).map((t) => ({
+          id: t.id,
+          numero_boleto: t.numero_boleto,
+          purchase_group_id: pg.id,
+          player_id: t.player_id,
+          status: t.status,
+          created_at: t.created_at,
+          monto_unitario: pg.monto / (pg.total_tickets || 1),
+          moneda: pg.moneda,
+          banco: pg.banco,
+          comprobante_url: pg.comprobante_url,
+          referido_codigo: pg.referido_codigo,
+          estado: pg.estado,
+          fecha_compra: pg.created_at,
+          nombre: pg.player?.nombre || '',
+          phone_number: pg.player?.phone_number || '',
+          email: pg.player?.email || null,
+        }))
+      )
+    : []
+
+  // Filter pending - for boleto_fisico use flattenedTickets, for others use purchase groups
+  const pendingFlattenedTickets = flattenedTickets.filter(t => t.estado === 'pendiente')
+    .filter(t => {
+      if (!pendingSearchTerm.trim()) return true
+      const term = pendingSearchTerm.toLowerCase().replace('#', '')
+      return t.numero_boleto.toLowerCase().includes(term)
+    })
+
+  // Filter all flattened tickets with estado and search filters (for Compras section in boleto_fisico)
+  const filteredFlattenedTickets = flattenedTickets
+    .filter(t => estadoFilter === 'todos' || t.estado === estadoFilter)
+    .filter(t => {
+      if (!searchTerm.trim()) return true
+      const term = searchTerm.toLowerCase()
+      return t.numero_boleto.toLowerCase().includes(term) ||
+             t.nombre.toLowerCase().includes(term) ||
+             t.phone_number.toLowerCase().includes(term)
+    })
+
+  // Filter pending payments with optional search by ticket number (for admin/referido_plus)
   const pendingPayments = filteredCompras
     .filter((c: PurchaseGroup) => c.estado === 'pendiente')
     .filter((c: PurchaseGroup) => {
@@ -541,6 +613,69 @@ export default function AdminDashboard() {
                   disabled={isResetting}
                 >
                   {isResetting ? 'Restableciendo...' : 'Si, confirmo restablecer'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Individual Ticket Modal (for boleto_fisico) */}
+        {editingTicket && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-cyan-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10">
+                  <Pencil className="h-6 w-6 text-cyan-500" />
+                </div>
+                <h3 className="text-xl font-bold text-cyan-500">Editar Datos del Boleto</h3>
+              </div>
+              <p className="mb-4 text-sm text-muted-foreground">
+                El numero de boleto no es editable. Solo puedes modificar los datos del comprador.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Nombre</label>
+                  <Input
+                    value={editingTicket.nombre}
+                    onChange={(e) => setEditingTicket({ ...editingTicket, nombre: e.target.value })}
+                    placeholder="Nombre completo"
+                    className="bg-input"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Telefono</label>
+                  <Input
+                    value={editingTicket.phone_number}
+                    onChange={(e) => setEditingTicket({ ...editingTicket, phone_number: e.target.value })}
+                    placeholder="Numero de telefono"
+                    className="bg-input"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electronico</label>
+                  <Input
+                    value={editingTicket.email}
+                    onChange={(e) => setEditingTicket({ ...editingTicket, email: e.target.value })}
+                    placeholder="correo@ejemplo.com"
+                    className="bg-input"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setEditingTicket(null)}
+                  disabled={isEditingTicket}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-cyan-600 text-white hover:bg-cyan-700"
+                  onClick={handleUpdateTicket}
+                  disabled={isEditingTicket}
+                >
+                  {isEditingTicket ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
               </div>
             </div>
@@ -889,7 +1024,7 @@ export default function AdminDashboard() {
                       <TableHead>{'Boleto #'}</TableHead>
                       <TableHead>Nombre</TableHead>
                       <TableHead>{'Telefono'}</TableHead>
-                      <TableHead>Boletos</TableHead>
+                      {userRole !== 'boleto_fisico' && <TableHead>Boletos</TableHead>}
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Referido</TableHead>
@@ -899,13 +1034,111 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pendingPayments.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={10} className="text-center text-muted-foreground">
-                          No hay pagos pendientes
-                        </TableCell>
-                      </TableRow>
+                    {/* Boleto Fisico: Show individual tickets */}
+                    {userRole === 'boleto_fisico' ? (
+                      pendingFlattenedTickets.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} className="text-center text-muted-foreground">
+                            No hay pagos pendientes
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        pendingFlattenedTickets.map((ticket: FlattenedTicket) => (
+                          <TableRow key={ticket.id}>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-primary/20 text-primary text-xs">
+                                #{ticket.numero_boleto.padStart(5, '0')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium text-foreground">
+                                {ticket.nombre || '?'}
+                              </span>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{ticket.phone_number}</TableCell>
+                            <TableCell className="font-medium">{formatCurrency(ticket.monto_unitario, ticket.moneda)}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-green-500/20 text-green-500">
+                                {ticket.banco}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {ticket.referido_codigo ? (
+                                <Badge variant="outline">{ticket.referido_codigo}</Badge>
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell className="text-xs">{formatDate(ticket.fecha_compra)}</TableCell>
+                            <TableCell>
+                              {ticket.comprobante_url && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Comprobante de Pago</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                                      <Image
+                                        src={ticket.comprobante_url}
+                                        alt="Comprobante"
+                                        fill
+                                        className="object-contain"
+                                      />
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
+                                  onClick={() => setEditingTicket({
+                                    ticketId: ticket.id,
+                                    purchaseGroupId: ticket.purchase_group_id,
+                                    nombre: ticket.nombre,
+                                    phone_number: ticket.phone_number,
+                                    email: ticket.email || '',
+                                  })}
+                                >
+                                  <Pencil className="mr-1 h-4 w-4" />
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 text-white hover:bg-green-700"
+                                  onClick={() => handleUpdateCompraEstado(ticket.purchase_group_id, 'aprobado')}
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Aprobar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleUpdateCompraEstado(ticket.purchase_group_id, 'rechazado')}
+                                >
+                                  <X className="mr-1 h-4 w-4" />
+                                  Rechazar
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )
                     ) : (
+                      /* Admin/Referido Plus: Show grouped purchases */
+                      pendingPayments.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={10} className="text-center text-muted-foreground">
+                            No hay pagos pendientes
+                          </TableCell>
+                        </TableRow>
+                      ) : (
                       pendingPayments.map((pg: PurchaseGroup) => (
                         <TableRow key={pg.id}>
                           <TableCell>
@@ -1000,7 +1233,7 @@ export default function AdminDashboard() {
                           </TableCell>
                         </TableRow>
                       ))
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </div>
@@ -1029,16 +1262,24 @@ export default function AdminDashboard() {
               <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Card className="border-border/50 bg-secondary/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">COMPRAS APROBADAS</p>
+                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'BOLETOS APROBADOS' : 'COMPRAS APROBADAS'}</p>
                     <p className="text-2xl font-bold text-green-500">
-                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
+                      {userRole === 'boleto_fisico' 
+                        ? flattenedTickets.filter(t => t.estado === 'aprobado').length
+                        : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
+                      {userRole === 'boleto_fisico'
+                        ? formatCurrency(flattenedTickets.filter(t => t.estado === 'aprobado' && (t.moneda || 'DOP') === 'DOP').reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
+                        : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
                     </p>
-                    {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length > 0 && (
+                    {(userRole === 'boleto_fisico' 
+                      ? flattenedTickets.filter(t => t.estado === 'aprobado' && t.moneda === 'USD').length > 0
+                      : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length > 0) && (
                       <p className="text-xs text-green-400">
-                        {formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
+                        {userRole === 'boleto_fisico'
+                          ? formatCurrency(flattenedTickets.filter(t => t.estado === 'aprobado' && t.moneda === 'USD').reduce((s, t) => s + t.monto_unitario, 0), 'USD')
+                          : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
                       </p>
                     )}
                   </CardContent>
@@ -1080,7 +1321,9 @@ export default function AdminDashboard() {
                   <CardContent className="p-4">
                     <p className="text-xs text-muted-foreground">BOLETOS VENDIDOS</p>
                     <p className="text-2xl font-bold text-primary">
-                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
+                      {userRole === 'boleto_fisico'
+                        ? flattenedTickets.filter(t => t.estado === 'aprobado').length
+                        : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
                     </p>
                     <p className="text-xs text-muted-foreground">boletos aprobados</p>
                   </CardContent>
@@ -1119,11 +1362,11 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Boletos</TableHead>
+                      <TableHead>{userRole === 'boleto_fisico' ? 'Boleto #' : 'Boletos'}</TableHead>
                       <TableHead>Comprador</TableHead>
                       <TableHead>Telefono</TableHead>
-                      <TableHead>Cedula</TableHead>
-                      <TableHead>Qty</TableHead>
+                      {userRole !== 'boleto_fisico' && <TableHead>Cedula</TableHead>}
+                      {userRole !== 'boleto_fisico' && <TableHead>Qty</TableHead>}
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Referido</TableHead>
@@ -1134,13 +1377,125 @@ export default function AdminDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCompras.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={12} className="text-center text-muted-foreground">
-                          {searchTerm ? 'No se encontraron resultados' : 'No hay compras registradas'}
-                        </TableCell>
-                      </TableRow>
+                    {/* Boleto Fisico: Show individual tickets */}
+                    {userRole === 'boleto_fisico' ? (
+                      filteredFlattenedTickets.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={10} className="text-center text-muted-foreground">
+                            {searchTerm ? 'No se encontraron resultados' : 'No hay compras registradas'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredFlattenedTickets.map((ticket: FlattenedTicket) => (
+                          <TableRow key={ticket.id}>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-primary/20 text-primary text-xs">
+                                #{ticket.numero_boleto.padStart(5, '0')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className="bg-green-600 text-white">
+                                {ticket.nombre?.split(' ').slice(0, 2).join(' ') || 'N/A'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{ticket.phone_number}</TableCell>
+                            <TableCell className="font-medium">{formatCurrency(ticket.monto_unitario, ticket.moneda)}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="bg-green-500/20 text-green-500">
+                                {ticket.banco}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {ticket.referido_codigo ? (
+                                <Badge variant="outline">{ticket.referido_codigo}</Badge>
+                              ) : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  ticket.estado === 'aprobado'
+                                    ? 'bg-green-500 text-white'
+                                    : ticket.estado === 'rechazado'
+                                    ? 'bg-red-500 text-white'
+                                    : 'bg-yellow-500 text-black'
+                                }
+                              >
+                                {ticket.estado}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">{formatDate(ticket.fecha_compra)}</TableCell>
+                            <TableCell>
+                              {ticket.comprobante_url && (
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm">
+                                      <Eye className="h-4 w-4" /> Ver
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Comprobante de Pago</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                                      <Image
+                                        src={ticket.comprobante_url}
+                                        alt="Comprobante"
+                                        fill
+                                        className="object-contain"
+                                      />
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
+                                  onClick={() => setEditingTicket({
+                                    ticketId: ticket.id,
+                                    purchaseGroupId: ticket.purchase_group_id,
+                                    nombre: ticket.nombre,
+                                    phone_number: ticket.phone_number,
+                                    email: ticket.email || '',
+                                  })}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                {(ticket.estado === 'aprobado' || ticket.estado === 'rechazado') && (
+                                  <Button
+                                    size="sm"
+                                    className="bg-yellow-600 text-white hover:bg-yellow-700"
+                                    onClick={() => setRevertingId(ticket.purchase_group_id)}
+                                  >
+                                    <RotateCcw className="mr-1 h-4 w-4" />
+                                    Revertir
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-red-500/50 text-red-500 hover:bg-red-500 hover:text-white"
+                                  onClick={() => setDeletingId(ticket.purchase_group_id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )
                     ) : (
+                      /* Admin/Referido Plus: Show grouped purchases */
+                      filteredCompras.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={12} className="text-center text-muted-foreground">
+                            {searchTerm ? 'No se encontraron resultados' : 'No hay compras registradas'}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
                       filteredCompras.map((pg: PurchaseGroup) => (
                         <TableRow key={pg.id}>
                           <TableCell>
@@ -1250,12 +1605,12 @@ export default function AdminDashboard() {
                           </TableCell>
                         </TableRow>
                       ))
-                    )}
+                    ))}
                   </TableBody>
                 </Table>
               </div>
               <p className="mt-2 text-right text-xs text-muted-foreground">
-                {filteredCompras.length} resultados
+                {userRole === 'boleto_fisico' ? filteredFlattenedTickets.length : filteredCompras.length} resultados
               </p>
             </CardContent>
           )}

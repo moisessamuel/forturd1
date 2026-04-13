@@ -118,6 +118,28 @@ export interface PurchaseFormData {
   referido_codigo?: string
 }
 
+// Flattened ticket for individual display in boleto_fisico panel
+export interface FlattenedTicket {
+  id: string // ticket id
+  numero_boleto: string
+  purchase_group_id: string
+  player_id: string
+  status: 'pending' | 'verified' | 'rejected'
+  created_at: string
+  // From purchase group
+  monto_unitario: number
+  moneda: string
+  banco: string | null
+  comprobante_url: string | null
+  referido_codigo: string | null
+  estado: EstadoCompra
+  fecha_compra: string
+  // Player info (can be edited per ticket)
+  nombre: string
+  phone_number: string
+  email: string | null
+}
+
 export interface AdminStats {
   ventas_totales: number
   agentes_activos: number
