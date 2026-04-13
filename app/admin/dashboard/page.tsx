@@ -718,12 +718,12 @@ export default function AdminDashboard() {
                       className="bg-input pl-9"
                     />
                   </div>
-                  {pendingTicketSearch.trim() && (
+                  {pendingTicketSearch && pendingTicketSearch.trim() && (
                     <div className="mt-3">
                       {(() => {
-                        const searchNum = pendingTicketSearch.trim().toLowerCase()
-                        const foundPending = pendingPayments.filter((pg: PurchaseGroup) =>
-                          pg.tickets?.some((t) => t.numero_boleto.toLowerCase().includes(searchNum))
+                        const searchNum = (pendingTicketSearch || '').trim().toLowerCase()
+                        const foundPending = (pendingPayments || []).filter((pg: PurchaseGroup) =>
+                          pg?.tickets?.some((t) => t?.numero_boleto?.toLowerCase()?.includes(searchNum))
                         )
                         if (foundPending.length === 0) {
                           return (
@@ -740,17 +740,17 @@ export default function AdminDashboard() {
                             {foundPending.map((pg: PurchaseGroup) => (
                               <div key={pg.id} className="rounded border border-border/50 bg-card p-3">
                                 <div className="mb-2 flex flex-wrap gap-1">
-                                  {pg.tickets?.map((t) => (
+                                  {(pg.tickets || []).map((t) => (
                                     <Badge
                                       key={t.id}
                                       variant="outline"
                                       className={
-                                        t.numero_boleto.toLowerCase().includes(searchNum)
+                                        (t.numero_boleto || '').toLowerCase().includes(searchNum)
                                           ? 'bg-cyan-500/30 text-cyan-500 border-cyan-500'
                                           : 'bg-primary/20 text-primary'
                                       }
                                     >
-                                      #{t.numero_boleto.padStart(5, '0')}
+                                      #{(t.numero_boleto || '').padStart(5, '0')}
                                     </Badge>
                                   ))}
                                 </div>
