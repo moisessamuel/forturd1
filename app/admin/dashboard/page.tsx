@@ -100,6 +100,14 @@ export default function AdminDashboard() {
   // Delete purchase
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Edit player data (for boleto_fisico panel)
+  const [editingPlayer, setEditingPlayer] = useState<{ id: string; nombre: string; phone_number: string; email: string } | null>(null)
+  const [isEditingPlayer, setIsEditingPlayer] = useState(false)
+
+  // Reset for boleto_fisico
+  const [showResetBoletoFisico, setShowResetBoletoFisico] = useState(false)
+  const [isResettingBoletoFisico, setIsResettingBoletoFisico] = useState(false)
   
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -188,6 +196,48 @@ export default function AdminDashboard() {
     setIsLoading(true)
     fetchData()
     toast.success('Datos actualizados')
+  }
+
+  // Update player data (name, phone, email)
+  const handleUpdatePlayer = async () => {
+    if (!editingPlayer) return
+    setIsEditingPlayer(true)
+    try {
+      const res = await fetch(`/api/players/${editingPlayer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombre: editingPlayer.nombre,
+          phone_number: editingPlayer.phone_number,
+          email: editingPlayer.email || null,
+        }),
+      })
+      if (!res.ok) throw new Error('Error al actualizar')
+      toast.success('Datos del comprador actualizados')
+      setEditingPlayer(null)
+      fetchData()
+    } catch {
+      toast.error('Error al actualizar los datos')
+    } finally {
+      setIsEditingPlayer(false)
+    }
+  }
+
+  // Reset only boleto_fisico purchases
+  const handleResetBoletoFisico = async () => {
+    setIsResettingBoletoFisico(true)
+    try {
+      const res = await fetch('/api/admin/reset-boleto-fisico', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      toast.success('Boletos fisicos restablecidos correctamente')
+      setShowResetBoletoFisico(false)
+      fetchData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error al restablecer')
+    } finally {
+      setIsResettingBoletoFisico(false)
+    }
   }
 
   const handleSaveConfig = async () => {
@@ -412,8 +462,53 @@ export default function AdminDashboard() {
                 Restablecer
               </Button>
             )}
+            {userRole === 'boleto_fisico' && (
+              <Button 
+                variant="outline" 
+                className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                onClick={() => setShowResetBoletoFisico(true)}
+              >
+                <Settings className="mr-2 h-4 w-4" />
+                Restablecer
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* Reset Boleto Fisico Confirmation Modal */}
+        {showResetBoletoFisico && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-red-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
+                  <Settings className="h-6 w-6 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold text-red-500">Restablecer Boletos Fisicos</h3>
+              </div>
+              <p className="mb-6 text-foreground/80">
+                Esta accion eliminara TODOS los boletos fisicos (compras con referido BOLETOFISICO o nombre &quot;Boleto Fisico&quot;). 
+                Esta accion no puede deshacerse. Los boletos del panel administrativo NO seran afectados.
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowResetBoletoFisico(false)}
+                  disabled={isResettingBoletoFisico}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-red-600 text-white hover:bg-red-700"
+                  onClick={handleResetBoletoFisico}
+                  disabled={isResettingBoletoFisico}
+                >
+                  {isResettingBoletoFisico ? 'Restableciendo...' : 'Confirmar'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Reset Confirmation Modal */}
         {showResetConfirm && (
@@ -446,6 +541,66 @@ export default function AdminDashboard() {
                   disabled={isResetting}
                 >
                   {isResetting ? 'Restableciendo...' : 'Si, confirmo restablecer'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Player Modal */}
+        {editingPlayer && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="mx-4 w-full max-w-md rounded-xl border border-cyan-500/30 bg-card p-6 shadow-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10">
+                  <Pencil className="h-6 w-6 text-cyan-500" />
+                </div>
+                <h3 className="text-xl font-bold text-cyan-500">Editar Datos del Comprador</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Nombre</label>
+                  <Input
+                    value={editingPlayer.nombre}
+                    onChange={(e) => setEditingPlayer({ ...editingPlayer, nombre: e.target.value })}
+                    placeholder="Nombre completo"
+                    className="bg-input"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Telefono</label>
+                  <Input
+                    value={editingPlayer.phone_number}
+                    onChange={(e) => setEditingPlayer({ ...editingPlayer, phone_number: e.target.value })}
+                    placeholder="Numero de telefono"
+                    className="bg-input"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electronico</label>
+                  <Input
+                    value={editingPlayer.email}
+                    onChange={(e) => setEditingPlayer({ ...editingPlayer, email: e.target.value })}
+                    placeholder="correo@ejemplo.com"
+                    className="bg-input"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setEditingPlayer(null)}
+                  disabled={isEditingPlayer}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  className="flex-1 bg-cyan-600 text-white hover:bg-cyan-700"
+                  onClick={handleUpdatePlayer}
+                  disabled={isEditingPlayer}
+                >
+                  {isEditingPlayer ? 'Guardando...' : 'Guardar Cambios'}
                 </Button>
               </div>
             </div>
@@ -808,6 +963,20 @@ export default function AdminDashboard() {
                           <TableCell>
                             {(userRole === 'admin' || userRole === 'boleto_fisico') ? (
                               <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-cyan-500/50 text-cyan-500 hover:bg-cyan-500 hover:text-white"
+                                  onClick={() => setEditingPlayer({
+                                    id: pg.player?.id || '',
+                                    nombre: pg.player?.nombre || '',
+                                    phone_number: pg.player?.phone_number || '',
+                                    email: pg.player?.email || '',
+                                  })}
+                                >
+                                  <Pencil className="mr-1 h-4 w-4" />
+                                  Editar
+                                </Button>
                                 <Button
                                   size="sm"
                                   className="bg-green-600 text-white hover:bg-green-700"
