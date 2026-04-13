@@ -261,17 +261,20 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
         <p className="mb-2 font-semibold text-primary">Importante sobre los premios:</p>
         <p className="mb-3 text-sm text-foreground/80">
-          Los dos vehículos serán otorgados como premios independientes. Cada premio tendrá su propio ganador. Tercer premio sorpresa, el cual será anunciado próximamente.
+          Los dos vehiculos seran otorgados como premios independientes. Cada premio tendra su propio ganador. Tercer premio sorpresa, el cual sera anunciado proximamente.
         </p>
-        <p className="mb-1 text-sm font-semibold text-primary">Fechas de entrega:</p>
+        <p className="mb-1 text-sm font-semibold text-primary">Las fechas de nuestros sorteos son las siguientes:</p>
         <ul className="mb-3 space-y-1 text-sm text-foreground/80">
-          <li>1er premio: entre 15/06/2026 al 15/07/2026</li>
-          <li>2do premio: entre 15/07/2026 al 15/08/2026</li>
-          <li>3er premio: entre 15/08/2026 al 15/09/2026</li>
+          <li>{"1er sorteo: entre 15/06/2026 al 15/07/2026, se seleccionara un dia para sortear el primero de los premios (sorpresa)."}</li>
+          <li>{"2do sorteo: entre 15/07/2026 al 15/08/2026 se seleccionara un dia para sortear el segundo de los premios (BMW x7 o BMW x6)."}</li>
+          <li>{"3er sorteo: entre 15/08/2026 al 15/09/2026 se seleccionara un dia para sortear el tercer de los premios (BMW restante)."}</li>
         </ul>
-        <p className="mb-1 text-sm font-semibold text-primary">Selección del ganador:</p>
+        <p className="mb-2 text-sm text-foreground/80">
+          <span className="font-semibold text-primary">Dato importante:</span> recordando que los boletos son limitados, si se completa la totalidad de boletos vendidos se procederia a realizar el sorteo de los tres premios juntos.
+        </p>
+        <p className="mb-1 text-sm font-semibold text-primary">{"Seleccion del ganador:"}</p>
         <p className="text-sm text-foreground/80">
-          El ganador será seleccionado de forma transparente mediante los números emitidos en el sorteo de la quiniela de la Lotería Nacional Gana Más, eliminando el último dígito de los números presentados.
+          {"El ganador sera seleccionado de forma transparente mediante los numeros emitidos en el sorteo de la quiniela de la Loteria Nacional Gana Mas, eliminando el ultimo digito de los numeros presentados."}
         </p>
       </div>
     </div>
