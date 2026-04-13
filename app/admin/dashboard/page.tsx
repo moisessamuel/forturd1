@@ -73,6 +73,7 @@ export default function AdminDashboard() {
   // Filters
   const [searchTerm, setSearchTerm] = useState('')
   const [estadoFilter, setEstadoFilter] = useState<'todos' | 'pendiente' | 'aprobado' | 'rechazado'>('todos')
+  const [pendingSearchTerm, setPendingSearchTerm] = useState('')
   
   // Config form
   const [totalBoletos, setTotalBoletos] = useState('')
@@ -337,13 +338,23 @@ export default function AdminDashboard() {
   }
 
   // Filter compras based on user role
+  // Admin: excludes BOLETOFISICO (those go to the physical tickets panel)
+  // referido_plus: only sees GAMUNDI referrals
+  // boleto_fisico: only sees BOLETOFISICO referrals
   const filteredCompras = userRole === 'referido_plus' 
     ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'GAMUNDI')
     : userRole === 'boleto_fisico'
     ? compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() === 'BOLETOFISICO')
-    : compras
+    : compras.filter((c: PurchaseGroup) => c.referido?.codigo?.toUpperCase() !== 'BOLETOFISICO')
 
-  const pendingPayments = filteredCompras.filter((c: PurchaseGroup) => c.estado === 'pendiente')
+  // Filter pending payments with optional search by ticket number
+  const pendingPayments = filteredCompras
+    .filter((c: PurchaseGroup) => c.estado === 'pendiente')
+    .filter((c: PurchaseGroup) => {
+      if (!pendingSearchTerm.trim()) return true
+      const term = pendingSearchTerm.toLowerCase().replace('#', '')
+      return c.tickets?.some((t) => t.numero_boleto.toLowerCase().includes(term))
+    })
 
   if (isLoading) {
     return (
@@ -698,6 +709,20 @@ export default function AdminDashboard() {
           </CardHeader>
           {sectionsOpen.pagos && (
             <CardContent>
+              {/* Search input for pending tickets - visible for boleto_fisico */}
+              {userRole === 'boleto_fisico' && (
+                <div className="mb-4">
+                  <div className="relative max-w-md">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por numero de boleto..."
+                      value={pendingSearchTerm}
+                      onChange={(e) => setPendingSearchTerm(e.target.value)}
+                      className="bg-input pl-9"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
