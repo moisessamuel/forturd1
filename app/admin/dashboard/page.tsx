@@ -128,6 +128,9 @@ export default function AdminDashboard() {
   const [showBulkEditModal, setShowBulkEditModal] = useState(false)
   const [bulkEditData, setBulkEditData] = useState({ nombre: '', phone_number: '', email: '' })
   const [isBulkEditing, setIsBulkEditing] = useState(false)
+
+  // Local overrides for individual ticket edits (persists visual changes until data refresh)
+  const [ticketEdits, setTicketEdits] = useState<Record<string, { nombre: string; phone_number: string; email: string | null }>>({})
   
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -259,22 +262,15 @@ export default function AdminDashboard() {
       })
       if (!res.ok) throw new Error('Error al actualizar')
       
-      // Update local state immediately for boleto_fisico panel
+      // Update local ticket edits state for immediate visual feedback
       if (userRole === 'boleto_fisico') {
-        setCompras(prevCompras => prevCompras.map(pg => {
-          if (pg.id === editingTicket.purchaseGroupId) {
-            // Update the player info in the purchase group
-            return {
-              ...pg,
-              player: pg.player ? {
-                ...pg.player,
-                nombre: editingTicket.nombre,
-                phone_number: editingTicket.phone_number,
-                email: editingTicket.email || null,
-              } : pg.player
-            }
+        setTicketEdits(prev => ({
+          ...prev,
+          [editingTicket.ticketId]: {
+            nombre: editingTicket.nombre,
+            phone_number: editingTicket.phone_number,
+            email: editingTicket.email || null,
           }
-          return pg
         }))
       }
       
@@ -481,24 +477,17 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error al actualizar')
 
-      // Update local state immediately for boleto_fisico panel
+      // Update local ticket edits state for immediate visual feedback
       const selectedTicketIds = Array.from(selectedTickets)
-      setCompras(prevCompras => prevCompras.map(pg => {
-        // Check if any ticket in this purchase group was edited
-        const hasEditedTicket = pg.tickets?.some(t => selectedTicketIds.includes(t.id))
-        if (hasEditedTicket) {
-          return {
-            ...pg,
-            player: pg.player ? {
-              ...pg.player,
-              nombre: bulkEditData.nombre,
-              phone_number: bulkEditData.phone_number,
-              email: bulkEditData.email || null,
-            } : pg.player
-          }
+      const newEdits: Record<string, { nombre: string; phone_number: string; email: string | null }> = {}
+      selectedTicketIds.forEach(ticketId => {
+        newEdits[ticketId] = {
+          nombre: bulkEditData.nombre,
+          phone_number: bulkEditData.phone_number,
+          email: bulkEditData.email || null,
         }
-        return pg
-      }))
+      })
+      setTicketEdits(prev => ({ ...prev, ...newEdits }))
 
       toast.success(`${selectedTickets.size} boletos actualizados correctamente`)
       setSelectedTickets(new Set())
@@ -614,26 +603,30 @@ export default function AdminDashboard() {
   // Use ticket_player if available (individual edit), otherwise fallback to purchase group player
   const flattenedTickets: FlattenedTicket[] = userRole === 'boleto_fisico' 
     ? filteredCompras.flatMap((pg: PurchaseGroup) => 
-        (pg.tickets || []).map((t) => ({
-          id: t.id,
-          numero_boleto: t.numero_boleto,
-          purchase_group_id: pg.id,
-          player_id: t.player_id,
-          status: t.status,
-          created_at: t.created_at,
-          monto_unitario: pg.monto / (pg.total_tickets || 1),
-          moneda: pg.moneda,
-          banco: pg.banco,
-          comprobante_url: pg.comprobante_url,
-          referido_codigo: pg.referido_codigo,
-          // Use individual ticket status, converted to estado format
-          estado: t.status === 'verified' ? 'aprobado' : t.status === 'rejected' ? 'rechazado' : 'pendiente',
-          fecha_compra: pg.created_at,
-          // Use purchase group player info (individual edits are reflected via API updates)
-          nombre: pg.player?.nombre || '',
-          phone_number: pg.player?.phone_number || '',
-          email: pg.player?.email || null,
-        }))
+        (pg.tickets || []).map((t) => {
+          // Check if this ticket has local edits that should override the server data
+          const localEdit = ticketEdits[t.id]
+          return {
+            id: t.id,
+            numero_boleto: t.numero_boleto,
+            purchase_group_id: pg.id,
+            player_id: t.player_id,
+            status: t.status,
+            created_at: t.created_at,
+            monto_unitario: pg.monto / (pg.total_tickets || 1),
+            moneda: pg.moneda,
+            banco: pg.banco,
+            comprobante_url: pg.comprobante_url,
+            referido_codigo: pg.referido_codigo,
+            // Use individual ticket status, converted to estado format
+            estado: t.status === 'verified' ? 'aprobado' : t.status === 'rejected' ? 'rechazado' : 'pendiente',
+            fecha_compra: pg.created_at,
+            // Use local edits if available, otherwise use purchase group player info
+            nombre: localEdit?.nombre || pg.player?.nombre || '',
+            phone_number: localEdit?.phone_number || pg.player?.phone_number || '',
+            email: localEdit?.email || pg.player?.email || null,
+          }
+        })
       )
     : []
 
