@@ -604,8 +604,13 @@ export default function AdminDashboard() {
   const flattenedTickets: FlattenedTicket[] = userRole === 'boleto_fisico' 
     ? filteredCompras.flatMap((pg: PurchaseGroup) => 
         (pg.tickets || []).map((t) => {
-          // Check if this ticket has local edits that should override the server data
+          // Priority: 1. Local edits (for immediate UI feedback)
+          //           2. ticket_player from server (persisted individual edits)
+          //           3. purchase group player (original buyer info)
           const localEdit = ticketEdits[t.id]
+          const serverTicketPlayer = t.ticket_player
+          const groupPlayer = pg.player
+          
           return {
             id: t.id,
             numero_boleto: t.numero_boleto,
@@ -621,10 +626,10 @@ export default function AdminDashboard() {
             // Use individual ticket status, converted to estado format
             estado: t.status === 'verified' ? 'aprobado' : t.status === 'rejected' ? 'rechazado' : 'pendiente',
             fecha_compra: pg.created_at,
-            // Use local edits if available, otherwise use purchase group player info
-            nombre: localEdit?.nombre || pg.player?.nombre || '',
-            phone_number: localEdit?.phone_number || pg.player?.phone_number || '',
-            email: localEdit?.email || pg.player?.email || null,
+            // Use local edits first, then server ticket_player, then purchase group player
+            nombre: localEdit?.nombre || serverTicketPlayer?.nombre || groupPlayer?.nombre || '',
+            phone_number: localEdit?.phone_number || serverTicketPlayer?.phone_number || groupPlayer?.phone_number || '',
+            email: localEdit?.email || serverTicketPlayer?.email || groupPlayer?.email || null,
           }
         })
       )

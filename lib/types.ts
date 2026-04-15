@@ -105,6 +105,7 @@ export interface Ticket {
   created_at: string
   // Joined fields
   player?: Player
+  ticket_player?: Player // Individual player for edited tickets (different from purchase group player)
   purchase_group?: PurchaseGroup
 }
 

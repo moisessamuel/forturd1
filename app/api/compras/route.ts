@@ -34,8 +34,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error al obtener compras' }, { status: 500 })
     }
 
+    // For each group, load individual ticket players if they differ from purchase group player
+    const groupsWithTicketPlayers = await Promise.all((groups || []).map(async (group) => {
+      const tickets = group.tickets || []
+      const purchaseGroupPlayerId = group.player_id
+      
+      // Find tickets with different player_id (individually edited tickets)
+      const ticketsWithDifferentPlayers = tickets.filter(
+        (t: { player_id: string }) => t.player_id && t.player_id !== purchaseGroupPlayerId
+      )
+      
+      if (ticketsWithDifferentPlayers.length === 0) {
+        return group
+      }
+      
+      // Get unique player IDs
+      const uniquePlayerIds = [...new Set(ticketsWithDifferentPlayers.map((t: { player_id: string }) => t.player_id))]
+      
+      // Fetch those players
+      const { data: ticketPlayers } = await supabase
+        .from('players')
+        .select('*')
+        .in('id', uniquePlayerIds)
+      
+      // Create a map of player_id to player data
+      const playerMap: Record<string, unknown> = {}
+      ticketPlayers?.forEach((player) => {
+        playerMap[player.id] = player
+      })
+      
+      // Add ticket_player to each ticket that has a different player
+      const ticketsWithPlayers = tickets.map((ticket: { player_id: string }) => ({
+        ...ticket,
+        ticket_player: playerMap[ticket.player_id] || null,
+      }))
+      
+      return {
+        ...group,
+        tickets: ticketsWithPlayers,
+      }
+    }))
+
     // Filter by search if provided
-    let result = groups || []
+    let result = groupsWithTicketPlayers || []
     if (search) {
       const s = search.toLowerCase()
       result = result.filter((g: Record<string, unknown>) => {
