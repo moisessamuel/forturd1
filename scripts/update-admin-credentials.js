@@ -15,35 +15,19 @@ async function updateCredentials() {
   const newPassword = 'bmwx6x7@'
   const hashedPassword = await bcrypt.hash(newPassword, 10)
   
-  console.log('Updating admin user...')
+  console.log('Updating pocoyo user password...')
   
-  // Update adminforturd user password (user already exists)
-  const { error: adminError } = await supabase
+  // Update pocoyo user password
+  const { error: pocoyoError } = await supabase
     .from('admin_users')
     .update({ password_hash: hashedPassword })
-    .eq('username', 'adminforturd')
+    .eq('username', 'pocoyo')
   
-  if (adminError) {
-    console.error('Error updating admin:', adminError)
+  if (pocoyoError) {
+    console.error('Error updating pocoyo:', pocoyoError)
   } else {
-    console.log('Admin credentials updated successfully!')
-    console.log('  Username: adminforturd')
-    console.log('  Password: bmwx6x7@')
-  }
-  
-  console.log('\nUpdating boletofisico user...')
-  
-  // Update boletofisico user: only change password (keep username as 'boletofisico')
-  const { error: boletoError } = await supabase
-    .from('admin_users')
-    .update({ password_hash: hashedPassword })
-    .eq('role', 'boleto_fisico')
-  
-  if (boletoError) {
-    console.error('Error updating boletofisico:', boletoError)
-  } else {
-    console.log('Boletofisico credentials updated successfully!')
-    console.log('  Username: boletofisico')
+    console.log('Pocoyo credentials updated successfully!')
+    console.log('  Username: pocoyo')
     console.log('  Password: bmwx6x7@')
   }
 }
