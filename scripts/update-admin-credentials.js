@@ -17,14 +17,11 @@ async function updateCredentials() {
   
   console.log('Updating admin user...')
   
-  // Update admin user: change username to 'adminforturd' and password
+  // Update adminforturd user password (user already exists)
   const { error: adminError } = await supabase
     .from('admin_users')
-    .update({ 
-      username: 'adminforturd',
-      password_hash: hashedPassword 
-    })
-    .eq('role', 'admin')
+    .update({ password_hash: hashedPassword })
+    .eq('username', 'adminforturd')
   
   if (adminError) {
     console.error('Error updating admin:', adminError)
