@@ -78,7 +78,7 @@ export function Header() {
                 className="flex items-center gap-3 px-4 py-3 text-foreground/80 transition-colors hover:bg-primary/10 hover:text-primary"
               >
                 <Phone className="h-5 w-5" />
-                <span className="text-base font-medium">Contáctanos</span>
+                <span className="text-base font-medium">Contacto</span>
               </a>
             </div>
           )}

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { MapPin, Search, Shield } from 'lucide-react'
 
 const GALLERY_IMAGES = [
-  { src: '/images/gallery1.jpg', alt: 'BMW X7 y X6 en tunel de noche' },
+  { src: '/images/gallery1.jpg', alt: 'BMW X7 y X6 en túnel de noche' },
   { src: '/images/gallery2.jpg', alt: 'BMW X7 y X6 trasera en gasolinera' },
   { src: '/images/gallery3.jpg', alt: 'BMW X6 y X7 frontal en estacionamiento' },
 ]
@@ -106,7 +106,7 @@ export function HeroSection() {
 
         <div className="flex flex-col justify-center">
           <h1 className="mb-2 text-2xl font-extrabold uppercase text-primary md:text-3xl lg:text-4xl">
-            {'TU DECIDES TU SUERTE UNA X6 Y UNA X7 ESPERANDO DUEÑO.'}
+            {'TÚ DECIDES TU SUERTE. UNA X6 Y UNA X7 ESPERANDO DUEÑO.'}
           </h1>
           <div className="mb-4 flex items-center gap-2 text-muted-foreground">
             <MapPin className="h-4 w-4" />
@@ -137,7 +137,7 @@ export function HeroSection() {
 
           <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Shield className="h-4 w-4 text-green-500" />
-            Compra minima garantizada por sistema seguro
+            Compra mínima garantizada por sistema seguro.
           </p>
         </div>
       </div>
@@ -160,7 +160,7 @@ export function HeroSection() {
             <div>
               <p className="text-lg font-semibold">{'¿Ya compraste tu boleto?'}</p>
               <p className="text-lg text-muted-foreground">
-                Verifica el estado de tu boleto aqui
+                Verifica el estado de tu boleto aquí.
               </p>
             </div>
           </div>
@@ -176,20 +176,20 @@ export function HeroSection() {
       <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
         <p className="mb-2 font-semibold text-primary">Importante sobre los premios:</p>
         <p className="mb-3 text-sm text-foreground/80">
-          Los dos vehiculos seran otorgados como premios independientes. Cada premio tendra su propio ganador. Tercer premio sorpresa, el cual sera anunciado proximamente.
+          Los dos vehículos serán otorgados como premios independientes. Cada premio tendrá su propio ganador. Tercer premio sorpresa, el cual será anunciado próximamente.
         </p>
         <p className="mb-1 text-sm font-semibold text-primary">Las fechas de nuestros sorteos son las siguientes:</p>
         <ul className="mb-3 space-y-1 text-sm text-foreground/80">
-          <li>{"1er sorteo: entre 15/06/2026 al 15/07/2026, se seleccionara un dia para sortear el primero de los premios (sorpresa)."}</li>
-          <li>{"2do sorteo: entre 15/07/2026 al 15/08/2026 se seleccionara un dia para sortear el segundo de los premios (BMW x7 o BMW x6)."}</li>
-          <li>{"3er sorteo: entre 15/08/2026 al 15/09/2026 se seleccionara un dia para sortear el tercer de los premios (BMW restante)."}</li>
+          <li>{"1er sorteo: entre 15/06/2026 al 15/07/2026, se seleccionará un día para sortear el primero de los premios (sorpresa)."}</li>
+          <li>{"2do sorteo: entre 15/07/2026 al 15/08/2026, se seleccionará un día para sortear el segundo de los premios (BMW X7 o BMW X6)."}</li>
+          <li>{"3er sorteo: entre 15/08/2026 al 15/09/2026, se seleccionará un día para sortear el tercero de los premios (BMW restante)."}</li>
         </ul>
         <p className="mb-2 text-sm text-foreground/80">
-          <span className="font-semibold text-primary">Dato importante:</span> recordando que los boletos son limitados, si se completa la totalidad de boletos vendidos se procederia a realizar el sorteo de los tres premios juntos.
+          <span className="font-semibold text-primary">Dato importante:</span> Recordando que los boletos son limitados, si se completa la totalidad de boletos vendidos se procedería a realizar el sorteo de los tres premios juntos.
         </p>
-        <p className="mb-1 text-sm font-semibold text-primary">{"Seleccion del ganador:"}</p>
+        <p className="mb-1 text-sm font-semibold text-primary">{"Selección del ganador:"}</p>
         <p className="text-sm text-foreground/80">
-          {"El ganador sera seleccionado de forma transparente mediante los numeros emitidos en el sorteo de la quiniela de la Loteria Nacional Gana Mas, eliminando el ultimo digito de los numeros presentados."}
+          {"El ganador será seleccionado de forma transparente mediante los números emitidos en el sorteo de la quiniela de la Lotería Nacional Gana Más, eliminando el último dígito de los números presentados."}
         </p>
       </div>
     </div>

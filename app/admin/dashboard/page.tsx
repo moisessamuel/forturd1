@@ -380,7 +380,7 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error al eliminar')
 
-      toast.success('Compra eliminada completamente. Los numeros de boletos estan disponibles nuevamente.')
+      toast.success('Compra eliminada completamente. Los números de boletos están disponibles nuevamente.')
       setDeletingId(null)
       fetchData()
     } catch {
@@ -402,7 +402,7 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error al eliminar')
 
-      toast.success('Boleto eliminado. El numero esta disponible nuevamente.')
+      toast.success('Boleto eliminado. El número está disponible nuevamente.')
       setDeletingTicketId(null)
       fetchData()
     } catch {
@@ -458,7 +458,7 @@ export default function AdminDashboard() {
   const handleBulkEditTickets = async () => {
     if (selectedTickets.size === 0) return
     if (!bulkEditData.nombre.trim() || !bulkEditData.phone_number.trim()) {
-      toast.error('Nombre y telefono son requeridos')
+      toast.error('Nombre y teléfono son requeridos.')
       return
     }
 
@@ -679,12 +679,12 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-2">
             <div className={`h-3 w-3 rounded-full ${userRole === 'referido_plus' ? 'bg-green-500' : userRole === 'boleto_fisico' ? 'bg-cyan-500' : 'bg-primary'}`} />
             <span className="font-medium">
-              {userRole === 'referido_plus' ? 'REFERIDO PLUS GAMUNDI' : userRole === 'boleto_fisico' ? 'PANEL DE BOLETOS FISICOS' : 'ADMINISTRADOR DEL PANEL'}
+              {userRole === 'referido_plus' ? 'REFERIDO PLUS GAMUNDI' : userRole === 'boleto_fisico' ? 'PANEL DE BOLETOS FÍSICOS' : 'ADMINISTRADOR DEL PANEL'}
             </span>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              {'Sesion: '}<span className="text-foreground">{username}</span>
+              {'Sesión: '}<span className="text-foreground">{username}</span>
             </span>
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
@@ -698,7 +698,7 @@ export default function AdminDashboard() {
         {/* Title and actions */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className={`text-2xl font-bold ${userRole === 'referido_plus' ? 'text-green-500' : userRole === 'boleto_fisico' ? 'text-cyan-500' : 'text-primary'}`}>
-            {userRole === 'referido_plus' ? 'Panel Referido Plus Gamundi' : userRole === 'boleto_fisico' ? 'Panel de Boletos Fisicos' : 'Panel de Administracion'}
+            {userRole === 'referido_plus' ? 'Panel Referido Plus Gamundi' : userRole === 'boleto_fisico' ? 'Panel de Boletos Físicos' : 'Panel de Administración'}
           </h1>
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleRefresh}>
@@ -736,11 +736,11 @@ export default function AdminDashboard() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10">
                   <Settings className="h-6 w-6 text-red-500" />
                 </div>
-                <h3 className="text-xl font-bold text-red-500">Restablecer Boletos Fisicos</h3>
+                <h3 className="text-xl font-bold text-red-500">Restablecer Boletos Físicos</h3>
               </div>
               <p className="mb-6 text-foreground/80">
-                Esta accion eliminara TODOS los boletos fisicos (compras con referido BOLETOFISICO o nombre &quot;Boleto Fisico&quot;). 
-                Esta accion no puede deshacerse. Los boletos del panel administrativo NO seran afectados.
+                Esta acción eliminará TODOS los boletos físicos (compras con referido BOLETOFISICO o nombre &quot;Boleto Físico&quot;). 
+                Esta acción no puede deshacerse. Los boletos del panel administrativo NO serán afectados.
               </p>
               <div className="flex gap-3">
                 <Button
@@ -774,10 +774,10 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-red-500">ADVERTENCIA</h3>
               </div>
               <p className="mb-2 text-base font-medium text-foreground">
-                {'Esta accion es irreversible.'}
+                {'Esta acción es irreversible.'}
               </p>
               <p className="mb-6 text-sm text-muted-foreground">
-                {'Al restablecer el sistema, se eliminaran TODAS las compras, boletos asignados, comprobantes de pago y datos de referidos. Todo volvera a cero como si fuera un sistema nuevo. Esta seguro de continuar?'}
+                {'Al restablecer el sistema, se eliminarán TODAS las compras, boletos asignados, comprobantes de pago y datos de referidos. Todo volverá a cero como si fuera un sistema nuevo. ¿Está seguro de continuar?'}
               </p>
               <div className="flex gap-3">
                 <Button
@@ -793,7 +793,7 @@ export default function AdminDashboard() {
                   onClick={handleReset}
                   disabled={isResetting}
                 >
-                  {isResetting ? 'Restableciendo...' : 'Si, confirmo restablecer'}
+                  {isResetting ? 'Restableciendo...' : 'Sí, confirmo restablecer'}
                 </Button>
               </div>
             </div>
@@ -814,8 +814,8 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <p className="mb-4 text-sm text-muted-foreground">
-                Los boletos seleccionados seran asignados a un nuevo comprador con la informacion que ingreses.
-                El monto se calculara automaticamente (RD$1,000 por boleto).
+                Los boletos seleccionados serán asignados a un nuevo comprador con la información que ingreses.
+                El monto se calculará automáticamente (RD$1,000 por boleto).
               </p>
               <div className="space-y-4">
                 <div>
@@ -828,16 +828,16 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Telefono *</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Teléfono *</label>
                   <Input
                     value={bulkEditData.phone_number}
                     onChange={(e) => setBulkEditData({ ...bulkEditData, phone_number: e.target.value })}
-                    placeholder="Numero de telefono"
+                    placeholder="Número de teléfono"
                     className="bg-input"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electronico</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electrónico</label>
                   <Input
                     value={bulkEditData.email}
                     onChange={(e) => setBulkEditData({ ...bulkEditData, email: e.target.value })}
@@ -884,7 +884,7 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-cyan-500">Editar Datos del Boleto</h3>
               </div>
               <p className="mb-4 text-sm text-muted-foreground">
-                El numero de boleto no es editable. Solo puedes modificar los datos del comprador.
+                El número de boleto no es editable. Solo puedes modificar los datos del comprador.
               </p>
               <div className="space-y-4">
                 <div>
@@ -897,16 +897,16 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Telefono</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Teléfono</label>
                   <Input
                     value={editingTicket.phone_number}
                     onChange={(e) => setEditingTicket({ ...editingTicket, phone_number: e.target.value })}
-                    placeholder="Numero de telefono"
+                    placeholder="Número de teléfono"
                     className="bg-input"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electronico</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electrónico</label>
                   <Input
                     value={editingTicket.email}
                     onChange={(e) => setEditingTicket({ ...editingTicket, email: e.target.value })}
@@ -957,16 +957,16 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Telefono</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Teléfono</label>
                   <Input
                     value={editingPlayer.phone_number}
                     onChange={(e) => setEditingPlayer({ ...editingPlayer, phone_number: e.target.value })}
-                    placeholder="Numero de telefono"
+                    placeholder="Número de teléfono"
                     className="bg-input"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electronico</label>
+                  <label className="mb-1 block text-sm font-medium text-foreground">Correo Electrónico</label>
                   <Input
                     value={editingPlayer.email}
                     onChange={(e) => setEditingPlayer({ ...editingPlayer, email: e.target.value })}
@@ -1095,7 +1095,7 @@ export default function AdminDashboard() {
               <ul className="mb-4 ml-4 list-disc text-sm text-muted-foreground">
                 <li>La compra y todos sus datos</li>
                 <li>Los boletos asociados (quedaran disponibles para otros)</li>
-                <li>El QR de validacion</li>
+                <li>El QR de validación</li>
                 <li>Los datos del jugador (si no tiene otras compras)</li>
               </ul>
               <p className="mb-4 text-sm font-semibold text-red-400">
@@ -1133,7 +1133,7 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-red-500">Eliminar Boleto</h3>
               </div>
               <p className="mb-4 text-sm text-muted-foreground">
-                Esta accion eliminara este boleto individual. El numero quedara disponible para otros.
+                Esta acción eliminará este boleto individual. El número quedará disponible para otros.
               </p>
               <p className="mb-4 text-sm font-semibold text-red-400">
                 {'Esta accion no se puede deshacer.'}
@@ -1203,7 +1203,7 @@ export default function AdminDashboard() {
                     </Button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {'Los numeros de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.'}
+                    {'Los números de boleto se generan aleatoriamente dentro de este rango. No se pueden repetir.'}
                   </p>
                 </div>
 
@@ -1321,7 +1321,7 @@ export default function AdminDashboard() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-primary">
                 <Clock className="h-5 w-5" />
-                {'Pagos Pendientes de Validacion'}
+                {'Pagos Pendientes de Validación'}
               </span>
               {sectionsOpen.pagos ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
@@ -1334,7 +1334,7 @@ export default function AdminDashboard() {
                   <div className="relative max-w-md">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder="Buscar por numero de boleto..."
+                      placeholder="Buscar por número de boleto..."
                       value={pendingSearchTerm}
                       onChange={(e) => setPendingSearchTerm(e.target.value)}
                       className="bg-input pl-9"
@@ -1348,7 +1348,7 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>{'Boleto #'}</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>{'Telefono'}</TableHead>
+                      <TableHead>{'Teléfono'}</TableHead>
                       {userRole !== 'boleto_fisico' && <TableHead>Boletos</TableHead>}
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
@@ -1707,7 +1707,7 @@ export default function AdminDashboard() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar nombre, telefono, boleto, cedula..."
+                    placeholder="Buscar nombre, teléfono, boleto, cédula..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="bg-input pl-9"
@@ -1785,8 +1785,8 @@ export default function AdminDashboard() {
                       {userRole === 'boleto_fisico' && <TableHead className="w-10"></TableHead>}
                       <TableHead>{userRole === 'boleto_fisico' ? 'Boleto #' : 'Boletos'}</TableHead>
                       <TableHead>Comprador</TableHead>
-                      <TableHead>Telefono</TableHead>
-                      {userRole !== 'boleto_fisico' && <TableHead>Cedula</TableHead>}
+                      <TableHead>Teléfono</TableHead>
+                      {userRole !== 'boleto_fisico' && <TableHead>Cédula</TableHead>}
                       {userRole !== 'boleto_fisico' && <TableHead>Qty</TableHead>}
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
@@ -2052,19 +2052,19 @@ export default function AdminDashboard() {
                     className="bg-input"
                   />
                   <Input
-                    placeholder="Codigo (ej. JUAN10)"
+                    placeholder="Código (ej. JUAN10)"
                     value={newReferidoCodigo}
                     onChange={(e) => setNewReferidoCodigo(e.target.value.toUpperCase())}
                     className="bg-input"
                   />
                   <Input
-                    placeholder="Cedula o Pasaporte"
+                    placeholder="Cédula o Pasaporte"
                     value={newReferidoCedula}
                     onChange={(e) => setNewReferidoCedula(e.target.value)}
                     className="bg-input"
                   />
                   <Input
-                    placeholder="Telefono"
+                    placeholder="Teléfono"
                     value={newReferidoTelefono}
                     onChange={(e) => setNewReferidoTelefono(e.target.value)}
                     className="bg-input"
@@ -2085,7 +2085,7 @@ export default function AdminDashboard() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nombre o codigo..."
+                    placeholder="Buscar por nombre o código..."
                     value={referidoSearch}
                     onChange={(e) => setReferidoSearch(e.target.value)}
                     className="bg-input pl-9"
@@ -2100,9 +2100,9 @@ export default function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Agente</TableHead>
-                      <TableHead>{'Codigo'}</TableHead>
-                      <TableHead>{'Cedula / Pasaporte'}</TableHead>
-                      <TableHead>{'Telefono'}</TableHead>
+                      <TableHead>{'Código'}</TableHead>
+                      <TableHead>{'Cédula / Pasaporte'}</TableHead>
+                      <TableHead>{'Teléfono'}</TableHead>
                       <TableHead>Ventas Aprobadas</TableHead>
                       <TableHead>Ventas (DOP)</TableHead>
                       <TableHead>{'Comision (10%)'}</TableHead>
@@ -2152,7 +2152,7 @@ export default function AdminDashboard() {
                               size="sm"
                               className="text-red-500 hover:bg-red-500/10 hover:text-red-400"
                               onClick={async () => {
-                                if (!confirm(`Seguro que deseas eliminar al referido "${referido.nombre_agente}" (${referido.codigo})?`)) return
+                                if (!confirm(`¿Seguro que deseas eliminar al referido "${referido.nombre_agente}" (${referido.codigo})?`)) return
                                 try {
                                   const res = await fetch(`/api/referidos?id=${referido.id}`, { method: 'DELETE' })
                                   if (!res.ok) throw new Error('Error al eliminar')
@@ -2187,7 +2187,7 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>{'Boleto #'}</TableHead>
                       <TableHead>Nombre</TableHead>
-                      <TableHead>{'Telefono'}</TableHead>
+                      <TableHead>{'Teléfono'}</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Estado</TableHead>

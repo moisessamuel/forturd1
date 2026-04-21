@@ -116,7 +116,7 @@ export default function JugadorPage() {
           <CardContent className="p-6 text-center">
             <X className="mx-auto mb-4 h-12 w-12 text-destructive" />
             <h2 className="mb-2 text-xl font-bold">QR no encontrado</h2>
-            <p className="mb-4 text-muted-foreground">{error || 'El codigo QR no esta registrado en el sistema.'}</p>
+            <p className="mb-4 text-muted-foreground">{error || 'El código QR no está registrado en el sistema.'}</p>
             <Link href="/">
               <Button className="bg-primary text-primary-foreground">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Volver al inicio
