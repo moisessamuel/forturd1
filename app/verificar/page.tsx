@@ -48,15 +48,9 @@ export default function VerificarPage() {
         ? `boleto=${encodeURIComponent(searchValue)}`
         : `telefono=${encodeURIComponent(searchValue)}`
 
-      console.log('[v0] Searching with param:', param, 'searchValue:', searchValue)
-
       const response = await fetch(`/api/verificar?${param}`)
-      
-      console.log('[v0] Response status:', response.status)
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        console.log('[v0] Error response:', errorData)
         if (response.status === 404) {
           toast.error(searchMode === 'boleto' ? 'Boleto no encontrado' : 'No se encontraron boletos para este telefono')
         } else {
@@ -66,15 +60,13 @@ export default function VerificarPage() {
       }
 
       const data = await response.json()
-      console.log('[v0] Success response:', data)
 
       if (searchMode === 'telefono' && data.results) {
         setMultiResults(data.results)
       } else {
         setSingleResult(data)
       }
-    } catch (error) {
-      console.error('[v0] Fetch error:', error)
+    } catch {
       toast.error('Error al verificar. Intenta de nuevo.')
     } finally {
       setIsLoading(false)

@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
     if (telefono) {
       // Strip all non-digit characters for flexible matching
       const digitsOnly = telefono.replace(/[^0-9]/g, '')
-      const cleanPhone = telefono.replace(/[^0-9+]/g, '')
       const results: Array<{
         numero_boleto: string
         nombre: string
@@ -31,67 +30,29 @@ export async function GET(request: NextRequest) {
         source: string
       }> = []
 
-      console.log('[v0] Searching for phone:', telefono, 'digitsOnly:', digitsOnly, 'cleanPhone:', cleanPhone)
-
-      // Search in players/tickets (new system) using flexible matching
-      // Try multiple approaches: exact, contains digits, with/without country code
-      let player = null
-      
-      // First try exact match
-      const { data: exactPlayer, error: exactError } = await supabase
+      // Get all players and match by normalized phone number (digits only)
+      const { data: allPlayers } = await supabase
         .from('players')
         .select('*')
-        .eq('phone_number', telefono.trim())
-        .single()
-      
-      console.log('[v0] Exact match result:', exactPlayer, 'error:', exactError)
-      player = exactPlayer
 
-      // If no exact match, try with cleaned phone (only digits and +)
-      if (!player) {
-        const { data: cleanPlayer, error: cleanError } = await supabase
-          .from('players')
-          .select('*')
-          .eq('phone_number', cleanPhone)
-          .single()
-        console.log('[v0] Clean phone match result:', cleanPlayer, 'error:', cleanError)
-        player = cleanPlayer
-      }
-
-      // If still no match, try searching with ILIKE for partial match
-      if (!player && digitsOnly.length >= 7) {
-        // Try matching last 10 digits (without country code)
-        const lastDigits = digitsOnly.slice(-10)
-        console.log('[v0] Trying ILIKE with last 10 digits:', lastDigits)
-        const { data: likeResults, error: likeError } = await supabase
-          .from('players')
-          .select('*')
-          .ilike('phone_number', `%${lastDigits}%`)
+      // Find matching players by comparing only digits
+      const matchingPlayers = (allPlayers || []).filter(p => {
+        if (!p.phone_number) return false
+        const playerDigits = p.phone_number.replace(/[^0-9]/g, '')
         
-        console.log('[v0] ILIKE 10 digits result:', likeResults, 'error:', likeError)
-        if (likeResults && likeResults.length > 0) {
-          player = likeResults[0]
-        }
-      }
-
-      // If still no match, try just the last 7 digits
-      if (!player && digitsOnly.length >= 7) {
-        const last7 = digitsOnly.slice(-7)
-        console.log('[v0] Trying ILIKE with last 7 digits:', last7)
-        const { data: likeResults, error: likeError } = await supabase
-          .from('players')
-          .select('*')
-          .ilike('phone_number', `%${last7}%`)
+        // Match if digits are equal, or if one contains the other (for country code variations)
+        // Also match last 10 digits (typical phone number without country code)
+        const searchLast10 = digitsOnly.slice(-10)
+        const playerLast10 = playerDigits.slice(-10)
         
-        console.log('[v0] ILIKE 7 digits result:', likeResults, 'error:', likeError)
-        if (likeResults && likeResults.length > 0) {
-          player = likeResults[0]
-        }
-      }
+        return digitsOnly === playerDigits || 
+               playerDigits.endsWith(digitsOnly) || 
+               digitsOnly.endsWith(playerDigits) ||
+               (searchLast10.length >= 7 && searchLast10 === playerLast10)
+      })
 
-      console.log('[v0] Final player found:', player)
-
-      if (player) {
+      // Process all matching players
+      for (const player of players) {
         // Search tickets directly where this player is the ticket_player (individual edits)
         const { data: directTickets } = await supabase
           .from('tickets')
@@ -105,6 +66,9 @@ export async function GET(request: NextRequest) {
             const totalTickets = pg?.total_tickets || 1
             const individualMonto = (pg?.monto || 0) / totalTickets
             const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+            
+            // Skip if already added
+            if (results.some(r => r.numero_boleto === ticket.numero_boleto)) continue
             
             results.push({
               numero_boleto: ticket.numero_boleto,
@@ -131,8 +95,7 @@ export async function GET(request: NextRequest) {
         if (purchaseGroups) {
           for (const pg of purchaseGroups) {
             for (const ticket of (pg.tickets || [])) {
-              // Skip if ticket has its own player (already added above with different info)
-              // We check if the ticket was already added by comparing numero_boleto
+              // Skip if ticket was already added
               const alreadyAdded = results.some(r => r.numero_boleto === ticket.numero_boleto)
               if (alreadyAdded) continue
               
@@ -158,16 +121,26 @@ export async function GET(request: NextRequest) {
       }
 
       // Also search in legacy compras table with flexible matching
-      const lastDigitsLegacy = digitsOnly.slice(-7)
-      const { data: compras } = await supabase
+      const { data: allCompras } = await supabase
         .from('compras')
         .select('*')
-        .ilike('telefono', `%${lastDigitsLegacy}%`)
         .order('fecha', { ascending: false })
 
-      if (compras) {
-        for (const compra of compras) {
-          if (compra.numero_boleto) {
+      if (allCompras) {
+        for (const compra of allCompras) {
+          if (!compra.numero_boleto || !compra.telefono) continue
+          
+          // Normalize compra phone number and compare
+          const compraDigits = compra.telefono.replace(/[^0-9]/g, '')
+          const searchLast10 = digitsOnly.slice(-10)
+          const compraLast10 = compraDigits.slice(-10)
+          
+          const isMatch = digitsOnly === compraDigits ||
+                         compraDigits.endsWith(digitsOnly) ||
+                         digitsOnly.endsWith(compraDigits) ||
+                         (searchLast10.length >= 7 && searchLast10 === compraLast10)
+          
+          if (isMatch && !results.some(r => r.numero_boleto === compra.numero_boleto)) {
             results.push({
               numero_boleto: compra.numero_boleto,
               nombre: compra.nombre_comprador,
