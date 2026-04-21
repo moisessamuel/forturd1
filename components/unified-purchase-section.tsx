@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Check, Clock, User, Upload, CreditCard, Copy, Camera, FolderOpen, Image as ImageIcon, X, Shield  } from 'lucide-react'
+import { Check, Clock, User, Upload, Copy, Camera, FolderOpen, Image as ImageIcon, X, Shield, Plus, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -60,7 +60,6 @@ export function UnifiedPurchaseSection() {
   const [bancos, setBancos] = useState<Banco[]>([])
   const [selectedBanco, setSelectedBanco] = useState<Banco | null>(null)
   const [expandedBanco, setExpandedBanco] = useState<string | null>(null)
-  const [showCashPanel, setShowCashPanel] = useState(false)
 
   // Form data state
   const [formData, setFormData] = useState<FormData>({
@@ -153,8 +152,16 @@ export function UnifiedPurchaseSection() {
     return `RD$ ${new Intl.NumberFormat('es-DO').format(amount)}`
   }
 
-  const handleQuickSelect = (qty: number) => {
-    setQuantity(qty.toString())
+  const incrementQuantity = () => {
+    const current = parseInt(quantity) || 0
+    setQuantity((current + 1).toString())
+  }
+
+  const decrementQuantity = () => {
+    const current = parseInt(quantity) || 0
+    if (current > 0) {
+      setQuantity((current - 1).toString())
+    }
   }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -421,34 +428,30 @@ export function UnifiedPurchaseSection() {
           </p>
 
           <div className="space-y-4">
+            {/* Ticket Counter */}
             <div>
-              <label className="mb-2 block text-sm font-medium">
-                CANTIDAD DE BOLETOS
+              <label className="mb-3 block text-center text-sm font-medium uppercase tracking-wider text-muted-foreground">
+                BOLETOS
               </label>
-              <Input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Escribe la cantidad"
-                className="bg-input"
-              />
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs text-muted-foreground">SELECCION RAPIDA</p>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 5, 10, 25].map((qty) => (
-                  <Button
-                    key={qty}
-                    type="button"
-                    variant={quantity === qty.toString() ? 'default' : 'outline'}
-                    onClick={() => handleQuickSelect(qty)}
-                    className={quantity === qty.toString() ? 'bg-primary text-primary-foreground' : ''}
-                  >
-                    {qty}
-                  </Button>
-                ))}
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={decrementQuantity}
+                  disabled={!quantity || parseInt(quantity) <= 0}
+                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Minus className="h-6 w-6" />
+                </button>
+                <div className="flex h-16 w-24 items-center justify-center rounded-xl border-2 border-primary/50 bg-card">
+                  <span className="text-3xl font-bold text-primary">{quantity || '0'}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={incrementQuantity}
+                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                >
+                  <Plus className="h-6 w-6" />
+                </button>
               </div>
             </div>
 
@@ -576,78 +579,45 @@ export function UnifiedPurchaseSection() {
             </p>
           </div>
 
-          {/* Cash payment banner - only show for DOP */}
-          {moneda === 'DOP' && (
-            <button
-              onClick={() => setShowCashPanel(!showCashPanel)}
-              className="mb-4 flex w-full cursor-pointer flex-col items-center gap-3"
-            >
-              <p className="text-center text-lg font-extrabold uppercase tracking-wide" style={{ color: '#DAA520', textShadow: '0 0 15px rgba(218, 165, 32, 0.7), 0 0 30px rgba(218, 165, 32, 0.4)' }}>
-                {'PARA PAGO EN EFECTIVO PRESIONE AQUI'}
-              </p>
-              <div className={`overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg hover:shadow-primary/30 ${
-                showCashPanel ? 'border-primary shadow-lg shadow-primary/30' : 'border-primary/50 hover:border-primary'
-              }`}>
-                <Image
-                  src="/images/banks/payment-header.jpeg"
-                  alt="Pago en Efectivo"
-                  width={400}
-                  height={160}
-                  className="h-auto w-72 object-cover sm:w-80"
-                />
-              </div>
-            </button>
-          )}
-
-          {/* Cash info panel - only show for DOP */}
-          {moneda === 'DOP' && showCashPanel && (
-            <Card className="mb-4 w-full border-primary/30 bg-card/90">
-              <CardContent className="p-4">
-                <p className="mb-2 text-sm font-semibold text-primary">Pago en Efectivo</p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
-                </p>
-                <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-                  Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago de abajo.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          {/* Payment Method Logos Grid */}
+          <div className="mb-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
             {paymentMethods.map((method) => (
-              <div key={method.id}>
-                <p className="mb-2 text-center text-sm font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
-                  {method.nombre}
-                </p>
-                <Card
-                  className={`cursor-pointer border-2 transition-all overflow-hidden rounded-xl ${
-                    selectedBanco?.id === method.id
-                      ? 'border-primary shadow-lg shadow-primary/20'
-                      : 'border-border/50 hover:border-primary/50'
-                  }`}
-                  onClick={() => {
-                    setExpandedBanco(expandedBanco === method.id ? null : method.id)
-                    setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
-                    setFormData(prev => ({ ...prev, banco: method.nombre }))
-                  }}
-                >
-                  <CardContent className="flex items-center justify-center bg-white p-3">
-                    <div className="relative h-24 w-full overflow-hidden">
-                      <Image
-                        src={method.image}
-                        alt={method.nombre}
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => {
+                  setExpandedBanco(expandedBanco === method.id ? null : method.id)
+                  setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
+                  setFormData(prev => ({ ...prev, banco: method.nombre }))
+                }}
+                className={`relative overflow-hidden rounded-lg border-2 bg-white p-2 transition-all ${
+                  selectedBanco?.id === method.id
+                    ? 'border-primary shadow-md shadow-primary/30'
+                    : 'border-border/30 hover:border-primary/50'
+                }`}
+              >
+                <div className="relative h-12 w-full">
+                  <Image
+                    src={method.image}
+                    alt={method.nombre}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                {selectedBanco?.id === method.id && (
+                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                    <Check className="h-3 w-3 text-primary-foreground" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
 
-                {/* Payment Info Modal */}
+          {/* Payment Info Modal */}
+          {expandedBanco && (() => {
+            const method = paymentMethods.find(m => m.id === expandedBanco)
+            if (!method) return null
+            return (
                 {expandedBanco === method.id && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
                     <Card className="relative w-full max-w-sm border-2 border-primary/50 bg-card shadow-2xl shadow-primary/20" onClick={(e) => e.stopPropagation()}>
@@ -773,10 +743,9 @@ export function UnifiedPurchaseSection() {
                       </CardContent>
                     </Card>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                )
+              })()
+          }
 
           {selectedBanco && (
             <Card className="mb-4 border-green-500/50 bg-green-500/10">
@@ -803,74 +772,18 @@ export function UnifiedPurchaseSection() {
 
       {/* Section 4: Upload Receipt */}
       <Card ref={uploadRef} className="border-border/50 bg-card/50">
-        <CardContent className="p-6">
-          <div className="mb-6 flex flex-col items-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary">
-              <Upload className="h-8 w-8 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold">Subir Comprobante de Pago</h2>
-            <p className="text-center text-sm text-muted-foreground">
-              Sube una foto o captura de pantalla del comprobante de la
-              transferencia bancaria.
-            </p>
-          </div>
-
-          {selectedBanco && (
-            <Card className="mb-6 border-border/50 bg-secondary/50">
-              <CardContent className="flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
-                    <Image
-                      src={allPaymentMethods.find(m => m.nombre === selectedBanco?.nombre)?.image || '/images/banks/bhd.jpeg'}
-                      alt={selectedBanco?.nombre || 'Banco'}
-                      width={40}
-                      height={40}
-                      className="h-8 w-8 object-contain"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-medium">{selectedBanco?.nombre}</p>
-                    {selectedBanco?.cuenta && (
-                      <p className="text-sm text-muted-foreground">
-                        Cuenta: {selectedBanco?.cuenta}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <p className="text-lg font-bold text-primary">{formatCurrency(total)}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <div className="mb-6 relative">
+        <CardContent className="p-4">
+          <div className="relative">
             <div
               onClick={() => !formData.comprobante && !isUploading && setShowImageMenu(!showImageMenu)}
-              className="flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed border-border p-8 transition-colors hover:border-primary"
+              className="flex cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-dashed border-primary/50 p-4 transition-colors hover:border-primary hover:bg-primary/5"
             >
-              <Upload className="mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="mb-2 text-center">
+              <Upload className="h-6 w-6 text-primary" />
+              <p className="text-center text-sm font-medium text-primary">
                 {formData.comprobante
                   ? formData.comprobante.name
                   : 'Toca aqui para subir tu comprobante'}
               </p>
-              <p className="text-sm text-muted-foreground">
-                PNG, JPG, JPEG - Maximo 10 MB
-              </p>
-              {!formData.comprobante && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-4 border-primary text-primary"
-                  disabled={isUploading}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setShowImageMenu(!showImageMenu)
-                  }}
-                >
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  {isUploading ? 'Subiendo...' : 'Seleccionar imagen'}
-                </Button>
-              )}
             </div>
 
             {/* Image Source Menu */}
