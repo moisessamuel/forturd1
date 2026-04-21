@@ -618,8 +618,7 @@ export function UnifiedPurchaseSection() {
             const method = paymentMethods.find(m => m.id === expandedBanco)
             if (!method) return null
             return (
-                {expandedBanco === method.id && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
                     <Card className="relative w-full max-w-sm border-2 border-primary/50 bg-card shadow-2xl shadow-primary/20" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => setExpandedBanco(null)}
@@ -741,11 +740,10 @@ export function UnifiedPurchaseSection() {
                           </button>
                         </div>
                       </CardContent>
-                    </Card>
-                  </div>
-                )
-              })()
-          }
+                </Card>
+              </div>
+            )
+          })()}
 
           {selectedBanco && (
             <Card className="mb-4 border-green-500/50 bg-green-500/10">
