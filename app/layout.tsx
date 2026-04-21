@@ -10,12 +10,12 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-  description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+  description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
   generator: 'FortuRD',
   metadataBase: new URL('https://www.forturd1.com'),
   openGraph: {
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-    description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+    description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
     url: 'https://www.forturd1.com',
     siteName: 'FortuRD',
     images: [
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-    description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+    description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
     images: ['https://www.forturd1.com/images/og-image.png'],
   },
   icons: {
@@ -75,7 +75,7 @@ export default function RootLayout({
               '@type': 'WebSite',
               name: 'FortuRD',
               url: 'https://www.forturd1.com',
-              description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+              description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
               potentialAction: {
                 '@type': 'SearchAction',
                 target: 'https://www.forturd1.com/verificar?q={search_term_string}',
@@ -91,7 +91,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Event',
               name: 'Sorteo FortuRD - BMW X6 y BMW X7',
-              description: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Boletos a 1,000 DOP.',
+              description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Boletos a 1,000 DOP.',
               image: 'https://www.forturd1.com/images/og-image.png',
               organizer: {
                 '@type': 'Organization',

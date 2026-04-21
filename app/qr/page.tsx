@@ -64,7 +64,7 @@ export default function QRPage() {
       // Subtitulo
       ctx.fillStyle = '#cccccc'
       ctx.font = '42px sans-serif'
-      ctx.fillText('Arranca tu sueño. Enciende tu fortuna', cx, 300)
+      ctx.fillText('Arranca tu sueño. Enciende tu fortuna.', cx, 300)
 
       // Linea decorativa
       ctx.strokeStyle = '#DAA520'
@@ -77,7 +77,7 @@ export default function QRPage() {
       // Texto escanea
       ctx.fillStyle = '#ffffff'
       ctx.font = 'bold 48px sans-serif'
-      ctx.fillText('ESCANEA EL CODIGO QR', cx, 420)
+      ctx.fillText('ESCANEA EL CÓDIGO QR', cx, 420)
 
       // QR fondo blanco con borde dorado
       const qrSize = 900
@@ -138,7 +138,7 @@ export default function QRPage() {
       // Descripcion vehiculos
       ctx.fillStyle = '#ffffff'
       ctx.font = 'bold 40px sans-serif'
-      ctx.fillText('BMW X6 Y BMW X7 ESPERANDO DUEÑO', cx, 1580)
+      ctx.fillText('BMW X6 Y BMW X7 ESPERANDO DUEÑO.', cx, 1580)
 
       // Precio boleto
       ctx.fillStyle = '#DAA520'
@@ -186,7 +186,7 @@ export default function QRPage() {
       try {
         await navigator.share({
           title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-          text: 'Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos en www.forturd1.com',
+          text: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos en www.forturd1.com',
           url: siteUrl,
         })
       } catch {
@@ -219,7 +219,7 @@ export default function QRPage() {
             style={{ width: 'auto', height: '90px' }}
           />
           <p className="mb-6 text-center text-sm text-muted-foreground">
-            Escanea el código QR para participar
+            Escanea el código QR para participar.
           </p>
 
           {/* QR Code */}
@@ -236,7 +236,7 @@ export default function QRPage() {
 
           {/* URL */}
           <p className="mt-4 text-sm font-medium text-primary">www.forturd1.com/verificar</p>
-          <p className="mt-1 text-xs text-muted-foreground">Arranca tu sueño, Enciende tu fortuna</p>
+          <p className="mt-1 text-xs text-muted-foreground">Arranca tu sueño. Enciende tu fortuna.</p>
 
           {/* Actions */}
           <div className="mt-6 flex w-full gap-3">
@@ -260,7 +260,7 @@ export default function QRPage() {
       </Card>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
-        Imprime este QR y colocalo donde desees para que las personas puedan escanear y participar.
+        Imprime este QR y colócalo donde desees para que las personas puedan escanear y participar.
       </p>
     </main>
   )

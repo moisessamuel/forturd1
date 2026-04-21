@@ -34,7 +34,7 @@ export default function VerificarPage() {
     e.preventDefault()
 
     if (!searchValue.trim()) {
-      toast.error(searchMode === 'boleto' ? 'Ingresa un numero de boleto' : 'Ingresa un numero de telefono')
+      toast.error(searchMode === 'boleto' ? 'Ingresa un número de boleto' : 'Ingresa un número de teléfono')
       return
     }
 
@@ -52,7 +52,7 @@ export default function VerificarPage() {
 
       if (!response.ok) {
         if (response.status === 404) {
-          toast.error(searchMode === 'boleto' ? 'Boleto no encontrado' : 'No se encontraron boletos para este telefono')
+          toast.error(searchMode === 'boleto' ? 'Boleto no encontrado.' : 'No se encontraron boletos para este teléfono.')
         } else {
           throw new Error('Error al verificar')
         }
@@ -144,7 +144,7 @@ export default function VerificarPage() {
           </div>
           <h1 className="mb-2 text-3xl font-bold italic">Verificar Boleto</h1>
           <p className="text-center text-muted-foreground">
-            Busca por numero de boleto o por telefono para ver todos tus tickets.
+            Busca por número de boleto o por teléfono para ver todos tus tickets.
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export default function VerificarPage() {
                 }`}
               >
                 <Phone className="h-4 w-4" />
-                Telefono
+                Teléfono
               </button>
             </div>
 
@@ -221,7 +221,7 @@ export default function VerificarPage() {
               </h2>
 
               <div className="mb-4 text-center">
-                <p className="text-sm text-muted-foreground">Numero de Boleto</p>
+                <p className="text-sm text-muted-foreground">Número de Boleto</p>
                 <p className="font-mono text-2xl font-bold text-primary">
                   #{singleResult.numero_boleto.padStart(5, '0')}
                 </p>
@@ -234,7 +234,7 @@ export default function VerificarPage() {
                 </div>
                 {singleResult.telefono && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Telefono:</span>
+                    <span className="text-muted-foreground">Teléfono:</span>
                     <span className="font-medium">{singleResult.telefono}</span>
                   </div>
                 )}
@@ -259,7 +259,7 @@ export default function VerificarPage() {
         {multiResults.length > 0 && (
           <div className="space-y-4">
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
-              <p className="text-sm text-muted-foreground">Boletos encontrados para este telefono</p>
+              <p className="text-sm text-muted-foreground">Boletos encontrados para este teléfono</p>
               <p className="mt-1 text-2xl font-bold text-primary">{multiResults.length}</p>
               {multiResults[0]?.nombre && (
                 <p className="mt-1 text-sm font-medium">{multiResults[0].nombre}</p>
@@ -318,8 +318,8 @@ export default function VerificarPage() {
               </h2>
               <p className="text-muted-foreground">
                 {searchMode === 'boleto'
-                  ? 'El numero de boleto ingresado no existe en nuestro sistema. Por favor verifica el numero e intenta de nuevo.'
-                  : 'No se encontraron boletos asociados a este numero de telefono. Verifica el numero e intenta de nuevo.'}
+                  ? 'El número de boleto ingresado no existe en nuestro sistema. Por favor verifica el número e intenta de nuevo.'
+                  : 'No se encontraron boletos asociados a este número de teléfono. Verifica el número e intenta de nuevo.'}
               </p>
             </CardContent>
           </Card>
@@ -329,7 +329,7 @@ export default function VerificarPage() {
           <CardContent className="flex items-start gap-3 p-4">
             <Clock className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
             <p className="text-sm">
-              {'Los pagos son verificados en un maximo de '}
+              {'Los pagos son verificados en un máximo de '}
               <span className="font-bold text-primary">24 horas</span>
               {'. Si tienes dudas, contacta a nuestro equipo de soporte.'}
             </p>

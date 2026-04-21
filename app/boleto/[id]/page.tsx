@@ -124,7 +124,7 @@ export default function BoletoPage() {
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">Cargando información del boleto...</p>
+          <p className="text-muted-foreground">Cargando información del boleto…</p>
         </div>
       </div>
     )
@@ -310,7 +310,7 @@ export default function BoletoPage() {
         {/* Footer */}
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            FortuRD - Arranca tu sueño, Enciende tu fortuna
+            FortuRD - Arranca tu sueño. Enciende tu fortuna.
           </p>
         </div>
       </div>

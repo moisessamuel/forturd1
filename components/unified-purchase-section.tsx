@@ -333,16 +333,16 @@ export function UnifiedPurchaseSection() {
               </div>
             </div>
 
-            <h2 className="mb-2 text-2xl font-bold">{'Comprobante Recibido!'}</h2>
+            <h2 className="mb-2 text-2xl font-bold">{'¡Comprobante Recibido!'}</h2>
             <p className="mb-6 text-muted-foreground">
-              Tu comprobante ha sido enviado exitosamente. Tu billete esta en estado{' '}
-              <span className="font-medium text-primary">Pendiente de Validacion</span>.
+              Tu comprobante ha sido enviado exitosamente. Tu billete está en estado{' '}
+              <span className="font-medium text-primary">Pendiente de Validación</span>.
             </p>
 
             <Card className="mb-6 border-primary/50 bg-primary/10">
               <CardContent className="p-6">
                 <p className="mb-2 text-sm text-muted-foreground">
-                  {ticketNumbers.length > 1 ? 'TUS NUMEROS DE BOLETOS' : 'TU NUMERO DE BOLETO'}
+                  {ticketNumbers.length > 1 ? 'TUS NÚMEROS DE BOLETOS' : 'TU NÚMERO DE BOLETO'}
                 </p>
                 <div className="space-y-2">
                   {ticketNumbers.map((num, idx) => (
@@ -360,10 +360,10 @@ export function UnifiedPurchaseSection() {
                   className="mt-2 text-muted-foreground hover:text-foreground"
                 >
                   <Copy className="mr-2 h-4 w-4" />
-                  Copiar {ticketNumbers.length > 1 ? 'numeros' : 'numero'}
+                  Copiar {ticketNumbers.length > 1 ? 'números' : 'número'}
                 </Button>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Guarda {ticketNumbers.length > 1 ? 'estos numeros' : 'este numero'} para verificar el estado de tu boleto
+                  Guarda {ticketNumbers.length > 1 ? 'estos números' : 'este número'} para verificar el estado de tu boleto.
                 </p>
               </CardContent>
             </Card>
@@ -384,7 +384,7 @@ export function UnifiedPurchaseSection() {
                   </div>
                   <p className="mt-2 font-mono text-sm font-bold text-primary">{qrValue}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Este QR es permanente. Usalo para ver todos tus boletos y compras futuras.
+                    Este QR es permanente. Úsalo para ver todos tus boletos y compras futuras.
                   </p>
                 </CardContent>
               </Card>
@@ -400,7 +400,7 @@ export function UnifiedPurchaseSection() {
                 onClick={handleReset}
                 className="flex-1 border-primary text-primary"
               >
-                Comprar mas boletos
+                Comprar más boletos
               </Button>
               <Link href="/verificar" className="flex-1">
                 <Button className="w-full border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground" variant="outline">
@@ -423,7 +423,7 @@ export function UnifiedPurchaseSection() {
             COMPRA TUS BOLETOS
           </h3>
           <p className="mb-6 text-center text-base text-muted-foreground md:text-lg">
-            Ingresa la cantidad deseada y procede al pago por transferencia bancaria
+            Ingresa la cantidad deseada y procede al pago por transferencia bancaria.
           </p>
 
           <div className="space-y-4">
@@ -456,7 +456,7 @@ export function UnifiedPurchaseSection() {
 
             <div>
               <label className="mb-2 block text-sm font-medium">
-                Codigo de Referido (Opcional)
+                Código de Referido (Opcional)
               </label>
               <Input
                 type="text"
@@ -493,9 +493,9 @@ export function UnifiedPurchaseSection() {
               <User className="h-8 w-8 text-primary" />
             </div>
             <h2 className="text-xl font-bold">Datos del Comprador</h2>
-            <p className="text-sm text-muted-foreground">
-              Completa tus datos personales para procesar tu compra de boletos.
-            </p>
+              <p className="text-sm text-muted-foreground">
+                Completa tus datos personales para procesar tu compra de boletos.
+              </p>
           </div>
 
           <div className="space-y-4">
@@ -515,7 +515,7 @@ export function UnifiedPurchaseSection() {
             <div>
               <label className="mb-2 flex items-center gap-2 text-sm font-medium">
                 <span className="text-primary">Tel</span>
-                Numero de Celular <span className="text-destructive">*</span>
+                Número de Celular <span className="text-destructive">*</span>
               </label>
               <Input
                 value={formData.telefono}
@@ -524,7 +524,7 @@ export function UnifiedPurchaseSection() {
                 className="bg-input"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Ingresa tu numero con codigo de pais (ej. +1, +52, +34)
+                Ingresa tu número con código de país (ej. +1, +52, +34).
               </p>
             </div>
 
@@ -549,7 +549,7 @@ export function UnifiedPurchaseSection() {
       <Card ref={paymentMethodRef} className="border-border/50 bg-card/50">
         <CardContent className="p-6">
           <h2 className="mb-2 text-center text-2xl font-bold text-primary">MODOS DE PAGO</h2>
-          <p className="mb-4 text-center text-muted-foreground">Elige una opcion.</p>
+          <p className="mb-4 text-center text-muted-foreground">Elige una opción.</p>
 
           {/* Currency Selector */}
           <div className="mb-6">
@@ -567,7 +567,7 @@ export function UnifiedPurchaseSection() {
                 onClick={() => setMoneda('USD')}
                 className={moneda === 'USD' ? 'bg-primary text-primary-foreground' : ''}
               >
-                USD (Dolares)
+                USD (Dólares)
               </Button>
             </div>
             <p className="mt-2 text-center text-sm text-muted-foreground">
@@ -727,7 +727,7 @@ export function UnifiedPurchaseSection() {
               <p className="text-center text-sm font-medium text-primary">
                 {formData.comprobante
                   ? formData.comprobante.name
-                  : 'Toca aqui para subir tu comprobante'}
+                  : 'Toca aquí para subir tu comprobante'}
               </p>
             </div>
 
@@ -748,7 +748,7 @@ export function UnifiedPurchaseSection() {
                         <Camera className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-medium">Camara</p>
+                        <p className="font-medium">Cámara</p>
                         <p className="text-xs text-muted-foreground">Tomar foto</p>
                       </div>
                     </button>
@@ -761,7 +761,7 @@ export function UnifiedPurchaseSection() {
                         <ImageIcon className="h-5 w-5 text-green-500" />
                       </div>
                       <div>
-                        <p className="font-medium">Galeria</p>
+                        <p className="font-medium">Galería</p>
                         <p className="text-xs text-muted-foreground">Seleccionar de fotos</p>
                       </div>
                     </button>
@@ -852,7 +852,7 @@ export function UnifiedPurchaseSection() {
 
       <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <Shield className="h-3 w-3" />
-        Pago seguro por transferencia bancaria con validacion manual
+        Pago seguro por transferencia bancaria con validación manual.
       </p>
     </div>
   )
