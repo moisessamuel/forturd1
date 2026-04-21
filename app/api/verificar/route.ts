@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       })
 
       // Process all matching players
-      for (const player of players) {
+      for (const player of matchingPlayers) {
         // Search tickets directly where this player is the ticket_player (individual edits)
         const { data: directTickets } = await supabase
           .from('tickets')
@@ -156,8 +156,6 @@ export async function GET(request: NextRequest) {
           }
         }
       }
-
-      console.log('[v0] Total results found:', results.length)
 
       if (results.length === 0) {
         return NextResponse.json({ error: 'No se encontraron boletos para este teléfono' }, { status: 404 })
