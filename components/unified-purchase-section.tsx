@@ -59,7 +59,6 @@ export function UnifiedPurchaseSection() {
   const [moneda, setMoneda] = useState<'DOP' | 'USD'>('DOP')
   const [bancos, setBancos] = useState<Banco[]>([])
   const [selectedBanco, setSelectedBanco] = useState<Banco | null>(null)
-  const [expandedBanco, setExpandedBanco] = useState<string | null>(null)
 
   // Form data state
   const [formData, setFormData] = useState<FormData>({
@@ -586,7 +585,6 @@ export function UnifiedPurchaseSection() {
                 key={method.id}
                 type="button"
                 onClick={() => {
-                  setExpandedBanco(expandedBanco === method.id ? null : method.id)
                   setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
                   setFormData(prev => ({ ...prev, banco: method.nombre }))
                 }}
@@ -604,167 +602,116 @@ export function UnifiedPurchaseSection() {
                     className="object-contain"
                   />
                 </div>
-                {selectedBanco?.id === method.id && (
-                  <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                    <Check className="h-3 w-3 text-primary-foreground" />
-                  </div>
-                )}
               </button>
             ))}
           </div>
 
-          {/* Payment Info Modal */}
-          {expandedBanco && (() => {
-            const method = paymentMethods.find(m => m.id === expandedBanco)
+          {/* Payment Info - Inline Display */}
+          {selectedBanco && (() => {
+            const method = paymentMethods.find(m => m.id === selectedBanco.id)
             if (!method) return null
             return (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
-                    <Card className="relative w-full max-w-sm border-2 border-primary/50 bg-card shadow-2xl shadow-primary/20" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => setExpandedBanco(null)}
-                        className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <X className="h-5 w-5" />
-                      </button>
-                      <CardContent className="px-6 pb-6 pt-8">
-                        <h3 className="mb-5 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
-                          {method.nombre}
-                        </h3>
+              <Card className="border-primary/50 bg-card">
+                <CardContent className="p-4">
+                  <h3 className="mb-4 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
+                    {method.nombre}
+                  </h3>
 
-                        <div className="space-y-4 text-base">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-sm text-muted-foreground">Titular</span>
-                            <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
-                          </div>
-                          {method.id !== 'zelle' && method.id !== 'cashapp' && (
-                            <>
-                              <div className="h-px w-full bg-border/50" />
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-sm text-muted-foreground">Cedula</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold text-foreground">{titular.cedula}</span>
-                                  <button
-                                    onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
-                                    className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
-                                  >
-                                    <Copy className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          {method.id === 'cashapp' && (
-                            <>
-                              <div className="h-px w-full bg-border/50" />
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-sm text-muted-foreground">User</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg font-bold text-primary">$FortunaRD</span>
-                                  <button
-                                    onClick={() => copyToClipboard('$FortunaRD', 'User')}
-                                    className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
-                                  >
-                                    <Copy className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          {method.cuenta && (
-                            <>
-                              <div className="h-px w-full bg-border/50" />
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-sm text-muted-foreground">Tipo de Cuenta</span>
-                                <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
-                              </div>
-                              <div className="h-px w-full bg-border/50" />
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-sm text-muted-foreground">Numero de Cuenta</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg font-bold text-primary">{method.cuenta}</span>
-                                  <button
-                                    onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')}
-                                    className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
-                                  >
-                                    <Copy className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
-                            <>
-                              <div className="h-px w-full bg-border/50" />
-                              <div className="flex flex-col items-center gap-1">
-                                <span className="text-sm text-muted-foreground">Tipo</span>
-                                <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
-                              </div>
-                            </>
-                          )}
-                          <div className="h-px w-full bg-border/50" />
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-sm text-muted-foreground">Monto a Transferir</span>
-                            <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
-                          </div>
-                          {method.isPaypal && (
-                            <a
-                              href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * (parseInt(quantity) || 0)}USD`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-base font-semibold text-white transition-colors hover:bg-blue-600"
-                            >
-                              Pagar con PayPal
-                            </a>
-                          )}
-                          {method.isCashApp && (
-                            <a
-                              href={method.cashAppLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 py-3 text-base font-semibold text-white transition-colors hover:bg-green-600"
-                            >
-                              Pagar con Cash App
-                            </a>
-                          )}
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                      <span className="text-muted-foreground">Titular</span>
+                      <span className="font-semibold text-foreground">{titular.nombre}</span>
+                    </div>
+                    
+                    {method.id !== 'zelle' && method.id !== 'cashapp' && (
+                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                        <span className="text-muted-foreground">Cedula</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-foreground">{titular.cedula}</span>
                           <button
-                            onClick={() => {
-                              setExpandedBanco(null)
-                              setTimeout(() => {
-                                uploadRef.current?.scrollIntoView({ behavior: 'smooth' })
-                              }, 100)
-                            }}
-                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3.5 text-base font-bold text-black uppercase tracking-wide transition-colors hover:bg-yellow-500"
+                            onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
+                            className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
                           >
-                            <Upload className="h-5 w-5" />
-                            Ya transferi, subir comprobante
+                            <Copy className="h-4 w-4" />
                           </button>
                         </div>
-                      </CardContent>
-                </Card>
-              </div>
+                      </div>
+                    )}
+                    
+                    {method.id === 'cashapp' && (
+                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                        <span className="text-muted-foreground">User</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-primary">$FortunaRD</span>
+                          <button
+                            onClick={() => copyToClipboard('$FortunaRD', 'User')}
+                            className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {method.cuenta && (
+                      <>
+                        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                          <span className="text-muted-foreground">Tipo de Cuenta</span>
+                          <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                          <span className="text-muted-foreground">Numero de Cuenta</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-primary">{method.cuenta}</span>
+                            <button
+                              onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')}
+                              className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                    
+                    {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
+                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                        <span className="text-muted-foreground">Tipo</span>
+                        <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2">
+                      <span className="text-muted-foreground">Monto a Transferir</span>
+                      <span className="text-lg font-bold text-primary">{formatCurrency(total)}</span>
+                    </div>
+                    
+                    {method.isPaypal && (
+                      <a
+                        href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * (parseInt(quantity) || 0)}USD`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
+                      >
+                        Pagar con PayPal
+                      </a>
+                    )}
+                    
+                    {method.isCashApp && (
+                      <a
+                        href={method.cashAppLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-600"
+                      >
+                        Pagar con Cash App
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             )
           })()}
-
-          {selectedBanco && (
-            <Card className="mb-4 border-green-500/50 bg-green-500/10">
-              <CardContent className="flex items-center gap-3 p-4">
-                <Check className="h-5 w-5 text-green-500" />
-                <p className="text-sm">
-                  Metodo seleccionado: <span className="font-semibold">{selectedBanco.nombre}</span>
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card className="border-green-500/50 bg-green-500/10">
-            <CardContent className="flex items-start gap-3 p-4">
-              <Check className="mt-0.5 h-5 w-5 text-green-500" />
-              <p className="text-sm">
-                Asegurese de transferir el monto exacto. Despues de realizar la
-                transferencia, suba el comprobante abajo.
-              </p>
-            </CardContent>
-          </Card>
         </CardContent>
       </Card>
 
