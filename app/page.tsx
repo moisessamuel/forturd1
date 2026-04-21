@@ -1,27 +1,7 @@
-'use client'
-
-import { useState } from 'react'
 import { Header } from '@/components/header'
 import { HeroSection } from '@/components/hero-section'
-import { PurchaseFlow } from '@/components/purchase-flow'
 
 export default function HomePage() {
-  const [showPurchaseFlow, setShowPurchaseFlow] = useState(false)
-  const [initialQuantity, setInitialQuantity] = useState(1)
-  const [referralCode, setReferralCode] = useState('')
-
-  const handleStartPurchase = (quantity: number, referral?: string) => {
-    setInitialQuantity(quantity)
-    setReferralCode(referral || '')
-    setShowPurchaseFlow(true)
-  }
-
-  const handleClosePurchase = () => {
-    setShowPurchaseFlow(false)
-    setInitialQuantity(1)
-    setReferralCode('')
-  }
-
   return (
     <main className="relative min-h-screen abstract-bg">
       {/* Background image */}
@@ -39,16 +19,8 @@ export default function HomePage() {
         />
       </div>
       <div className="relative z-10">
-      <Header />
-      {!showPurchaseFlow ? (
-        <HeroSection onStartPurchase={handleStartPurchase} />
-      ) : (
-        <PurchaseFlow 
-          initialQuantity={initialQuantity} 
-          referralCode={referralCode}
-          onClose={handleClosePurchase}
-        />
-      )}
+        <Header />
+        <HeroSection />
       </div>
     </main>
   )

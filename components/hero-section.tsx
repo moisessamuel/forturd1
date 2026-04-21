@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { MapPin, Search, CreditCard, Shield } from 'lucide-react'
+import { MapPin, Search, Shield } from 'lucide-react'
 
 const GALLERY_IMAGES = [
   { src: '/images/gallery1.jpg', alt: 'BMW X7 y X6 en tunel de noche' },
@@ -10,25 +10,19 @@ const GALLERY_IMAGES = [
   { src: '/images/gallery3.jpg', alt: 'BMW X6 y X7 frontal en estacionamiento' },
 ]
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-
-interface HeroSectionProps {
-  onStartPurchase: (quantity: number, referral?: string) => void
-}
+import { UnifiedPurchaseSection } from '@/components/unified-purchase-section'
 
 interface Config {
   precio_boleto_dop: number
   total_boletos: number
 }
 
-export function HeroSection({ onStartPurchase }: HeroSectionProps) {
+export function HeroSection() {
   const [config, setConfig] = useState<Config | null>(null)
   const [progress, setProgress] = useState(0)
-  const [quantity, setQuantity] = useState('')
-  const [referralCode, setReferralCode] = useState('')
   const totalSlides = GALLERY_IMAGES.length + 1 // portada + gallery
   const [currentSlide, setCurrentSlide] = useState(0) // 0 = portada, 1+ = gallery
 
@@ -54,18 +48,6 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
       })
       .catch(console.error)
   }, [])
-
-  const handleQuickSelect = (qty: number) => {
-    setQuantity(qty.toString())
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const qty = parseInt(quantity) || 1
-    if (qty > 0) {
-      onStartPurchase(qty, referralCode)
-    }
-  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-DO').format(amount)
@@ -155,7 +137,7 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
 
           <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Shield className="h-4 w-4 text-green-500" />
-            Compra mínima garantizada por sistema seguro
+            Compra minima garantizada por sistema seguro
           </p>
         </div>
       </div>
@@ -167,85 +149,18 @@ export function HeroSection({ onStartPurchase }: HeroSectionProps) {
         </p>
       </div>
 
-      {/* Purchase form */}
-      <Card className="mb-8 border-border/50 bg-card/50">
-        <CardContent className="p-6">
-          <h3 className="mb-2 text-center text-3xl font-extrabold uppercase text-primary md:text-4xl" style={{ textShadow: '0 0 10px rgba(218, 165, 32, 0.6), 0 0 20px rgba(218, 165, 32, 0.3)' }}>COMPRA TUS BOLETOS</h3>
-          <p className="mb-6 text-center text-base text-muted-foreground md:text-lg">
-            Ingresa la cantidad deseada y procede al pago por transferencia bancaria
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                CANTIDAD DE BOLETOS
-              </label>
-              <Input
-                type="number"
-                min="1"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Escribe la cantidad"
-                className="bg-input"
-              />
-            </div>
-
-            <div>
-              <p className="mb-2 text-xs text-muted-foreground">SELECCIÓN RÁPIDA</p>
-              <div className="grid grid-cols-4 gap-2">
-                {[1, 5, 10, 25].map((qty) => (
-                  <Button
-                    key={qty}
-                    type="button"
-                    variant={quantity === qty.toString() ? 'default' : 'outline'}
-                    onClick={() => handleQuickSelect(qty)}
-                    className={quantity === qty.toString() ? 'bg-primary text-primary-foreground' : ''}
-                  >
-                    {qty}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Código de Referido (Opcional)
-              </label>
-              <Input
-                type="text"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                placeholder="Ej. JUANPEREZ"
-                className="bg-input"
-              />
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={!quantity || parseInt(quantity) < 1}
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              EMPEZAR A JUGAR
-            </Button>
-
-            <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Shield className="h-3 w-3" />
-              Pago seguro por transferencia bancaria con validación manual
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+      {/* Unified Purchase Flow - All steps in one view */}
+      <UnifiedPurchaseSection />
 
       {/* Verify ticket card */}
-      <Card className="mb-8 border-border/50 bg-card/50">
+      <Card className="my-8 border-border/50 bg-card/50">
         <CardContent className="flex flex-col items-center justify-between gap-4 p-4 sm:flex-row">
           <div className="flex items-center gap-3">
             <Search className="h-5 w-5 text-primary" />
             <div>
               <p className="text-lg font-semibold">{'¿Ya compraste tu boleto?'}</p>
               <p className="text-lg text-muted-foreground">
-                Verifica el estado de tu boleto aquí
+                Verifica el estado de tu boleto aqui
               </p>
             </div>
           </div>
