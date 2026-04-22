@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateTicketNumbers } from '@/lib/ticket'
 import { getSession } from '@/lib/auth'
 import { randomUUID } from 'crypto'
-import { sendTicketPendingEmail } from '@/lib/email'
+import { sendTicketPendingEmail, sendAdminPurchaseNotification } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   try {
@@ -252,17 +252,36 @@ export async function POST(request: NextRequest) {
       .eq('id', purchaseGroup.id)
       .single()
 
+    // Format purchase date for emails
+    const purchaseDate = new Date().toLocaleDateString('es-DO', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    // Send admin notification email (always)
+    try {
+      await sendAdminPurchaseNotification({
+        playerName: body.nombre,
+        playerPhone: body.telefono,
+        playerEmail: body.email || undefined,
+        ticketNumbers,
+        totalAmount: monto,
+        moneda: body.moneda || 'DOP',
+        banco: body.banco,
+        purchaseDate,
+        referidoCodigo: body.referido_codigo?.toUpperCase() || undefined,
+      })
+    } catch (emailError) {
+      console.error('Error sending admin notification email:', emailError)
+      // Don't fail the request if email fails
+    }
+
     // Send pending email notification if player has email
     if (body.email) {
       try {
-        const purchaseDate = new Date().toLocaleDateString('es-DO', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-
         await sendTicketPendingEmail({
           playerName: body.nombre,
           playerEmail: body.email,
@@ -272,9 +291,8 @@ export async function POST(request: NextRequest) {
           qrCodeUrl: '',
           purchaseDate,
         })
-        console.log(`[v0] Pending email sent to ${body.email}`)
       } catch (emailError) {
-        console.error('[v0] Error sending pending email:', emailError)
+        console.error('Error sending pending email:', emailError)
         // Don't fail the request if email fails
       }
     }
