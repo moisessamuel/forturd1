@@ -455,7 +455,7 @@ export function UnifiedPurchaseSection() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium">
+              <label className="mb-2 block text-base font-medium">
                 Código de Referido (Opcional)
               </label>
               <Input
@@ -463,7 +463,7 @@ export function UnifiedPurchaseSection() {
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                 placeholder="Ej. JUANPEREZ"
-                className="bg-input"
+                className="bg-input text-base"
               />
             </div>
 
