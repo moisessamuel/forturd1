@@ -2105,7 +2105,7 @@ export default function AdminDashboard() {
                       <TableHead>{'Teléfono'}</TableHead>
                       <TableHead>Ventas Aprobadas</TableHead>
                       <TableHead>Ventas (DOP)</TableHead>
-                      <TableHead>{'Comision (10%)'}</TableHead>
+                      <TableHead>{'Comisión (15%)'}</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
