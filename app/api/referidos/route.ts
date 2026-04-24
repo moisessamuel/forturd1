@@ -24,34 +24,49 @@ export async function GET() {
       )
     }
 
-    // Get sales stats for each referido from both old and new tables
+    // Get sales stats for each referido from both old and new tables, separated by currency
     const referidosWithStats = await Promise.all(
       (referidos || []).map(async (referido) => {
         const [{ data: oldCompras }, { data: newGroups }] = await Promise.all([
           supabase
             .from('compras')
-            .select('monto, estado')
+            .select('monto, estado, moneda')
             .eq('referido_codigo', referido.codigo),
           supabase
             .from('purchase_groups')
-            .select('monto, estado')
+            .select('monto, estado, moneda')
             .eq('referido_codigo', referido.codigo),
         ])
 
-        const oldApproved = oldCompras
-          ?.filter((c) => c.estado === 'aprobado')
+        // Calculate DOP sales (old system)
+        const oldApprovedDOP = oldCompras
+          ?.filter((c) => c.estado === 'aprobado' && (c.moneda === 'DOP' || !c.moneda))
           .reduce((sum, c) => sum + Number(c.monto), 0) || 0
 
-        const newApproved = newGroups
-          ?.filter((pg) => pg.estado === 'aprobado')
+        const oldApprovedUSD = oldCompras
+          ?.filter((c) => c.estado === 'aprobado' && c.moneda === 'USD')
+          .reduce((sum, c) => sum + Number(c.monto), 0) || 0
+
+        // Calculate new system sales by currency
+        const newApprovedDOP = newGroups
+          ?.filter((pg) => pg.estado === 'aprobado' && (pg.moneda === 'DOP' || !pg.moneda))
           .reduce((sum, pg) => sum + Number(pg.monto), 0) || 0
 
-        const ventasAprobadas = oldApproved + newApproved
+        const newApprovedUSD = newGroups
+          ?.filter((pg) => pg.estado === 'aprobado' && pg.moneda === 'USD')
+          .reduce((sum, pg) => sum + Number(pg.monto), 0) || 0
+
+        const ventasAprobadasDOP = oldApprovedDOP + newApprovedDOP
+        const ventasAprobadasUSD = oldApprovedUSD + newApprovedUSD
+        const ventasAprobadas = ventasAprobadasDOP + ventasAprobadasUSD
 
         return {
           ...referido,
           ventas_aprobadas: ventasAprobadas,
-          comision: ventasAprobadas * 0.15,
+          ventas_dop: ventasAprobadasDOP,
+          ventas_usd: ventasAprobadasUSD,
+          comision_dop: ventasAprobadasDOP * 0.15,
+          comision_usd: ventasAprobadasUSD * 0.15,
         }
       })
     )
