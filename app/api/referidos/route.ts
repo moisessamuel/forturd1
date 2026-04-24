@@ -51,7 +51,7 @@ export async function GET() {
         return {
           ...referido,
           ventas_aprobadas: ventasAprobadas,
-          comision: ventasAprobadas * 0.1,
+          comision: ventasAprobadas * 0.15,
         }
       })
     )
