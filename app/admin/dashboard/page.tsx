@@ -2103,9 +2103,10 @@ export default function AdminDashboard() {
                       <TableHead>{'Código'}</TableHead>
                       <TableHead>{'Cédula / Pasaporte'}</TableHead>
                       <TableHead>{'Teléfono'}</TableHead>
-                      <TableHead>Ventas Aprobadas</TableHead>
                       <TableHead>Ventas (DOP)</TableHead>
-                      <TableHead>{'Comisión (15%)'}</TableHead>
+                      <TableHead>{'Comisión DOP (15%)'}</TableHead>
+                      <TableHead>Ventas (USD)</TableHead>
+                      <TableHead>{'Comisión USD (15%)'}</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2127,13 +2128,13 @@ export default function AdminDashboard() {
                       if (filtered.length === 0) {
                         return (
                           <TableRow>
-                            <TableCell colSpan={8} className="text-center text-muted-foreground">
+                            <TableCell colSpan={9} className="text-center text-muted-foreground">
                               {referidoSearch.trim() ? 'No se encontraron referidos' : 'No hay referidos registrados'}
                             </TableCell>
                           </TableRow>
                         )
                       }
-                      return filtered.map((referido: Referido & { ventas_aprobadas?: number; comision?: number }) => (
+                      return filtered.map((referido: Referido & { ventas_aprobadas?: number; ventas_dop?: number; ventas_usd?: number; comision_dop?: number; comision_usd?: number }) => (
                         <TableRow key={referido.id}>
                           <TableCell>{referido.nombre_agente}</TableCell>
                           <TableCell>
@@ -2141,10 +2142,13 @@ export default function AdminDashboard() {
                           </TableCell>
                           <TableCell className="text-sm">{referido.cedula || '-'}</TableCell>
                           <TableCell className="text-sm">{referido.telefono || '-'}</TableCell>
-                          <TableCell>{referido.ventas_aprobadas || 0}</TableCell>
-                          <TableCell>{formatCurrency(referido.ventas_aprobadas || 0)}</TableCell>
+                          <TableCell>{formatCurrency(referido.ventas_dop || 0)}</TableCell>
                           <TableCell className="text-green-500">
-                            {formatCurrency(referido.comision || 0)}
+                            {formatCurrency(referido.comision_dop || 0)}
+                          </TableCell>
+                          <TableCell>{(referido.ventas_usd || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                          <TableCell className="text-green-500">
+                            {(referido.comision_usd || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                           </TableCell>
                           <TableCell>
                             <Button
