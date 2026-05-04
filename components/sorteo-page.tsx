@@ -88,7 +88,7 @@ export function SorteoPage({ slug }: SorteoPageProps) {
           </Link>
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/images/logo.png"
+              src="/images/forturd-logo.png"
               alt="FortuRD"
               width={120}
               height={40}

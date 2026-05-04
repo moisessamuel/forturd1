@@ -9,7 +9,7 @@ export default function MantenimientoPage() {
       {/* Logo */}
       <div className="mb-8">
         <Image
-          src="/images/logo.png"
+          src="/images/forturd-logo.png"
           alt="FortuRD"
           width={200}
           height={80}

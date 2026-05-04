@@ -114,7 +114,7 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center">
           <Image
-            src="/images/logo.png"
+            src="/images/forturd-logo.png"
             alt="FortuRD"
             width={150}
             height={50}
