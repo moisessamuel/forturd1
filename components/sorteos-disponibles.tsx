@@ -13,9 +13,24 @@ interface SorteoWithProgress extends Sorteo {
   progress?: number
 }
 
+const carouselImages = [
+  '/images/bmw-carousel-1.png',
+  '/images/bmw-carousel-2.png',
+  '/images/bmw-carousel-3.png',
+]
+
 export function SorteosDisponibles() {
   const [sorteos, setSorteos] = useState<SorteoWithProgress[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+  // Auto-rotate carousel images every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % carouselImages.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const fetchSorteos = async () => {
@@ -74,12 +89,62 @@ export function SorteosDisponibles() {
       {/* Active Sorteos */}
       {activeSorteos.length > 0 && (
         <>
+          {/* Image Carousel Section */}
+          <div className="mb-10">
+            {/* Carousel */}
+            <div className="relative mx-auto mb-6 aspect-[16/9] max-w-4xl overflow-hidden rounded-2xl border-2 border-primary/30 shadow-[0_0_30px_rgba(218,165,32,0.3)]">
+              {carouselImages.map((src, index) => (
+                <div
+                  key={src}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${
+                    index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <Image
+                    src={src}
+                    alt={`BMW X6 y X7 - Imagen ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    priority={index === 0}
+                  />
+                </div>
+              ))}
+              {/* Carousel indicators */}
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                {carouselImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`h-2 w-8 rounded-full transition-all ${
+                      index === currentImageIndex 
+                        ? 'bg-primary shadow-[0_0_10px_rgba(218,165,32,0.8)]' 
+                        : 'bg-white/50 hover:bg-white/70'
+                    }`}
+                    aria-label={`Ver imagen ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Text below carousel */}
+            <div className="text-center">
+              <h1 
+                className="mb-4 text-3xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.9)] md:text-4xl lg:text-5xl"
+                style={{ textShadow: '0 0 20px rgba(218,165,32,0.8), 0 0 40px rgba(218,165,32,0.5), 0 0 60px rgba(218,165,32,0.3)' }}
+              >
+                PARTICIPA Y GANA CON FORTURD
+              </h1>
+              <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg">
+                Una de estas BMW puede ser tuya. Por cada boleto comprado recibes un giro en la ruleta FortuRD. 
+                Participa y aumenta tus oportunidades de ganar increibles premios.
+              </p>
+            </div>
+          </div>
+
+          {/* Section title */}
           <div className="mb-8 text-center">
-            <h1 className="mb-4 text-2xl font-bold text-primary drop-shadow-[0_0_10px_rgba(218,165,32,0.8)] md:text-3xl lg:text-4xl" style={{ textShadow: '0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.4)' }}>
-              TÚ DECIDES TU SUERTE. UNA X6 Y UNA X7 ESPERANDO DUEÑO.
-            </h1>
             <p className="mb-2 text-sm font-semibold tracking-widest text-primary">
-              Participa!
+              Sorteos Activos
             </p>
             <h2 className="text-3xl font-extrabold uppercase tracking-tight text-foreground md:text-4xl">
               DISPONIBLES
@@ -111,8 +176,14 @@ export function SorteosDisponibles() {
                       {sorteo.nombre}
                     </h3>
                   </Link>
-                  <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>CON LA VENTA DEL 100%</span>
+                  <div className="mb-3 text-sm text-muted-foreground">
+                    {sorteo.slug === 'bmw-x6' ? (
+                      <span>Deportivo, elegante y potente. Disenado para destacar.</span>
+                    ) : sorteo.slug === 'bmw-x7' ? (
+                      <span>Espacioso, comodo y confortable. Ideal para toda la familia.</span>
+                    ) : (
+                      <span>CON LA VENTA DEL 100%</span>
+                    )}
                   </div>
                   
                   {/* Progress bar */}
@@ -176,6 +247,27 @@ export function SorteosDisponibles() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Verify Ticket Button */}
+        <div className="mt-8">
+          <Link href="/verificar" className="block">
+            <div className="group relative mx-auto overflow-hidden rounded-2xl border-2 border-primary bg-gradient-to-r from-primary/20 via-yellow-500/15 to-primary/20 p-1 shadow-[0_0_30px_rgba(218,165,32,0.4)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(218,165,32,0.6)]">
+              <div className="rounded-xl bg-background/95 px-6 py-6 text-center backdrop-blur-sm transition-all group-hover:bg-background/90 md:px-10 md:py-8">
+                <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary/80">
+                  Ya compraste tu boleto?
+                </p>
+                <p 
+                  className="text-xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.7)] md:text-2xl lg:text-3xl"
+                  style={{ textShadow: '0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.3)' }}
+                >
+                  Verifica tu boleto aqui y obtiene tu giro gratis
+                </p>
+              </div>
+              {/* Animated shimmer effect */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+            </div>
+          </Link>
+        </div>
       </div>
 
       {/* Sold Out Sorteos */}
