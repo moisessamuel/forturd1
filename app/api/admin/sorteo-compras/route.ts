@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
         total_tickets,
         comprobante_url,
         created_at,
-        updated_at,
         player:players(id, nombre, phone_number, email)
       `)
       .eq('sorteo_slug', sorteoSlug)
@@ -73,7 +72,6 @@ export async function GET(request: NextRequest) {
       estado: compra.estado,
       sorteo_slug: compra.sorteo_slug,
       created_at: compra.created_at,
-      updated_at: compra.updated_at,
       player: compra.player,
     }))
 
@@ -99,10 +97,7 @@ export async function PATCH(request: NextRequest) {
     // Update purchase_groups status
     const { data, error } = await supabase
       .from('purchase_groups')
-      .update({ 
-        estado,
-        updated_at: new Date().toISOString()
-      })
+      .update({ estado })
       .eq('id', id)
       .select()
       .single()
