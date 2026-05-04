@@ -38,7 +38,7 @@ export function Header() {
             width={200}
             height={80}
             style={{ width: 'auto', height: scrolled ? '50px' : '70px' }}
-            className="object-contain transition-all duration-300 ease-in-out"
+            className="object-contain mix-blend-lighten transition-all duration-300 ease-in-out"
           />
         </Link>
 
