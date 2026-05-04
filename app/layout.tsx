@@ -91,7 +91,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Event',
               name: 'Sorteo FortuRD - BMW X6 y BMW X7',
-              description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Boletos a 1,000 DOP.',
+              description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Boletos a 490 DOP.',
               image: 'https://www.forturd1.com/images/og-image.png',
               organizer: {
                 '@type': 'Organization',
@@ -110,7 +110,7 @@ export default function RootLayout({
               },
               offers: {
                 '@type': 'Offer',
-                price: '1000',
+                price: '490',
                 priceCurrency: 'DOP',
                 url: 'https://www.forturd1.com',
                 availability: 'https://schema.org/InStock',

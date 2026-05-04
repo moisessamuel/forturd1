@@ -60,8 +60,8 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
   const [referralCode, setReferralCode] = useState('')
   
   // Config state
-  const [precioBoleto, setPrecioBoleto] = useState(1000)
-  const [precioBoletoUsd, setPrecioBoletoUsd] = useState(20)
+  const [precioBoleto, setPrecioBoleto] = useState(490)
+  const [precioBoletoUsd, setPrecioBoletoUsd] = useState(9)
   const [moneda, setMoneda] = useState<'DOP' | 'USD'>('DOP')
   const [bancos, setBancos] = useState<Banco[]>([])
   const [selectedBanco, setSelectedBanco] = useState<Banco | null>(null)
