@@ -2,12 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lock, Eye, EyeOff, User } from 'lucide-react'
+import { Lock, Eye, EyeOff, User, Car, Disc3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
 import Image from 'next/image'
+
+type ViewState = 'login' | 'panel-selection'
+
+interface UserSession {
+  username: string
+  role: string
+}
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -15,14 +22,25 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [viewState, setViewState] = useState<ViewState>('login')
+  const [currentUser, setCurrentUser] = useState<UserSession | null>(null)
 
   useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return
+    
     // Check if already logged in via cookie session
     fetch('/api/admin/session')
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated && data.role) {
-          redirectToPanel(data.role)
+          // If user is pocoyo/admin, show panel selection
+          if (data.role === 'admin' || data.user?.username?.toLowerCase() === 'pocoyo') {
+            setCurrentUser({ username: data.user?.username || 'admin', role: data.role })
+            setViewState('panel-selection')
+          } else {
+            redirectToPanel(data.role)
+          }
         }
       })
       .catch(() => {})
@@ -31,6 +49,16 @@ export default function AdminLoginPage() {
     const bmwx6Session = sessionStorage.getItem('bmwx6_admin_session')
     const bmwx7Session = sessionStorage.getItem('bmwx7_admin_session')
     const ruletaSession = sessionStorage.getItem('ruleta_admin_session')
+    const adminSession = sessionStorage.getItem('admin_session')
+    
+    if (adminSession) {
+      try {
+        const session = JSON.parse(adminSession)
+        setCurrentUser({ username: session.username, role: session.role })
+        setViewState('panel-selection')
+        return
+      } catch {}
+    }
     
     if (bmwx6Session) {
       router.push('/admin/bmw-x6')
@@ -43,9 +71,6 @@ export default function AdminLoginPage() {
 
   const redirectToPanel = (role: string) => {
     switch (role) {
-      case 'admin':
-        router.push('/admin/dashboard')
-        break
       case 'sorteo_bmw-x6':
         router.push('/admin/bmw-x6')
         break
@@ -57,7 +82,8 @@ export default function AdminLoginPage() {
         router.push('/admin/ruleta')
         break
       default:
-        router.push('/admin/dashboard')
+        // For admin role, show panel selection
+        break
     }
   }
 
@@ -84,24 +110,38 @@ export default function AdminLoginPage() {
         throw new Error(data.error || 'Credenciales invalidas')
       }
 
-      // Store session based on role for backward compatibility
+      // Store session based on role
       const sessionData = {
         username: data.user.username,
         role: data.user.role,
         loginTime: Date.now(),
       }
 
-      // Store in appropriate sessionStorage key based on role
-      if (data.user.role === 'sorteo_bmw-x6') {
+      // For admin/pocoyo user, show panel selection
+      if (data.user.role === 'admin' || data.user.username.toLowerCase() === 'pocoyo') {
+        sessionStorage.setItem('admin_session', JSON.stringify(sessionData))
+        setCurrentUser({ username: data.user.username, role: data.user.role })
+        setViewState('panel-selection')
+        toast.success('Bienvenido ' + data.user.username)
+      } else if (data.user.role === 'sorteo_bmw-x6') {
         sessionStorage.setItem('bmwx6_admin_session', JSON.stringify(sessionData))
+        toast.success('Inicio de sesion exitoso')
+        router.push('/admin/bmw-x6')
       } else if (data.user.role === 'sorteo_bmw-x7') {
         sessionStorage.setItem('bmwx7_admin_session', JSON.stringify(sessionData))
+        toast.success('Inicio de sesion exitoso')
+        router.push('/admin/bmw-x7')
       } else if (data.user.role === 'ruleta_admin' || data.user.role === 'ruleta') {
         sessionStorage.setItem('ruleta_admin_session', JSON.stringify(sessionData))
+        toast.success('Inicio de sesion exitoso')
+        router.push('/admin/ruleta')
+      } else {
+        // Default: show panel selection
+        sessionStorage.setItem('admin_session', JSON.stringify(sessionData))
+        setCurrentUser({ username: data.user.username, role: data.user.role })
+        setViewState('panel-selection')
+        toast.success('Bienvenido ' + data.user.username)
       }
-
-      toast.success('Inicio de sesion exitoso')
-      redirectToPanel(data.user.role)
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al iniciar sesion')
     } finally {
@@ -109,6 +149,117 @@ export default function AdminLoginPage() {
     }
   }
 
+  const handlePanelSelect = (panel: string) => {
+    const sessionData = {
+      username: currentUser?.username || 'admin',
+      role: currentUser?.role || 'admin',
+      loginTime: Date.now(),
+    }
+
+    if (panel === 'bmw-x6') {
+      sessionStorage.setItem('bmwx6_admin_session', JSON.stringify(sessionData))
+      router.push('/admin/bmw-x6')
+    } else if (panel === 'bmw-x7') {
+      sessionStorage.setItem('bmwx7_admin_session', JSON.stringify(sessionData))
+      router.push('/admin/bmw-x7')
+    } else if (panel === 'ruleta') {
+      sessionStorage.setItem('ruleta_admin_session', JSON.stringify(sessionData))
+      router.push('/admin/ruleta')
+    }
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('admin_session')
+    sessionStorage.removeItem('bmwx6_admin_session')
+    sessionStorage.removeItem('bmwx7_admin_session')
+    sessionStorage.removeItem('ruleta_admin_session')
+    setCurrentUser(null)
+    setViewState('login')
+    setUsername('')
+    setPassword('')
+    toast.success('Sesion cerrada')
+  }
+
+  // Panel Selection View
+  if (viewState === 'panel-selection') {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="w-full max-w-lg">
+          <div className="mb-8 flex flex-col items-center">
+            <Image
+              src="/images/forturd-logo.png"
+              alt="FortuRD"
+              width={150}
+              height={50}
+              className="mb-4 h-16 w-auto object-contain"
+            />
+            <h1 className="mb-2 text-2xl font-bold">Hola, {currentUser?.username}</h1>
+            <p className="text-center text-muted-foreground">
+              Selecciona el panel que deseas administrar
+            </p>
+          </div>
+
+          <div className="grid gap-4">
+            {/* BMW X6 Panel */}
+            <Card 
+              className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
+              onClick={() => handlePanelSelect('bmw-x6')}
+            >
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <Car className="h-8 w-8 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold">BMW X6</h3>
+                  <p className="text-sm text-muted-foreground">Panel de administracion del sorteo BMW X6</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* BMW X7 Panel */}
+            <Card 
+              className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
+              onClick={() => handlePanelSelect('bmw-x7')}
+            >
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <Car className="h-8 w-8 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold">BMW X7</h3>
+                  <p className="text-sm text-muted-foreground">Panel de administracion del sorteo BMW X7</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ruleta Panel */}
+            <Card 
+              className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
+              onClick={() => handlePanelSelect('ruleta')}
+            >
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <Disc3 className="h-8 w-8 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold">Ruleta</h3>
+                  <p className="text-sm text-muted-foreground">Panel de administracion de la ruleta de premios</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-6 text-center">
+            <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
+              Cerrar sesion
+            </Button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // Login View
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">

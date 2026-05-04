@@ -10,6 +10,8 @@ export default function AdminBMWX7Page() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const session = sessionStorage.getItem('bmwx7_admin_session')
     if (!session) {
       router.push('/admin')

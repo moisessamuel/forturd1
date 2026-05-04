@@ -109,6 +109,9 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
 
   useEffect(() => {
     // Check authentication using sessionStorage based on sorteo
+    // Only run on client-side
+    if (typeof window === 'undefined') return
+    
     let isAuth = false
     if (sorteoSlug === 'bmw-x6') {
       isAuth = !!sessionStorage.getItem('bmwx6_admin_session')
