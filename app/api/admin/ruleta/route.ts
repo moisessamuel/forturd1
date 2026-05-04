@@ -54,12 +54,14 @@ export async function GET(request: Request) {
         ...j,
         es_giro_gratis: false,
         numero_boleto_referencia: null,
+        source_table: 'ruleta_jugadas',
       })),
       ...(freeJugadas || []).map(j => ({
         ...j,
         es_giro_gratis: j.es_giro_gratis || true,
         numero_boleto_referencia: j.numero_boleto_referencia,
         metodo_pago: 'Verificador',
+        source_table: 'jugadas_ruleta',
       })),
     ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
@@ -74,7 +76,7 @@ export async function PATCH(request: Request) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { id, estado } = body
+    const { id, estado, source_table } = body
 
     const updateData: Record<string, unknown> = { estado }
     
@@ -82,13 +84,23 @@ export async function PATCH(request: Request) {
       updateData.confirmado_at = new Date().toISOString()
     }
 
-    const { error } = await supabase
+    // Determine which table to update
+    const tableName = source_table === 'jugadas_ruleta' ? 'jugadas_ruleta' : 'ruleta_jugadas'
+
+    // Try updating in ruleta_jugadas first
+    const { error: error1 } = await supabase
       .from('ruleta_jugadas')
       .update(updateData)
       .eq('id', id)
 
-    if (error) {
-      console.error('Error updating jugada:', error)
+    // Also try jugadas_ruleta (free spins table)
+    const { error: error2 } = await supabase
+      .from('jugadas_ruleta')
+      .update(updateData)
+      .eq('id', id)
+
+    if (error1 && error2) {
+      console.error('Error updating jugada:', error1, error2)
       return NextResponse.json({ error: 'Error updating jugada' }, { status: 500 })
     }
 
@@ -99,20 +111,125 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const supabase = await createClient()
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const sourceTable = searchParams.get('source_table')
+    const resetType = searchParams.get('reset')
 
-    // Delete all jugadas from ruleta_jugadas
-    const { error } = await supabase
+    console.log('[API DELETE] Params:', { id, sourceTable, resetType })
+
+    // If id is provided, delete single record
+    if (id) {
+      let deleted = false
+      
+      // If source_table is specified, try that table first
+      if (sourceTable === 'jugadas_ruleta') {
+        const { error } = await supabase
+          .from('jugadas_ruleta')
+          .delete()
+          .eq('id', id)
+        
+        if (!error) {
+          deleted = true
+          console.log('[API DELETE] Deleted from jugadas_ruleta')
+        } else {
+          console.error('[API DELETE] Error from jugadas_ruleta:', error)
+        }
+      }
+      
+      if (sourceTable === 'ruleta_jugadas' || !deleted) {
+        const { error } = await supabase
+          .from('ruleta_jugadas')
+          .delete()
+          .eq('id', id)
+        
+        if (!error) {
+          deleted = true
+          console.log('[API DELETE] Deleted from ruleta_jugadas')
+        } else {
+          console.error('[API DELETE] Error from ruleta_jugadas:', error)
+        }
+      }
+      
+      // If still not deleted, try both tables
+      if (!deleted) {
+        const { error: error1 } = await supabase
+          .from('ruleta_jugadas')
+          .delete()
+          .eq('id', id)
+
+        const { error: error2 } = await supabase
+          .from('jugadas_ruleta')
+          .delete()
+          .eq('id', id)
+
+        if (error1 && error2) {
+          console.error('[API DELETE] Error deleting from both tables:', error1, error2)
+          return NextResponse.json({ error: 'Error deleting record' }, { status: 500 })
+        }
+      }
+
+      return NextResponse.json({ success: true, message: 'Record deleted' })
+    }
+
+    // If resetType is 'counters', only reset the global spin counter
+    if (resetType === 'counters') {
+      const { error } = await supabase
+        .from('global_spin_counter')
+        .update({ count: 0, updated_at: new Date().toISOString() })
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      if (error) {
+        console.error('Error resetting counters:', error)
+        return NextResponse.json({ error: 'Error resetting counters' }, { status: 500 })
+      }
+
+      return NextResponse.json({ success: true, message: 'Counters reset' })
+    }
+
+    // If resetType is 'all', delete everything
+    if (resetType === 'all') {
+      // Delete all from ruleta_jugadas
+      const { error: error1 } = await supabase
+        .from('ruleta_jugadas')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      // Delete all from jugadas_ruleta
+      const { error: error2 } = await supabase
+        .from('jugadas_ruleta')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      // Reset global spin counter
+      const { error: error3 } = await supabase
+        .from('global_spin_counter')
+        .update({ count: 0, updated_at: new Date().toISOString() })
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      if (error1) console.error('Error deleting ruleta_jugadas:', error1)
+      if (error2) console.error('Error deleting jugadas_ruleta:', error2)
+      if (error3) console.error('Error resetting counter:', error3)
+
+      return NextResponse.json({ success: true, message: 'All data reset' })
+    }
+
+    // Default: delete all jugadas but keep counter
+    const { error: error1 } = await supabase
       .from('ruleta_jugadas')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all rows
+      .neq('id', '00000000-0000-0000-0000-000000000000')
 
-    if (error) {
-      console.error('Error deleting jugadas:', error)
-      return NextResponse.json({ error: 'Error deleting data' }, { status: 500 })
-    }
+    const { error: error2 } = await supabase
+      .from('jugadas_ruleta')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000')
+
+    if (error1) console.error('Error deleting ruleta_jugadas:', error1)
+    if (error2) console.error('Error deleting jugadas_ruleta:', error2)
 
     return NextResponse.json({ success: true })
   } catch (error) {

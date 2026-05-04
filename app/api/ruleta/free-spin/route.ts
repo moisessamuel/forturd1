@@ -20,12 +20,14 @@ export async function POST(request: Request) {
       .from('jugadas_ruleta')
       .insert({
         nombre,
-        telefono: telefono || null,
+        telefono: telefono || '',
+        email: '',
         monto: 0, // Free spin
         moneda: 'DOP',
-        metodo_pago: 'GIRO GRATIS',
-        estado: 'completado',
-        premio_ganado: resultado || null,
+        banco: 'Giro Gratis',
+        estado: 'jugado',
+        premio_id: premio_id || null,
+        resultado: resultado || null,
         numero_boleto_referencia: numero_boleto,
         es_giro_gratis: true,
       })

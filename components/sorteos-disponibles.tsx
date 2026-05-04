@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { MiniRuletaPreview } from '@/components/mini-ruleta-preview'
 import type { Sorteo } from '@/lib/types'
 
 interface SorteoWithProgress extends Sorteo {
@@ -150,15 +151,9 @@ export function SorteosDisponibles() {
       {/* Roulette Promo */}
       <div className="mt-12">
         <Card className="overflow-hidden border-primary/30 bg-gradient-to-r from-primary/10 to-yellow-500/10">
-          <CardContent className="flex flex-col items-center gap-6 p-8 md:flex-row">
+          <CardContent className="flex flex-col items-center gap-6 p-6 md:flex-row md:p-8">
             <div className="flex-shrink-0">
-              <Image
-                src="/images/ruleta-forturd.png"
-                alt="Ruleta FortuRD"
-                width={200}
-                height={200}
-                className="h-40 w-40 object-contain md:h-48 md:w-48"
-              />
+              <MiniRuletaPreview size={180} />
             </div>
             <div className="flex-1 text-center md:text-left">
               <h3 className="mb-2 text-2xl font-bold text-primary" style={{ textShadow: '0 0 10px rgba(218,165,32,0.5)' }}>
