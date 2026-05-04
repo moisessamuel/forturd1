@@ -39,7 +39,9 @@ import {
   Eye,
   Banknote,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  Undo2
 } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
@@ -59,6 +61,7 @@ interface RuletaJugada {
   es_giro_gratis: boolean
   origen: string
   numero_boleto_referencia: string | null
+  source_table: string
   created_at: string
   confirmado_at: string | null
   jugado_at: string | null
@@ -97,7 +100,11 @@ export default function RuletaAdminPage() {
   const [selectedJugada, setSelectedJugada] = useState<RuletaJugada | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [jugadaToDelete, setJugadaToDelete] = useState<RuletaJugada | null>(null)
   const [isResetting, setIsResetting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [resetType, setResetType] = useState<'counters' | 'all'>('counters')
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -136,20 +143,22 @@ export default function RuletaAdminPage() {
     }
   }, [isAuthenticated, fetchData])
 
-  const handleUpdateEstado = async (id: string, nuevoEstado: string) => {
+  const handleUpdateEstado = async (id: string, nuevoEstado: string, sourceTable?: string) => {
     setUpdating(id)
     try {
       const response = await fetch('/api/admin/ruleta', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, estado: nuevoEstado }),
+        body: JSON.stringify({ id, estado: nuevoEstado, source_table: sourceTable }),
       })
       
       if (response.ok) {
         if (nuevoEstado === 'confirmado') {
           toast.success('Giro confirmado exitosamente')
         } else if (nuevoEstado === 'cancelado') {
-          toast.success('Giro rechazado')
+          toast.success('Giro cancelado')
+        } else if (nuevoEstado === 'pendiente') {
+          toast.success('Giro revertido a pendiente')
         }
         await fetchData()
         setShowDetailModal(false)
@@ -163,20 +172,47 @@ export default function RuletaAdminPage() {
     setUpdating(null)
   }
 
+  const handleDeleteJugada = async () => {
+    if (!jugadaToDelete) return
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/admin/ruleta?id=${jugadaToDelete.id}`, {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        toast.success('Registro eliminado exitosamente')
+        setShowDeleteModal(false)
+        setJugadaToDelete(null)
+        await fetchData()
+      } else {
+        toast.error('Error al eliminar el registro')
+      }
+    } catch (error) {
+      console.error('Error deleting:', error)
+      toast.error('Error de conexion')
+    }
+    setIsDeleting(false)
+  }
+
   const handleLogout = () => {
     sessionStorage.removeItem('ruleta_admin_session')
     router.push('/admin/ruleta/login')
   }
 
-  const handleReset = async () => {
+  const handleReset = async (type: 'counters' | 'all') => {
     setIsResetting(true)
     try {
-      const response = await fetch('/api/admin/ruleta', {
+      const response = await fetch(`/api/admin/ruleta?reset=${type}`, {
         method: 'DELETE',
       })
       
       if (response.ok) {
-        toast.success('Todos los datos han sido eliminados')
+        if (type === 'counters') {
+          toast.success('Contadores reiniciados (historial intacto)')
+        } else {
+          toast.success('Todos los datos han sido eliminados')
+        }
         setShowResetModal(false)
         await fetchData()
       } else {
@@ -516,7 +552,7 @@ export default function RuletaAdminPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <Button
                           size="sm"
                           variant="ghost"
@@ -524,6 +560,7 @@ export default function RuletaAdminPage() {
                             setSelectedJugada(jugada)
                             setShowDetailModal(true)
                           }}
+                          title="Ver detalles"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -533,8 +570,9 @@ export default function RuletaAdminPage() {
                               size="sm"
                               variant="outline"
                               className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
-                              onClick={() => handleUpdateEstado(jugada.id, 'confirmado')}
+                              onClick={() => handleUpdateEstado(jugada.id, 'confirmado', jugada.source_table)}
                               disabled={updating === jugada.id}
+                              title="Aprobar"
                             >
                               <CheckCircle className="h-4 w-4" />
                             </Button>
@@ -542,13 +580,38 @@ export default function RuletaAdminPage() {
                               size="sm"
                               variant="outline"
                               className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
-                              onClick={() => handleUpdateEstado(jugada.id, 'cancelado')}
+                              onClick={() => handleUpdateEstado(jugada.id, 'cancelado', jugada.source_table)}
                               disabled={updating === jugada.id}
+                              title="Cancelar"
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
                           </>
                         )}
+                        {(jugada.estado === 'confirmado' || jugada.estado === 'cancelado' || jugada.estado === 'jugado') && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-white"
+                            onClick={() => handleUpdateEstado(jugada.id, 'pendiente', jugada.source_table)}
+                            disabled={updating === jugada.id}
+                            title="Revertir a pendiente"
+                          >
+                            <Undo2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                          onClick={() => {
+                            setJugadaToDelete(jugada)
+                            setShowDeleteModal(true)
+                          }}
+                          title="Eliminar"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -670,21 +733,53 @@ export default function RuletaAdminPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-500">
               <AlertTriangle className="h-5 w-5" />
-              Confirmar Restablecimiento
+              Restablecer Datos
             </DialogTitle>
             <DialogDescription>
-              Esta accion eliminara TODOS los datos de la ruleta de forma permanente, incluyendo:
+              Selecciona el tipo de restablecimiento:
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 rounded-lg bg-red-500/10 p-4 text-sm">
-            <p>• Todos los giros registrados</p>
-            <p>• Historial de jugadores</p>
-            <p>• Comprobantes de pago</p>
-            <p>• Estadisticas y contadores</p>
+          
+          <div className="space-y-4">
+            {/* Option 1: Reset counters only */}
+            <div 
+              className={`cursor-pointer rounded-lg border p-4 transition-all ${
+                resetType === 'counters' ? 'border-yellow-500 bg-yellow-500/10' : 'border-border hover:border-yellow-500/50'
+              }`}
+              onClick={() => setResetType('counters')}
+            >
+              <div className="flex items-center gap-2">
+                <RefreshCw className="h-5 w-5 text-yellow-500" />
+                <h4 className="font-bold">Restablecer Contadores</h4>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Reinicia el contador de giros a 0. El historial permanece intacto.
+              </p>
+            </div>
+
+            {/* Option 2: Reset everything */}
+            <div 
+              className={`cursor-pointer rounded-lg border p-4 transition-all ${
+                resetType === 'all' ? 'border-red-500 bg-red-500/10' : 'border-border hover:border-red-500/50'
+              }`}
+              onClick={() => setResetType('all')}
+            >
+              <div className="flex items-center gap-2">
+                <Trash2 className="h-5 w-5 text-red-500" />
+                <h4 className="font-bold text-red-500">Volver a 0 (Eliminar TODO)</h4>
+              </div>
+              <div className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <p>• Todos los giros registrados</p>
+                <p>• Historial de jugadores</p>
+                <p>• Comprobantes de pago</p>
+                <p>• Estadisticas y contadores</p>
+              </div>
+              <p className="mt-2 text-xs font-bold text-red-500">
+                Esta accion NO se puede deshacer
+              </p>
+            </div>
           </div>
-          <p className="text-center text-sm font-bold text-red-500">
-            Esta accion NO se puede deshacer
-          </p>
+
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
@@ -694,11 +789,59 @@ export default function RuletaAdminPage() {
               Cancelar
             </Button>
             <Button
-              variant="destructive"
-              onClick={handleReset}
+              variant={resetType === 'all' ? 'destructive' : 'default'}
+              onClick={() => handleReset(resetType)}
               disabled={isResetting}
             >
-              {isResetting ? 'Eliminando...' : 'Si, Eliminar Todo'}
+              {isResetting ? 'Procesando...' : resetType === 'all' ? 'Eliminar Todo' : 'Restablecer Contadores'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Single Record Modal */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="max-w-md border-red-500 bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <Trash2 className="h-5 w-5" />
+              Confirmar Eliminacion
+            </DialogTitle>
+            <DialogDescription>
+              Estas a punto de eliminar este registro permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {jugadaToDelete && (
+            <div className="rounded-lg bg-muted/50 p-4">
+              <p><strong>Jugador:</strong> {jugadaToDelete.nombre}</p>
+              <p><strong>Telefono:</strong> {jugadaToDelete.telefono}</p>
+              <p><strong>Estado:</strong> {jugadaToDelete.estado}</p>
+              <p><strong>Monto:</strong> {jugadaToDelete.es_gratis || jugadaToDelete.es_giro_gratis ? 'GRATIS' : `${jugadaToDelete.moneda === 'DOP' ? 'RD$' : 'US$'}${jugadaToDelete.monto}`}</p>
+            </div>
+          )}
+
+          <p className="text-center text-sm font-bold text-red-500">
+            Esta accion NO se puede deshacer
+          </p>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDeleteModal(false)
+                setJugadaToDelete(null)
+              }}
+              disabled={isDeleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteJugada}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Eliminando...' : 'Si, Eliminar'}
             </Button>
           </DialogFooter>
         </DialogContent>
