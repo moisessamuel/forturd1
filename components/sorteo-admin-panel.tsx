@@ -118,6 +118,14 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     // Only run on client-side
     if (typeof window === 'undefined') return
     
+    // Check for admin session (pocoyo or admin users can access all panels)
+    const adminSession = sessionStorage.getItem('admin_session')
+    if (adminSession) {
+      fetchData()
+      return
+    }
+    
+    // Check for specific sorteo admin session
     let isAuth = false
     if (sorteoSlug === 'bmw-x6') {
       isAuth = !!sessionStorage.getItem('bmwx6_admin_session')
@@ -219,6 +227,13 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     }
   }
 
+  const handleResetFilters = () => {
+    setSearchTerm('')
+    setEstadoFilter('todos')
+    fetchData()
+    toast.success('Filtros restablecidos')
+  }
+
   const formatCurrency = (amount: number, currency: string = 'DOP') => {
     if (currency === 'USD') {
       return `US$ ${new Intl.NumberFormat('en-US').format(amount)}`
@@ -270,6 +285,10 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Restablecer
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchData}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Actualizar
