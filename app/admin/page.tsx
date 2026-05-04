@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, Eye, EyeOff, User, Car, Disc3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,51 +25,7 @@ export default function AdminLoginPage() {
   const [viewState, setViewState] = useState<ViewState>('login')
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null)
 
-  useEffect(() => {
-    // Only run on client-side
-    if (typeof window === 'undefined') return
-    
-    // Check if already logged in via cookie session
-    fetch('/api/admin/session')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.authenticated && data.role) {
-          // If user is pocoyo/admin, show panel selection
-          if (data.role === 'admin' || data.user?.username?.toLowerCase() === 'pocoyo') {
-            setCurrentUser({ username: data.user?.username || 'admin', role: data.role })
-            setViewState('panel-selection')
-          } else {
-            redirectToPanel(data.role)
-          }
-        }
-      })
-      .catch(() => {})
-    
-    // Also check sessionStorage for legacy sessions
-    const bmwx6Session = sessionStorage.getItem('bmwx6_admin_session')
-    const bmwx7Session = sessionStorage.getItem('bmwx7_admin_session')
-    const ruletaSession = sessionStorage.getItem('ruleta_admin_session')
-    const adminSession = sessionStorage.getItem('admin_session')
-    
-    if (adminSession) {
-      try {
-        const session = JSON.parse(adminSession)
-        setCurrentUser({ username: session.username, role: session.role })
-        setViewState('panel-selection')
-        return
-      } catch {}
-    }
-    
-    if (bmwx6Session) {
-      router.push('/admin/bmw-x6')
-    } else if (bmwx7Session) {
-      router.push('/admin/bmw-x7')
-    } else if (ruletaSession) {
-      router.push('/admin/ruleta')
-    }
-  }, [router])
-
-  const redirectToPanel = (role: string) => {
+  const redirectToPanel = useCallback((role: string) => {
     switch (role) {
       case 'sorteo_bmw-x6':
         router.push('/admin/bmw-x6')
@@ -85,7 +41,57 @@ export default function AdminLoginPage() {
         // For admin role, show panel selection
         break
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    // Only run on client-side where sessionStorage is available
+    if (typeof window === 'undefined') return
+    
+    // Check sessionStorage for existing sessions first
+    const bmwx6Session = sessionStorage.getItem('bmwx6_admin_session')
+    const bmwx7Session = sessionStorage.getItem('bmwx7_admin_session')
+    const ruletaSession = sessionStorage.getItem('ruleta_admin_session')
+    const adminSession = sessionStorage.getItem('admin_session')
+    
+    if (adminSession) {
+      try {
+        const session = JSON.parse(adminSession)
+        setCurrentUser({ username: session.username, role: session.role })
+        setViewState('panel-selection')
+        return
+      } catch {
+        // Invalid session, continue
+      }
+    }
+    
+    if (bmwx6Session) {
+      router.push('/admin/bmw-x6')
+      return
+    }
+    if (bmwx7Session) {
+      router.push('/admin/bmw-x7')
+      return
+    }
+    if (ruletaSession) {
+      router.push('/admin/ruleta')
+      return
+    }
+    
+    // Check cookie session
+    fetch('/api/admin/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.role) {
+          if (data.role === 'admin' || data.user?.username?.toLowerCase() === 'pocoyo') {
+            setCurrentUser({ username: data.user?.username || 'admin', role: data.role })
+            setViewState('panel-selection')
+          } else {
+            redirectToPanel(data.role)
+          }
+        }
+      })
+      .catch(() => {})
+  }, [router, redirectToPanel])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
