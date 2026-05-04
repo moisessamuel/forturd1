@@ -63,3 +63,25 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE() {
+  try {
+    const supabase = await createClient()
+
+    // Delete all jugadas from ruleta_jugadas
+    const { error } = await supabase
+      .from('ruleta_jugadas')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all rows
+
+    if (error) {
+      console.error('Error deleting jugadas:', error)
+      return NextResponse.json({ error: 'Error deleting data' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
