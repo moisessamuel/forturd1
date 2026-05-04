@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Check if user has ruleta access
-    if (admin.role !== 'ruleta' && admin.role !== 'admin') {
+    if (admin.role !== 'ruleta_admin' && admin.role !== 'ruleta' && admin.role !== 'admin') {
       return NextResponse.json(
         { error: 'No tienes acceso a este panel' },
         { status: 403 }

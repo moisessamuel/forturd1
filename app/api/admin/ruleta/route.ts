@@ -6,6 +6,7 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const estado = searchParams.get('estado')
+    const search = searchParams.get('search')
 
     let query = supabase
       .from('ruleta_jugadas')
@@ -16,6 +17,10 @@ export async function GET(request: Request) {
       query = query.eq('estado', estado)
     }
 
+    if (search && search.trim()) {
+      query = query.or(`nombre.ilike.%${search}%,telefono.ilike.%${search}%`)
+    }
+
     const { data, error } = await query
 
     if (error) {
@@ -23,7 +28,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Error fetching data' }, { status: 500 })
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json({ jugadas: data })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
