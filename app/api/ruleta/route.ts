@@ -38,7 +38,8 @@ export async function POST(request: Request) {
       metodo_pago, 
       comprobante_url,
       es_gratis = false,
-      origen = 'compra'
+      origen = 'compra',
+      cantidad_giros = 1
     } = body
 
     // Create or get player (players table uses phone_number, not telefono)
@@ -83,6 +84,8 @@ export async function POST(request: Request) {
         confirmado_at: isPaidSpin ? null : new Date().toISOString(),
         es_gratis,
         origen,
+        cantidad_giros: es_gratis ? 1 : cantidad_giros,
+        giros_usados: 0,
       })
       .select('id')
       .single()

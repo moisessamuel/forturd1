@@ -32,33 +32,46 @@ export async function GET(request: NextRequest) {
 
     // Check for pending purchases (not yet confirmed)
     const pendingJugadas = jugadas.filter(j => j.estado === 'pendiente')
-    const confirmedJugadas = jugadas.filter(j => j.estado === 'confirmado')
+    // Include both 'confirmado' and 'jugado' states (jugado means they've used some spins but may have more)
+    const activeJugadas = jugadas.filter(j => j.estado === 'confirmado' || j.estado === 'jugado')
 
     // Count total spins purchased vs spins used
     let totalGirosComprados = 0
     let totalGirosUsados = 0
-    let latestConfirmedJugada = null
+    let latestActiveJugada = null
 
-    for (const jugada of confirmedJugadas) {
-      // Each jugada can have multiple spins (cantidad_giros field)
-      const cantidadGiros = jugada.cantidad_giros || 1
-      totalGirosComprados += cantidadGiros
-      
-      // Check if spin has been used (has resultado)
-      if (jugada.resultado) {
-        totalGirosUsados += 1
+    for (const jugada of activeJugadas) {
+      // Calculate cantidad_giros from monto if not properly set
+      let cantidadGiros = jugada.cantidad_giros
+      if (!cantidadGiros || cantidadGiros <= 1) {
+        // Calculate based on monto (100 DOP or 2 USD per spin)
+        const monto = Number(jugada.monto) || 0
+        if (jugada.moneda === 'DOP') {
+          cantidadGiros = Math.max(1, Math.floor(monto / 100))
+        } else if (jugada.moneda === 'USD') {
+          cantidadGiros = Math.max(1, Math.floor(monto / 2))
+        } else {
+          cantidadGiros = 1
+        }
       }
       
-      // Track the latest confirmed jugada for reference
-      if (!latestConfirmedJugada) {
-        latestConfirmedJugada = jugada
+      totalGirosComprados += cantidadGiros
+      
+      // Use the giros_usados field from the database
+      const girosUsados = jugada.giros_usados || 0
+      totalGirosUsados += girosUsados
+      
+      // Track the first jugada with available spins
+      const disponiblesEnEstaJugada = cantidadGiros - girosUsados
+      if (disponiblesEnEstaJugada > 0 && !latestActiveJugada) {
+        latestActiveJugada = jugada
       }
     }
 
     const girosDisponibles = totalGirosComprados - totalGirosUsados
 
-    // If there are only pending purchases and no confirmed ones
-    if (confirmedJugadas.length === 0 && pendingJugadas.length > 0) {
+    // If there are only pending purchases and no confirmed/active ones
+    if (activeJugadas.length === 0 && pendingJugadas.length > 0) {
       return NextResponse.json({
         success: false,
         pending: true,
@@ -80,9 +93,9 @@ export async function GET(request: NextRequest) {
       giros_disponibles: girosDisponibles,
       giros_totales: totalGirosComprados,
       giros_usados: totalGirosUsados,
-      jugada_id: latestConfirmedJugada?.id,
-      nombre: latestConfirmedJugada?.nombre,
-      telefono: latestConfirmedJugada?.telefono,
+      jugada_id: latestActiveJugada?.id,
+      nombre: latestActiveJugada?.nombre,
+      telefono: latestActiveJugada?.telefono,
     })
 
   } catch (error) {
