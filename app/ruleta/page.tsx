@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/header'
 import { RuletaWheel } from '@/components/ruleta-wheel'
@@ -70,7 +70,7 @@ const titulares: Record<string, { nombre: string; cedula: string }> = {
   paypal: { nombre: 'Moises Samuel', cedula: '' },
 }
 
-export default function RuletaPage() {
+function RuletaPageContent() {
   const searchParams = useSearchParams()
   const [premios, setPremios] = useState<Premio[]>([])
   const [loading, setLoading] = useState(true)
@@ -682,5 +682,13 @@ export default function RuletaPage() {
         </DialogContent>
       </Dialog>
     </main>
+  )
+}
+
+export default function RuletaPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-background"><div className="text-primary">Cargando ruleta...</div></div>}>
+      <RuletaPageContent />
+    </Suspense>
   )
 }
