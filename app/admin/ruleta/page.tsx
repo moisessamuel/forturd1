@@ -100,7 +100,7 @@ export default function RuletaAdminPage() {
   useEffect(() => {
     const session = sessionStorage.getItem('ruleta_admin_session')
     if (!session) {
-      router.push('/admin/ruleta/login')
+      router.push('/admin')
     } else {
       setIsAuthenticated(true)
       setIsLoading(false)
