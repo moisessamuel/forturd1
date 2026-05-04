@@ -34,22 +34,8 @@ export function RuletaWheel({
   const [rotation, setRotation] = useState(0)
   const [showParticles, setShowParticles] = useState(false)
   const [pulseButton, setPulseButton] = useState(true)
-  const [idleRotation, setIdleRotation] = useState(0)
   const audioContextRef = useRef<AudioContext | null>(null)
   const animationFrameRef = useRef<number | null>(null)
-  const idleIntervalRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Idle auto-rotation every 5 seconds
-  useEffect(() => {
-    if (!isSpinning && !canSpin) {
-      idleIntervalRef.current = setInterval(() => {
-        setIdleRotation(prev => prev + 15)
-      }, 5000)
-    }
-    return () => {
-      if (idleIntervalRef.current) clearInterval(idleIntervalRef.current)
-    }
-  }, [isSpinning, canSpin])
 
   // Pulsing animation for button when can spin
   useEffect(() => {
@@ -263,10 +249,9 @@ export function RuletaWheel({
     if (!ctx) return
 
     const size = canvas.width
-    const totalRotation = rotation + idleRotation
 
-    drawWheel(ctx, size, totalRotation)
-  }, [rotation, idleRotation, drawWheel])
+    drawWheel(ctx, size, rotation)
+  }, [rotation, drawWheel])
 
   // Initialize canvas size
   useEffect(() => {
@@ -283,14 +268,14 @@ export function RuletaWheel({
       
       const ctx = canvas.getContext('2d')
       if (ctx) {
-        drawWheel(ctx, size, rotation + idleRotation)
+        drawWheel(ctx, size, rotation)
       }
     }
 
     updateSize()
     window.addEventListener('resize', updateSize)
     return () => window.removeEventListener('resize', updateSize)
-  }, [drawWheel, rotation, idleRotation])
+  }, [drawWheel, rotation])
 
   // Initialize audio context
   const initAudio = useCallback(() => {
@@ -353,7 +338,7 @@ export function RuletaWheel({
 
   // Animated spin with tick sounds
   const animateSpin = useCallback((targetRotation: number, duration: number, onComplete: () => void) => {
-    const startRotation = rotation + idleRotation
+    const startRotation = rotation
     const startTime = performance.now()
     let lastTickAngle = startRotation
 
@@ -372,7 +357,7 @@ export function RuletaWheel({
       }
       lastTickAngle = currentRotation
       
-      setRotation(currentRotation - idleRotation)
+      setRotation(currentRotation)
       
       if (progress < 1) {
         animationFrameRef.current = requestAnimationFrame(animate)
@@ -382,7 +367,7 @@ export function RuletaWheel({
     }
 
     animationFrameRef.current = requestAnimationFrame(animate)
-  }, [rotation, idleRotation, playTickSound])
+  }, [rotation, playTickSound])
 
   // Calculate prize based on weighted probability
   const selectPrizeByProbability = (): Premio => {
@@ -426,7 +411,7 @@ export function RuletaWheel({
     const targetAngle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
     
     // Add multiple full rotations
-    const currentTotal = rotation + idleRotation
+    const currentTotal = rotation
     const spins = 8 + Math.floor(Math.random() * 4) // 8-11 full spins
     const finalRotation = currentTotal + (spins * 360) + (360 - targetAngle)
     
