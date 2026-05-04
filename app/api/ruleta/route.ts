@@ -41,17 +41,17 @@ export async function POST(request: Request) {
       origen = 'compra'
     } = body
 
-    // Create or get player
+    // Create or get player (players table uses phone_number, not telefono)
     let { data: player } = await supabase
       .from('players')
       .select('id')
-      .eq('telefono', telefono)
+      .eq('phone_number', telefono)
       .single()
 
     if (!player) {
       const { data: newPlayer, error: playerError } = await supabase
         .from('players')
-        .insert({ nombre, telefono, email })
+        .insert({ nombre, phone_number: telefono, email })
         .select('id')
         .single()
 
