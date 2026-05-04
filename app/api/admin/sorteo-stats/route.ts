@@ -65,20 +65,20 @@ export async function GET(request: Request) {
       }
     }
 
-    // Also check legacy compras table
-    const { data: legacyCompras } = await supabase
+    // Also check compras table (main table for purchases)
+    const { data: comprasData } = await supabase
       .from('compras')
-      .select('monto, moneda, estado, cantidad')
+      .select('monto, moneda, estado, cantidad_boletos')
       .eq('sorteo_slug', slug)
 
-    for (const compra of legacyCompras || []) {
+    for (const compra of comprasData || []) {
       if (compra.estado === 'aprobado') {
         if (compra.moneda === 'USD') {
           ventasUSD += Number(compra.monto)
         } else {
           ventasDOP += Number(compra.monto)
         }
-        boletosVendidos += compra.cantidad || 0
+        boletosVendidos += compra.cantidad_boletos || 1
       } else if (compra.estado === 'pendiente') {
         pagosPendientes++
       }
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
       ventas_dop: ventasDOP,
       ventas_usd: ventasUSD,
       pagos_pendientes: pagosPendientes,
-      transacciones_totales: (groups?.length || 0) + (legacyCompras?.length || 0),
+      transacciones_totales: (groups?.length || 0) + (comprasData?.length || 0),
       boletos_vendidos: boletosVendidos,
       boletos_disponibles: totalBoletos - boletosVendidos,
       total_boletos: totalBoletos,

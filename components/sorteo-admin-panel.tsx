@@ -306,7 +306,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                   <CardContent className="p-4">
                     <p className="text-sm text-muted-foreground">Boletos Vendidos</p>
                     <p className="text-2xl font-bold text-purple-500">
-                      {stats?.boletos_vendidos || 0} / {stats?.total_boletos || 1000}
+                      {stats?.boletos_vendidos || 0} / 99,999
                     </p>
                   </CardContent>
                 </Card>
@@ -380,10 +380,10 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                       compras.map((compra) => (
                         <TableRow key={compra.id}>
                           <TableCell className="font-medium">
-                            {compra.player?.nombre || 'N/A'}
+                            {compra.nombre || compra.player?.nombre || 'N/A'}
                           </TableCell>
-                          <TableCell>{compra.player?.phone_number || 'N/A'}</TableCell>
-                          <TableCell>{compra.total_tickets}</TableCell>
+                          <TableCell>{compra.telefono || compra.player?.phone_number || 'N/A'}</TableCell>
+                          <TableCell>{compra.cantidad_boletos || compra.total_tickets || 1}</TableCell>
                           <TableCell>
                             {formatCurrency(compra.monto, compra.moneda)}
                           </TableCell>
