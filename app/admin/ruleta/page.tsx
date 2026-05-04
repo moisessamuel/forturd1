@@ -201,15 +201,6 @@ export default function RuletaAdminPage() {
             onClick={() => {
               setEstadoFilter('todos')
               setSearchTerm('')
-              // Fetch with reset filters
-              setTimeout(() => {
-                fetch('/api/admin/ruleta?estado=todos&search=')
-                  .then(r => r.json())
-                  .then(data => setJugadas(data.jugadas || data || []))
-                fetch('/api/admin/ruleta/stats')
-                  .then(r => r.json())
-                  .then(data => setStats(data))
-              }, 100)
             }}
           >
             <RotateCcw className="mr-2 h-4 w-4" />
@@ -217,12 +208,9 @@ export default function RuletaAdminPage() {
           </Button>
           <Button 
             variant="outline" 
-            onClick={() => {
-              fetchData()
-            }}
-            disabled={isLoading}
+            onClick={fetchData}
           >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className="mr-2 h-4 w-4" />
             Actualizar
           </Button>
           <Button variant="outline" onClick={handleLogout}>
