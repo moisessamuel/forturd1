@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
-import { Search, Shield, CheckCircle, Clock, XCircle, Ticket, Phone, Gift } from 'lucide-react'
+import { Search, Shield, CheckCircle, Clock, XCircle, Ticket, Phone, Gift, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -34,6 +34,50 @@ export default function VerificarPage() {
   const [multiResults, setMultiResults] = useState<TicketResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastSearchParams, setLastSearchParams] = useState<{ mode: SearchMode; value: string } | null>(null)
+
+  // Function to refresh current results
+  const refreshResults = useCallback(async (silent = false) => {
+    if (!lastSearchParams) return
+    
+    if (!silent) setIsRefreshing(true)
+    
+    try {
+      const param = lastSearchParams.mode === 'boleto'
+        ? `boleto=${encodeURIComponent(lastSearchParams.value)}`
+        : `telefono=${encodeURIComponent(lastSearchParams.value)}`
+
+      const response = await fetch(`/api/verificar?${param}`)
+
+      if (response.ok) {
+        const data = await response.json()
+        
+        if (lastSearchParams.mode === 'telefono' && data.results) {
+          setMultiResults(data.results)
+        } else {
+          setSingleResult(data)
+        }
+        
+        if (!silent) toast.success('Datos actualizados')
+      }
+    } catch {
+      if (!silent) toast.error('Error al actualizar')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [lastSearchParams])
+
+  // Auto-refresh every 10 seconds when there are results
+  useEffect(() => {
+    if (!lastSearchParams || (!singleResult && multiResults.length === 0)) return
+
+    const interval = setInterval(() => {
+      refreshResults(true) // Silent refresh
+    }, 10000) // 10 seconds
+
+    return () => clearInterval(interval)
+  }, [lastSearchParams, singleResult, multiResults.length, refreshResults])
 
   const handleFreeSpinClick = (ticket: TicketResult) => {
     // Store ticket info in sessionStorage for the free spin
@@ -81,6 +125,9 @@ export default function VerificarPage() {
 
       const data = await response.json()
 
+      // Store search params for auto-refresh
+      setLastSearchParams({ mode: searchMode, value: searchValue })
+
       if (searchMode === 'telefono' && data.results) {
         setMultiResults(data.results)
       } else {
@@ -99,6 +146,7 @@ export default function VerificarPage() {
     setSingleResult(null)
     setMultiResults([])
     setSearched(false)
+    setLastSearchParams(null)
   }
 
   const getStatusConfig = (estado: string) => {
@@ -229,6 +277,20 @@ export default function VerificarPage() {
         {singleResult && (
           <Card className={`mb-4 border-2 ${getStatusConfig(singleResult.estado).borderColor} ${getStatusConfig(singleResult.estado).bgColor}`}>
             <CardContent className="p-6">
+              {/* Refresh button */}
+              <div className="mb-4 flex items-center justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => refreshResults(false)}
+                  disabled={isRefreshing}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <RefreshCw className={`mr-1 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isRefreshing ? 'Actualizando...' : 'Actualizar'}
+                </Button>
+              </div>
+              
               <div className="mb-4 flex items-center justify-center">
                 {(() => {
                   const StatusIcon = getStatusConfig(singleResult.estado).icon
@@ -310,7 +372,17 @@ export default function VerificarPage() {
         {/* Multiple results (phone search) */}
         {multiResults.length > 0 && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center relative">
+              {/* Refresh button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refreshResults(false)}
+                disabled={isRefreshing}
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
               <p className="text-sm text-muted-foreground">Boletos encontrados para este teléfono</p>
               <p className="mt-1 text-2xl font-bold text-primary">{multiResults.length}</p>
               {multiResults[0]?.nombre && (

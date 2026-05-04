@@ -400,6 +400,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Número de Boleto</TableHead>
                       <TableHead>Comprador</TableHead>
                       <TableHead>Telefono</TableHead>
                       <TableHead>Boletos</TableHead>
@@ -413,13 +414,26 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                   <TableBody>
                     {compras.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground">
                           No hay compras para este sorteo
                         </TableCell>
                       </TableRow>
                     ) : (
                       compras.map((compra) => (
                         <TableRow key={compra.id}>
+                          <TableCell>
+                            {compra.numeros_boletos && compra.numeros_boletos.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {compra.numeros_boletos.map((num: string) => (
+                                  <Badge key={num} variant="outline" className="text-xs font-mono text-primary border-primary/50">
+                                    #{num}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
                           <TableCell className="font-medium">
                             {compra.nombre || compra.player?.nombre || 'N/A'}
                           </TableCell>
