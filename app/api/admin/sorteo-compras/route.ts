@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendTicketApprovalEmail } from '@/lib/email'
 
 // This endpoint is for the individual sorteo admin panels (BMW X6, BMW X7)
 // Authentication is handled via sessionStorage on the client side
@@ -105,6 +106,46 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       console.error('Update estado error:', error)
       return NextResponse.json({ error: 'Error al actualizar estado' }, { status: 500 })
+    }
+
+    // If approved, send confirmation email to the player
+    if (estado === 'aprobado' && data) {
+      try {
+        // Get player info and tickets
+        const { data: player } = await supabase
+          .from('players')
+          .select('nombre, email, phone_number')
+          .eq('id', data.player_id)
+          .single()
+
+        // Get ticket numbers for this purchase
+        const { data: tickets } = await supabase
+          .from('tickets')
+          .select('numero_boleto')
+          .eq('purchase_group_id', id)
+
+        if (player?.email) {
+          const ticketNumbers = tickets?.map(t => t.numero_boleto) || []
+          const sorteoName = data.sorteo_slug === 'bmw-x6' ? 'BMW X6' : 
+                            data.sorteo_slug === 'bmw-x7' ? 'BMW X7' : 
+                            data.sorteo_slug.toUpperCase()
+
+          await sendTicketApprovalEmail({
+            playerEmail: player.email,
+            playerName: player.nombre,
+            ticketNumbers,
+            totalAmount: data.monto,
+            moneda: data.moneda || 'DOP',
+            qrCodeUrl: '',
+            purchaseDate: new Date().toISOString(),
+            sorteoName,
+          })
+          console.log('Approval email sent to:', player.email)
+        }
+      } catch (emailError) {
+        console.error('Error sending approval email:', emailError)
+        // Don't fail the request if email fails
+      }
     }
 
     return NextResponse.json(data)
