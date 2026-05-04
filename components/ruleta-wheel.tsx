@@ -22,7 +22,7 @@ interface RuletaWheelProps {
 
 // 12 segments like the image: 6 prizes (gold with gift), 6 "sigue intentando" (black)
 const TOTAL_SEGMENTS = 12
-const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS
+const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS // 30 degrees per segment
 
 export function RuletaWheel({ 
   premios, 
@@ -34,8 +34,9 @@ export function RuletaWheel({
   const [rotation, setRotation] = useState(0)
   const [showParticles, setShowParticles] = useState(false)
   const [pulseButton, setPulseButton] = useState(true)
+  const [isAnimating, setIsAnimating] = useState(false)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const animationFrameRef = useRef<number | null>(null)
+  const wheelRef = useRef<HTMLDivElement>(null)
 
   // Pulsing animation for button when can spin
   useEffect(() => {
@@ -72,8 +73,8 @@ export function RuletaWheel({
       
       oscillator.start(ctx.currentTime)
       oscillator.stop(ctx.currentTime + 0.05)
-    } catch (e) {
-      console.log('Audio not available')
+    } catch {
+      // Audio not available
     }
   }, [initAudio])
 
@@ -100,43 +101,10 @@ export function RuletaWheel({
         oscillator.start(startTime)
         oscillator.stop(startTime + 0.3)
       })
-    } catch (e) {
-      console.log('Audio not available')
+    } catch {
+      // Audio not available
     }
   }, [initAudio])
-
-  // Animated spin with tick sounds
-  const animateSpin = useCallback((targetRotation: number, duration: number, onComplete: () => void) => {
-    const startRotation = rotation
-    const startTime = performance.now()
-    let lastTickAngle = startRotation
-
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      
-      // Easing function for realistic deceleration
-      const easeOut = 1 - Math.pow(1 - progress, 4)
-      const currentRotation = startRotation + (targetRotation - startRotation) * easeOut
-      
-      // Play tick sound at segment boundaries
-      const segmentsPassed = Math.floor(currentRotation / SEGMENT_ANGLE) - Math.floor(lastTickAngle / SEGMENT_ANGLE)
-      if (segmentsPassed > 0 && progress < 0.95) {
-        playTickSound()
-      }
-      lastTickAngle = currentRotation
-      
-      setRotation(currentRotation)
-      
-      if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(animate)
-      } else {
-        onComplete()
-      }
-    }
-
-    animationFrameRef.current = requestAnimationFrame(animate)
-  }, [rotation, playTickSound])
 
   // Determine prize based on weighted probability
   const determinePrize = useCallback((): Premio => {
@@ -153,18 +121,19 @@ export function RuletaWheel({
     return premios.find(p => p.tipo === 'sin_premio') || premios[premios.length - 1]
   }, [premios])
 
-  // Handle spin
+  // Handle spin with CSS transition (from the JSX logic)
   const spinWheel = useCallback(() => {
-    if (!canSpin || isSpinning) return
+    if (!canSpin || isSpinning || isAnimating) return
 
     onStartSpin()
+    setIsAnimating(true)
     initAudio()
 
     const prize = determinePrize()
     const isWin = prize.tipo === 'premio'
     
-    // Calculate target segment (alternating: 0,2,4,6,8,10 = black/sin_premio, 1,3,5,7,9,11 = gold/premio)
-    // In the image, gold segments have gifts (prizes), black segments say "sigue intentando"
+    // Calculate target segment
+    // In the image: gold segments (prizes) at odd indices, black segments (sigue intentando) at even indices
     let targetSegment: number
     if (isWin) {
       // Prize segments (gold with gifts): 1, 3, 5, 7, 9, 11
@@ -176,34 +145,40 @@ export function RuletaWheel({
       targetSegment = noWinSegments[Math.floor(Math.random() * noWinSegments.length)]
     }
 
-    // Calculate rotation to land on target segment
-    // The pointer is at the top (12 o'clock position)
-    const currentTotal = rotation
-    const fullSpins = 8 + Math.floor(Math.random() * 4) // 8-11 full spins
-    const targetAngle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
-    // We need to rotate so that the target segment ends up at the top (where pointer is)
-    const finalRotation = currentTotal + (fullSpins * 360) + (360 - targetAngle + 90)
+    // Calculate rotation using the provided JSX logic
+    const fullSpins = 5 // Number of full rotations
+    const segmentMiddle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
+    // Adjust so the segment lands at the pointer (top position, 270 degrees in standard coords)
+    const finalRotation = rotation + (fullSpins * 360) + (270 - segmentMiddle + 360) % 360
     
-    const duration = 6000 + Math.random() * 2000 // 6-8 seconds
+    // Update rotation - the CSS transition handles the animation
+    setRotation(finalRotation)
 
-    animateSpin(finalRotation, duration, () => {
+    // Play tick sounds during spin
+    const tickInterval = setInterval(() => {
+      playTickSound()
+    }, 100)
+
+    // Slow down ticks as the wheel decelerates
+    setTimeout(() => {
+      clearInterval(tickInterval)
+      const slowTickInterval = setInterval(() => {
+        playTickSound()
+      }, 300)
+      setTimeout(() => clearInterval(slowTickInterval), 2000)
+    }, 3000)
+
+    // Complete after animation (5 seconds as per CSS transition)
+    setTimeout(() => {
+      setIsAnimating(false)
       if (isWin) {
         playWinSound()
         setShowParticles(true)
         setTimeout(() => setShowParticles(false), 3000)
       }
       onSpinComplete(prize)
-    })
-  }, [canSpin, isSpinning, onStartSpin, determinePrize, rotation, animateSpin, playWinSound, onSpinComplete, initAudio])
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current)
-      }
-    }
-  }, [])
+    }, 5000)
+  }, [canSpin, isSpinning, isAnimating, onStartSpin, determinePrize, rotation, playTickSound, playWinSound, onSpinComplete, initAudio])
 
   return (
     <div className="relative flex flex-col items-center">
@@ -233,11 +208,13 @@ export function RuletaWheel({
           />
         </div>
 
-        {/* Rotating wheel image */}
+        {/* Rotating wheel image with CSS transition */}
         <div
-          className="relative transition-none"
+          ref={wheelRef}
+          className="relative"
           style={{
             transform: `rotate(${rotation}deg)`,
+            transition: isAnimating ? 'transform 5s cubic-bezier(0.33, 1, 0.68, 1)' : 'none',
             transformOrigin: 'center center',
             width: 'min(400px, 90vw)',
             height: 'min(400px, 90vw)',
@@ -273,7 +250,7 @@ export function RuletaWheel({
         )}
 
         {/* Light rays during spin */}
-        {isSpinning && (
+        {isAnimating && (
           <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-full">
             {[...Array(8)].map((_, i) => (
               <div
@@ -292,7 +269,7 @@ export function RuletaWheel({
 
       {/* Spin button */}
       <div className="mt-8">
-        {canSpin && !isSpinning ? (
+        {canSpin && !isSpinning && !isAnimating ? (
           <Button
             onClick={spinWheel}
             className={`relative h-16 w-64 overflow-hidden bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-xl font-bold text-black transition-all hover:scale-105 hover:from-yellow-500 hover:via-yellow-400 hover:to-yellow-500 ${
@@ -312,7 +289,7 @@ export function RuletaWheel({
               }}
             />
           </Button>
-        ) : isSpinning ? (
+        ) : (isSpinning || isAnimating) ? (
           <div className="flex h-16 w-64 items-center justify-center rounded-md bg-primary/20 text-xl font-bold text-primary">
             <div className="flex items-center gap-2">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
