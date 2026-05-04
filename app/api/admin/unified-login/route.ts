@@ -35,14 +35,21 @@ export async function POST(request: Request) {
       )
     }
 
-    // Verify password - try bcrypt first, then plain text for legacy
+    // Verify password - check if hash is bcrypt format, otherwise compare plain text
     let isValid = false
-    try {
-      isValid = await bcrypt.compare(password, admin.password_hash)
-      console.log('[v0] bcrypt compare result:', isValid)
-    } catch (bcryptError) {
-      console.log('[v0] bcrypt error, trying plain text:', bcryptError)
-      // If bcrypt fails, try direct comparison for legacy plain-text passwords
+    const isBcryptHash = admin.password_hash && admin.password_hash.startsWith('$2')
+    
+    if (isBcryptHash) {
+      // It's a bcrypt hash, use bcrypt.compare
+      try {
+        isValid = await bcrypt.compare(password, admin.password_hash)
+        console.log('[v0] bcrypt compare result:', isValid)
+      } catch (bcryptError) {
+        console.log('[v0] bcrypt error:', bcryptError)
+        isValid = false
+      }
+    } else {
+      // It's plain text password (legacy), compare directly
       isValid = admin.password_hash === password
       console.log('[v0] Plain text compare result:', isValid)
     }
