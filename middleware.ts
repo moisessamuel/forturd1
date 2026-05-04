@@ -1,64 +1,28 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { verifyToken } from "@/lib/auth-edge";
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const COOKIE_NAME = "admin_session";
+const MAINTENANCE_MODE = true
 
-// Set to true to enable maintenance mode
-const MAINTENANCE_MODE = false;
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
 
-// Routes that bypass maintenance mode
-const MAINTENANCE_BYPASS = [
-  "/mantenimiento",
-  "/admin",
-  "/api/admin",
-  "/_next",
-  "/favicon.ico",
-  "/images",
-];
+  // Permitir acceso a la página de mantenimiento y archivos internos
+  if (
+    pathname.startsWith('/mantenimiento') ||
+    pathname.startsWith('/_next') ||
+    pathname.includes('.') // permite imágenes, favicon, etc.
+  ) {
+    return NextResponse.next()
+  }
 
-export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-
-  // Check maintenance mode
+  // Redirigir TODO al mantenimiento
   if (MAINTENANCE_MODE) {
-    const shouldBypass = MAINTENANCE_BYPASS.some(route => path.startsWith(route));
-    
-    if (!shouldBypass && path !== "/mantenimiento") {
-      return NextResponse.redirect(new URL("/mantenimiento", request.url));
-    }
+    return NextResponse.redirect(new URL('/mantenimiento', request.url))
   }
 
-  // Protect admin dashboard routes
-  if (path.startsWith("/admin/dashboard")) {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
-
-    if (!token) {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload) {
-      const response = NextResponse.redirect(new URL("/admin", request.url));
-      response.cookies.delete(COOKIE_NAME);
-      return response;
-    }
-  }
-
-  // Redirect logged in admin from login page to dashboard
-  if (path === "/admin") {
-    const token = request.cookies.get(COOKIE_NAME)?.value;
-    if (token) {
-      const payload = await verifyToken(token);
-      if (payload) {
-        return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-      }
-    }
-  }
-
-  return NextResponse.next();
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
-};
+  matcher: '/:path*',
+}
