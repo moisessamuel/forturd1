@@ -75,7 +75,7 @@ export function SorteosDisponibles() {
         <>
           <div className="mb-8 text-center">
             <h1 className="mb-4 text-2xl font-bold text-primary drop-shadow-[0_0_10px_rgba(218,165,32,0.8)] md:text-3xl lg:text-4xl" style={{ textShadow: '0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.4)' }}>
-              TU DECIDES TU SUERTE. UNA X6 Y UNA X7 ESPERANDO DUENO.
+              TÚ DECIDES TU SUERTE. UNA X6 Y UNA X7 ESPERANDO DUEÑO.
             </h1>
             <p className="mb-2 text-sm font-semibold tracking-widest text-primary">
               Participa!
