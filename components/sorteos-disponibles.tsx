@@ -137,7 +137,7 @@ export function SorteosDisponibles() {
 
                   <Link href={`/${sorteo.slug}`} className="block">
                     <Button className="w-full bg-primary font-bold text-primary-foreground hover:bg-primary/90">
-                      BOLETOS
+                      PARTICIPA AQUI
                     </Button>
                   </Link>
                 </CardContent>
