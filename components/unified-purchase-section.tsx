@@ -20,7 +20,13 @@ interface FormData {
   comprobanteUrl: string
 }
 
-export function UnifiedPurchaseSection() {
+interface UnifiedPurchaseSectionProps {
+  sorteoSlug?: string
+  precioDop?: number
+  precioUsd?: number
+}
+
+export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: UnifiedPurchaseSectionProps = {}) {
   const copyToClipboard = (text: string, label: string) => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
@@ -135,19 +141,30 @@ export function UnifiedPurchaseSection() {
   const total = (parseInt(quantity) || 0) * precioActual
 
   useEffect(() => {
-    fetch('/api/config')
-      .then((res) => res.json())
-      .then((data) => {
-        setPrecioBoleto(data.precio_boleto_dop)
-        setPrecioBoletoUsd(data.precio_boleto_usd || 20)
-      })
-      .catch(console.error)
+    // If sorteo-specific prices are provided, use them
+    if (precioDop !== undefined) {
+      setPrecioBoleto(precioDop)
+    }
+    if (precioUsd !== undefined) {
+      setPrecioBoletoUsd(precioUsd)
+    }
+    
+    // Otherwise fetch from config
+    if (precioDop === undefined || precioUsd === undefined) {
+      fetch('/api/config')
+        .then((res) => res.json())
+        .then((data) => {
+          if (precioDop === undefined) setPrecioBoleto(data.precio_boleto_dop)
+          if (precioUsd === undefined) setPrecioBoletoUsd(data.precio_boleto_usd || 20)
+        })
+        .catch(console.error)
+    }
 
     fetch('/api/bancos')
       .then((res) => res.json())
       .then((data) => setBancos(data))
       .catch(console.error)
-  }, [])
+  }, [precioDop, precioUsd])
 
   const formatCurrency = (amount: number) => {
     if (moneda === 'USD') {
@@ -276,6 +293,7 @@ export function UnifiedPurchaseSection() {
           moneda,
           comprobante_url: formData.comprobanteUrl,
           referido_codigo: referralCode || null,
+          sorteo_slug: sorteoSlug || 'default',
         }),
       })
 

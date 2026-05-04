@@ -1,5 +1,6 @@
 import { Header } from '@/components/header'
 import { HeroSection } from '@/components/hero-section'
+import { SorteosDisponibles } from '@/components/sorteos-disponibles'
 
 export default function HomePage() {
   return (
@@ -21,6 +22,9 @@ export default function HomePage() {
       <div className="relative z-10">
         <Header />
         <HeroSection />
+        <div className="mx-auto max-w-7xl px-4">
+          <SorteosDisponibles />
+        </div>
       </div>
     </main>
   )

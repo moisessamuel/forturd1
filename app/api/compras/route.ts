@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
     const estado = searchParams.get('estado')
     const search = searchParams.get('search')
+    const sorteoSlug = searchParams.get('sorteo_slug')
 
     let query = supabase
       .from('purchase_groups')
@@ -25,6 +26,10 @@ export async function GET(request: NextRequest) {
 
     if (estado && estado !== 'todos') {
       query = query.eq('estado', estado)
+    }
+
+    if (sorteoSlug) {
+      query = query.eq('sorteo_slug', sorteoSlug)
     }
 
     const { data: groups, error } = await query
@@ -217,6 +222,7 @@ export async function POST(request: NextRequest) {
         comprobante_url: body.comprobante_url || null,
         referido_codigo: body.referido_codigo?.toUpperCase() || null,
         estado: 'pendiente',
+        sorteo_slug: body.sorteo_slug || 'default',
       })
       .select('id')
       .single()
