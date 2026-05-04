@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X } from 'lucide-react'
+import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 interface Premio {
   id: string
@@ -20,27 +21,55 @@ interface Premio {
   descripcion: string
 }
 
-interface Banco {
+interface PaymentMethod {
   id: string
   nombre: string
+  shortName: string
   cuenta: string
-  tipo: string
-  titular: string
-  logo_url: string
+  tipoCuenta: string
+  image: string
+  monedas: string[]
+  isCashApp?: boolean
+  cashAppLink?: string
+  isPaypal?: boolean
+  paypalLink?: string
 }
 
-const PRECIO_GIRO_DOP = 200
-const PRECIO_GIRO_USD = 4
+const PRECIO_GIRO_DOP = 100
+const PRECIO_GIRO_USD = 2
+
+const allPaymentMethods: PaymentMethod[] = [
+  { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
+  { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', monedas: ['DOP'] },
+  { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', monedas: ['DOP'] },
+  { id: 'qik', nombre: 'QIK', shortName: 'QIK', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', monedas: ['DOP'] },
+  { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
+  { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
+  { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', cuenta: '$FortunaRD', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'], isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
+  { id: 'zelle', nombre: 'Zelle', shortName: 'Z', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
+  { id: 'paypal', nombre: 'PayPal', shortName: 'PP', cuenta: 'paypal.me/moisessamuel1', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
+]
+
+const titulares: Record<string, { nombre: string; cedula: string }> = {
+  bhd: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
+  banreservas: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
+  popular: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
+  qik: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
+  santacruz: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
+  apopular: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
+  zelle: { nombre: 'Robinson Yunior Guzman Veras', cedula: '+1 (504) 777-1271' },
+  cashapp: { nombre: 'Rosio Guzman', cedula: '' },
+  paypal: { nombre: 'Moises Samuel', cedula: '' },
+}
 
 export default function RuletaPage() {
   const [premios, setPremios] = useState<Premio[]>([])
-  const [bancos, setBancos] = useState<Banco[]>([])
   const [loading, setLoading] = useState(true)
   
   // Purchase flow state
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [moneda, setMoneda] = useState<'DOP' | 'USD'>('DOP')
-  const [selectedBanco, setSelectedBanco] = useState<Banco | null>(null)
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null)
   const [comprobante, setComprobante] = useState<File | null>(null)
   const [comprobanteUrl, setComprobanteUrl] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -59,14 +88,37 @@ export default function RuletaPage() {
   const [spinResult, setSpinResult] = useState<Premio | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
 
+  const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
+
+  const copyToClipboard = (text: string, label: string) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        toast.success(`${label} copiado`)
+      }).catch(() => {
+        fallbackCopy(text, label)
+      })
+    } else {
+      fallbackCopy(text, label)
+    }
+  }
+
+  const fallbackCopy = (text: string, label: string) => {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.style.position = 'fixed'
+    textarea.style.opacity = '0'
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+    toast.success(`${label} copiado`)
+  }
+
   useEffect(() => {
-    Promise.all([
-      fetch('/api/ruleta').then(r => r.json()),
-      fetch('/api/bancos').then(r => r.json()),
-    ])
-      .then(([premiosData, bancosData]) => {
-        setPremios(premiosData)
-        setBancos(bancosData)
+    fetch('/api/ruleta')
+      .then(r => r.json())
+      .then(data => {
+        setPremios(data)
         setLoading(false)
       })
       .catch(console.error)
@@ -95,7 +147,7 @@ export default function RuletaPage() {
   }
 
   const handlePurchase = async () => {
-    if (!formData.nombre || !formData.telefono || !selectedBanco || !comprobanteUrl) {
+    if (!formData.nombre || !formData.telefono || !selectedMethod || !comprobanteUrl) {
       return
     }
 
@@ -110,7 +162,7 @@ export default function RuletaPage() {
           email: formData.email,
           monto: moneda === 'DOP' ? PRECIO_GIRO_DOP : PRECIO_GIRO_USD,
           moneda,
-          metodo_pago: selectedBanco.nombre,
+          metodo_pago: selectedMethod.nombre,
           comprobante_url: comprobanteUrl,
         }),
       })
@@ -153,9 +205,7 @@ export default function RuletaPage() {
     }
   }
 
-  const filteredBancos = moneda === 'USD' 
-    ? bancos.filter(b => ['Zelle', 'Cash App', 'PayPal'].includes(b.nombre))
-    : bancos.filter(b => !['Zelle', 'Cash App', 'PayPal'].includes(b.nombre))
+
 
   if (loading) {
     return (
@@ -326,38 +376,99 @@ export default function RuletaPage() {
             <div>
               <Label className="mb-2 block text-sm font-semibold">METODO DE PAGO</Label>
               <div className="grid grid-cols-3 gap-2">
-                {filteredBancos.map((banco) => (
+                {paymentMethods.map((method) => (
                   <button
-                    key={banco.id}
-                    onClick={() => setSelectedBanco(banco)}
+                    key={method.id}
+                    onClick={() => setSelectedMethod(method)}
                     className={`flex flex-col items-center rounded-lg border-2 p-3 transition-all ${
-                      selectedBanco?.id === banco.id
+                      selectedMethod?.id === method.id
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
                     }`}
                   >
-                    {banco.logo_url ? (
-                      <Image
-                        src={banco.logo_url}
-                        alt={banco.nombre}
-                        width={40}
-                        height={40}
-                        className="h-10 w-10 object-contain"
-                      />
-                    ) : (
-                      <DollarSign className="h-8 w-8 text-primary" />
-                    )}
-                    <span className="mt-1 text-xs">{banco.nombre}</span>
+                    <Image
+                      src={method.image}
+                      alt={method.nombre}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded object-contain"
+                    />
+                    <span className="mt-1 text-xs">{method.shortName}</span>
                   </button>
                 ))}
               </div>
 
-              {selectedBanco && (
+              {selectedMethod && (
                 <Card className="mt-4 border-primary/30 bg-primary/5">
-                  <CardContent className="p-4 text-center text-sm">
-                    <p className="font-bold">{selectedBanco.nombre}</p>
-                    <p>{selectedBanco.tipo}: {selectedBanco.cuenta}</p>
-                    <p className="text-muted-foreground">{selectedBanco.titular}</p>
+                  <CardContent className="space-y-3 p-4">
+                    <p className="text-center font-bold text-primary">{selectedMethod.nombre}</p>
+                    
+                    {selectedMethod.isCashApp && (
+                      <a
+                        href={selectedMethod.cashAppLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-lg bg-green-600 py-3 text-center font-bold text-white hover:bg-green-500"
+                      >
+                        Pagar con Cash App
+                      </a>
+                    )}
+
+                    {selectedMethod.isPaypal && (
+                      <a
+                        href={selectedMethod.paypalLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-lg bg-blue-600 py-3 text-center font-bold text-white hover:bg-blue-500"
+                      >
+                        Pagar con PayPal
+                      </a>
+                    )}
+
+                    {!selectedMethod.isCashApp && !selectedMethod.isPaypal && (
+                      <>
+                        <div className="flex items-center justify-between rounded bg-background/50 p-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground">{selectedMethod.tipoCuenta}</p>
+                            <p className="font-mono font-bold">{selectedMethod.cuenta}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyToClipboard(selectedMethod.cuenta, 'Cuenta')}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="text-center text-sm">
+                          <p className="text-muted-foreground">Titular:</p>
+                          <p className="font-semibold">{titulares[selectedMethod.id]?.nombre}</p>
+                          {titulares[selectedMethod.id]?.cedula && (
+                            <p className="text-xs text-muted-foreground">{titulares[selectedMethod.id].cedula}</p>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {selectedMethod.id === 'zelle' && (
+                      <div className="flex items-center justify-between rounded bg-background/50 p-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Numero Zelle</p>
+                          <p className="font-mono font-bold">{selectedMethod.cuenta}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(selectedMethod.cuenta, 'Numero')}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    <p className="text-center text-sm font-bold text-primary">
+                      Monto a pagar: {moneda === 'DOP' ? `RD$${PRECIO_GIRO_DOP}` : `US$${PRECIO_GIRO_USD}`}
+                    </p>
                   </CardContent>
                 </Card>
               )}
@@ -397,7 +508,7 @@ export default function RuletaPage() {
             {/* Submit button */}
             <Button
               onClick={handlePurchase}
-              disabled={!formData.nombre || !formData.telefono || !selectedBanco || !comprobanteUrl || submitting}
+              disabled={!formData.nombre || !formData.telefono || !selectedMethod || !comprobanteUrl || submitting}
               className="w-full bg-primary py-6 text-lg font-bold text-primary-foreground"
             >
               {submitting ? (

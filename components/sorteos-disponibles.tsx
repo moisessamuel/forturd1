@@ -164,6 +164,9 @@ export function SorteosDisponibles() {
               <h3 className="mb-2 text-2xl font-bold text-primary" style={{ textShadow: '0 0 10px rgba(218,165,32,0.5)' }}>
                 RULETA DE LA FORTUNA
               </h3>
+              <p className="mb-2 text-lg font-bold text-foreground">
+                RD$100 / US$2 por giro
+              </p>
               <p className="mb-4 text-muted-foreground">
                 Gira la ruleta y gana increibles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho mas!
               </p>
