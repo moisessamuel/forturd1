@@ -32,7 +32,7 @@ export function WhatsAppBubble() {
         href="https://www.instagram.com/forturd_oficial/"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] shadow-lg transition-all hover:scale-110"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] shadow-lg"
         aria-label="Síguenos en Instagram"
       >
         <svg
@@ -58,7 +58,7 @@ export function WhatsAppBubble() {
         rel="noopener noreferrer"
         onClick={() => setShowTooltip(false)}
         onMouseEnter={() => setShowTooltip(true)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg shadow-[#25D366]/30 transition-all hover:scale-110 hover:shadow-xl hover:shadow-[#25D366]/40"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] shadow-lg shadow-[#25D366]/30"
         aria-label="Soporte por WhatsApp"
       >
         <svg

@@ -108,20 +108,29 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
   }, [sorteoSlug, estadoFilter, searchTerm])
 
   useEffect(() => {
-    // Check authentication
-    const isAuth = localStorage.getItem('admin_authenticated')
+    // Check authentication using sessionStorage based on sorteo
+    let isAuth = false
+    if (sorteoSlug === 'bmw-x6') {
+      isAuth = !!sessionStorage.getItem('bmwx6_admin_session')
+    } else if (sorteoSlug === 'bmw-x7') {
+      isAuth = !!sessionStorage.getItem('bmwx7_admin_session')
+    }
+    
     if (!isAuth) {
       router.push('/admin')
       return
     }
     
     fetchData()
-  }, [fetchData, router])
+  }, [fetchData, router, sorteoSlug])
 
   const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated')
-    localStorage.removeItem('admin_username')
-    localStorage.removeItem('admin_role')
+    // Clear session based on sorteo
+    if (sorteoSlug === 'bmw-x6') {
+      sessionStorage.removeItem('bmwx6_admin_session')
+    } else if (sorteoSlug === 'bmw-x7') {
+      sessionStorage.removeItem('bmwx7_admin_session')
+    }
     router.push('/admin')
   }
 

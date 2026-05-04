@@ -31,7 +31,7 @@ export function Header() {
   return (
     <header className={`sticky top-0 z-50 border-b border-border/50 backdrop-blur-md transition-all duration-300 ease-in-out ${scrolled ? 'bg-background/95 shadow-lg shadow-black/20' : 'bg-background/80'}`}>
       <div className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 ease-in-out ${scrolled ? 'h-16' : 'h-20'}`}>
-        <Link href="/" className="flex cursor-pointer items-center gap-2 transition-transform hover:scale-105">
+        <Link href="/" className="flex cursor-pointer items-center gap-2">
           <Image
             src="/images/forturd-logo-zeus.png"
             alt="FortuRD"
@@ -46,7 +46,7 @@ export function Header() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background transition-all hover:border-primary hover:shadow-[0_0_24px_rgba(218,165,32,0.6)]"
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background"
             aria-label="Menu"
           >
             <Image
