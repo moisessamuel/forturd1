@@ -4,8 +4,30 @@ import { verifyToken } from "@/lib/auth-edge";
 
 const COOKIE_NAME = "admin_session";
 
+// Set to true to enable maintenance mode
+const MAINTENANCE_MODE = false;
+
+// Routes that bypass maintenance mode
+const MAINTENANCE_BYPASS = [
+  "/mantenimiento",
+  "/admin",
+  "/api/admin",
+  "/_next",
+  "/favicon.ico",
+  "/images",
+];
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // Check maintenance mode
+  if (MAINTENANCE_MODE) {
+    const shouldBypass = MAINTENANCE_BYPASS.some(route => path.startsWith(route));
+    
+    if (!shouldBypass && path !== "/mantenimiento") {
+      return NextResponse.redirect(new URL("/mantenimiento", request.url));
+    }
+  }
 
   // Protect admin dashboard routes
   if (path.startsWith("/admin/dashboard")) {
@@ -38,5 +60,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
