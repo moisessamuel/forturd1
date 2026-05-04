@@ -197,6 +197,28 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar esta compra? Esta acción no se puede deshacer.')) {
+      return
+    }
+    
+    try {
+      const response = await fetch('/api/admin/sorteo-compras', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      
+      if (!response.ok) throw new Error('Error al eliminar')
+      
+      toast.success('Compra eliminada exitosamente')
+      fetchData()
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al eliminar la compra')
+    }
+  }
+
   const formatCurrency = (amount: number, currency: string = 'DOP') => {
     if (currency === 'USD') {
       return `US$ ${new Intl.NumberFormat('en-US').format(amount)}`
@@ -448,6 +470,15 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                                   <RotateCcw className="h-4 w-4" />
                                 </Button>
                               )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-red-400 hover:text-red-500"
+                                onClick={() => handleDelete(compra.id)}
+                                title="Eliminar compra"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>

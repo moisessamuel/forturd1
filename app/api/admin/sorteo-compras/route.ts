@@ -16,19 +16,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'sorteo_slug is required' }, { status: 400 })
     }
 
-    // Query compras table for this sorteo
+    // Query purchase_groups table with player data for this sorteo
     let query = supabase
-      .from('compras')
-      .select('*')
+      .from('purchase_groups')
+      .select(`
+        id,
+        player_id,
+        sorteo_slug,
+        estado,
+        monto,
+        moneda,
+        banco,
+        total_tickets,
+        comprobante_url,
+        created_at,
+        updated_at,
+        player:players(id, nombre, phone_number, email)
+      `)
       .eq('sorteo_slug', sorteoSlug)
       .order('created_at', { ascending: false })
 
     if (estado && estado !== 'Todos' && estado !== 'todos') {
       query = query.eq('estado', estado.toLowerCase())
-    }
-
-    if (search) {
-      query = query.or(`nombre_comprador.ilike.%${search}%,telefono.ilike.%${search}%,numero_boleto.ilike.%${search}%`)
     }
 
     const { data: compras, error } = await query
@@ -38,29 +47,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error al obtener compras' }, { status: 500 })
     }
 
+    // Filter by search if provided
+    let result = compras || []
+    if (search) {
+      const searchLower = search.toLowerCase()
+      result = result.filter(compra => {
+        const nombre = compra.player?.nombre?.toLowerCase() || ''
+        const telefono = compra.player?.phone_number?.toLowerCase() || ''
+        return nombre.includes(searchLower) || telefono.includes(searchLower)
+      })
+    }
+
     // Transform to match the expected format in the admin panel
-    const result = (compras || []).map(compra => ({
+    const transformed = result.map(compra => ({
       id: compra.id,
-      nombre: compra.nombre_comprador,
-      telefono: compra.telefono,
-      email: compra.email,
-      cedula: compra.cedula,
-      numero_boleto: compra.numero_boleto,
-      cantidad_boletos: compra.cantidad_boletos || 1,
-      total_tickets: compra.cantidad_boletos || 1,
+      nombre: compra.player?.nombre || 'N/A',
+      telefono: compra.player?.phone_number || 'N/A',
+      email: compra.player?.email || null,
+      cantidad_boletos: compra.total_tickets || 1,
+      total_tickets: compra.total_tickets || 1,
       monto: compra.monto,
       moneda: compra.moneda || 'DOP',
-      banco: compra.banco,
-      metodo_pago: compra.metodo_pago,
+      banco: compra.banco || 'N/A',
       comprobante_url: compra.comprobante_url,
       estado: compra.estado,
-      referido_codigo: compra.referido_codigo,
       sorteo_slug: compra.sorteo_slug,
       created_at: compra.created_at,
       updated_at: compra.updated_at,
+      player: compra.player,
     }))
 
-    return NextResponse.json(result)
+    return NextResponse.json(transformed)
   } catch (error) {
     console.error('Sorteo compras error:', error)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
@@ -79,9 +96,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'id and estado are required' }, { status: 400 })
     }
 
-    // Update compra status
+    // Update purchase_groups status
     const { data, error } = await supabase
-      .from('compras')
+      .from('purchase_groups')
       .update({ 
         estado,
         updated_at: new Date().toISOString()
@@ -98,6 +115,49 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(data)
   } catch (error) {
     console.error('PATCH error:', error)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+  }
+}
+
+// Delete a purchase
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    
+    // Accept id from either body or query params
+    let id: string | null = null
+    try {
+      const body = await request.json()
+      id = body.id
+    } catch {
+      const { searchParams } = new URL(request.url)
+      id = searchParams.get('id')
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 })
+    }
+
+    // First delete associated tickets
+    await supabase
+      .from('tickets')
+      .delete()
+      .eq('purchase_group_id', id)
+
+    // Then delete the purchase group
+    const { error } = await supabase
+      .from('purchase_groups')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Delete purchase error:', error)
+      return NextResponse.json({ error: 'Error al eliminar compra' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('DELETE error:', error)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
