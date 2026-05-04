@@ -286,6 +286,45 @@ export default function RuletaPage() {
           />
         </div>
 
+        {/* BMW Promo Section */}
+        {!canSpin && !purchaseComplete && (
+          <Card className="mx-auto mb-6 max-w-lg border-primary/30 bg-gradient-to-r from-primary/10 to-yellow-500/10">
+            <CardContent className="p-4 text-center">
+              <p className="mb-3 text-sm font-semibold text-primary">
+                COMPRA BOLETOS BMW Y OBTIENE UN GIRO GRATIS
+              </p>
+              <div className="flex justify-center gap-3">
+                <a href="/bmw-x6">
+                  <Button
+                    variant="outline"
+                    className="border-primary bg-black/50 text-primary hover:bg-primary hover:text-black"
+                  >
+                    <img 
+                      src="/images/sorteos/bmw-x6.png" 
+                      alt="BMW X6" 
+                      className="mr-2 h-6 w-6 object-contain"
+                    />
+                    BMW X6
+                  </Button>
+                </a>
+                <a href="/bmw-x7">
+                  <Button
+                    variant="outline"
+                    className="border-primary bg-black/50 text-primary hover:bg-primary hover:text-black"
+                  >
+                    <img 
+                      src="/images/sorteos/bmw-x7.png" 
+                      alt="BMW X7" 
+                      className="mr-2 h-6 w-6 object-contain"
+                    />
+                    BMW X7
+                  </Button>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Buy spin button */}
         {!canSpin && !purchaseComplete && (
           <div className="flex justify-center">
