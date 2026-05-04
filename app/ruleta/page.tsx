@@ -109,6 +109,12 @@ function RuletaPageContent() {
   const [showResultModal, setShowResultModal] = useState(false)
   const [paidSpinsRemaining, setPaidSpinsRemaining] = useState(0)
   
+  // Verification modal state (for users who already have spins)
+  const [showVerificationModal, setShowVerificationModal] = useState(false)
+  const [verificationPhone, setVerificationPhone] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [verificationError, setVerificationError] = useState('')
+  
   // Calculate total price
   const totalPriceDOP = spinQuantity * PRECIO_GIRO_DOP
   const totalPriceUSD = spinQuantity * PRECIO_GIRO_USD
@@ -306,6 +312,47 @@ function RuletaPageContent() {
     setIsSpinning(true)
   }
 
+  // Verify phone number and check for confirmed spins
+  const handleVerifyPhone = async () => {
+    if (!verificationPhone.trim()) {
+      setVerificationError('Por favor ingresa tu numero de telefono')
+      return
+    }
+
+    setVerifying(true)
+    setVerificationError('')
+
+    try {
+      const response = await fetch(`/api/ruleta/verify-spins?telefono=${encodeURIComponent(verificationPhone)}`)
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        if (data.giros_disponibles > 0) {
+          // User has confirmed spins available
+          setPaidSpinsRemaining(data.giros_disponibles)
+          setJugadaId(data.jugada_id)
+          setFormData(prev => ({ ...prev, telefono: verificationPhone, nombre: data.nombre || '' }))
+          setCanSpin(true)
+          setShowVerificationModal(false)
+          setVerificationPhone('')
+          toast.success(`Tienes ${data.giros_disponibles} giro${data.giros_disponibles > 1 ? 's' : ''} disponible${data.giros_disponibles > 1 ? 's' : ''}!`, {
+            duration: 4000,
+          })
+        } else {
+          setVerificationError('No tienes giros disponibles. Compra giros para participar.')
+        }
+      } else if (data.pending) {
+        setVerificationError('Tu pago aun no ha sido confirmado. Por favor espera la verificacion.')
+      } else {
+        setVerificationError(data.error || 'No se encontraron compras con este numero de telefono.')
+      }
+    } catch {
+      setVerificationError('Error de conexion. Intenta de nuevo.')
+    }
+
+    setVerifying(false)
+  }
+
   const handleSpinComplete = async (premio: Premio) => {
     setSpinResult(premio)
     setIsSpinning(false)
@@ -481,6 +528,18 @@ function RuletaPageContent() {
                 >
                   <Gift className="mr-2 h-5 w-5" />
                   COMPRAR Y GIRAR
+                </Button>
+                
+                {/* "Ya tengo mis giros" button */}
+                <Button
+                  onClick={() => setShowVerificationModal(true)}
+                  variant="outline"
+                  className="mt-4 h-auto w-full flex-col border-2 border-primary/60 bg-transparent py-3 transition-all hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+                >
+                  <span className="text-xs text-muted-foreground">Ya tengo mis giros</span>
+                  <span className="text-lg font-bold text-primary drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+                    Participar ahora
+                  </span>
                 </Button>
               </CardContent>
             </Card>
@@ -837,6 +896,75 @@ function RuletaPageContent() {
           >
             {spinResult?.tipo === 'premio' ? 'CERRAR' : 'INTENTAR DE NUEVO'}
           </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verification Modal - For users who already have spins */}
+      <Dialog open={showVerificationModal} onOpenChange={(open) => {
+        setShowVerificationModal(open)
+        if (!open) {
+          setVerificationPhone('')
+          setVerificationError('')
+        }
+      }}>
+        <DialogContent className="max-w-md border-primary/50 bg-background">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-bold text-primary">
+              VERIFICAR MIS GIROS
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <p className="text-center text-sm text-muted-foreground">
+              Ingresa el numero de telefono con el que realizaste tu compra para verificar tus giros disponibles.
+            </p>
+            
+            <div className="space-y-2">
+              <Label htmlFor="verification-phone" className="flex items-center gap-2 text-sm font-semibold">
+                <Phone className="h-4 w-4" />
+                Numero de Telefono
+              </Label>
+              <Input
+                id="verification-phone"
+                type="tel"
+                placeholder="Ej. 8091234567"
+                value={verificationPhone}
+                onChange={(e) => {
+                  setVerificationPhone(e.target.value)
+                  setVerificationError('')
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleVerifyPhone()
+                }}
+                className="border-border bg-card"
+              />
+            </div>
+
+            {verificationError && (
+              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-center text-sm text-red-400">
+                {verificationError}
+              </div>
+            )}
+
+            <Button
+              onClick={handleVerifyPhone}
+              disabled={!verificationPhone.trim() || verifying}
+              className="w-full bg-gradient-to-r from-primary to-yellow-500 py-6 text-lg font-bold text-black hover:from-yellow-500 hover:to-primary"
+            >
+              {verifying ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                  Verificando...
+                </div>
+              ) : (
+                'VERIFICAR Y PARTICIPAR'
+              )}
+            </Button>
+            
+            <p className="text-center text-xs text-muted-foreground">
+              Si aun no has comprado, usa el boton &quot;COMPRAR Y GIRAR&quot; para adquirir tus giros.
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     </main>
