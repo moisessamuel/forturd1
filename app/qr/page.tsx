@@ -143,7 +143,7 @@ export default function QRPage() {
       // Precio boleto
       ctx.fillStyle = '#DAA520'
       ctx.font = 'bold 52px sans-serif'
-      ctx.fillText('BOLETOS: 1,000 DOP', cx, 1660)
+      ctx.fillText('BOLETOS: 490 DOP', cx, 1660)
 
       // Linea decorativa inferior
       ctx.strokeStyle = '#DAA520'

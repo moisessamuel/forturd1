@@ -121,7 +121,7 @@ export function HeroSection() {
               <CardContent className="p-4">
                 <p className="text-xs text-muted-foreground">PRECIO DEL BOLETO</p>
                 <p className="text-xl font-bold text-foreground">
-                  {config ? formatCurrency(config.precio_boleto_dop) : '1,000'} DOP
+                  {config ? formatCurrency(config.precio_boleto_dop) : '490'} DOP
                 </p>
               </CardContent>
             </Card>
