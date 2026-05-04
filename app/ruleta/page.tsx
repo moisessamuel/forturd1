@@ -171,12 +171,29 @@ export default function RuletaPage() {
       if (data.success) {
         setJugadaId(data.jugada_id)
         setPurchaseComplete(true)
-        // For now, allow spinning after purchase (admin will confirm later)
-        setCanSpin(true)
         setShowPurchaseModal(false)
+        toast.success('Comprobante enviado correctamente', {
+          description: 'Tu pago esta siendo verificado. Podras girar la ruleta una vez confirmado.',
+          duration: 5000,
+        })
+        // Check payment status periodically
+        const checkStatus = async () => {
+          const res = await fetch(`/api/ruleta/check-status?id=${data.jugada_id}`)
+          const statusData = await res.json()
+          if (statusData.estado === 'confirmado') {
+            setCanSpin(true)
+            toast.success('Pago confirmado! Ya puedes girar la ruleta.')
+          } else if (statusData.estado === 'pendiente') {
+            setTimeout(checkStatus, 5000)
+          }
+        }
+        checkStatus()
+      } else {
+        toast.error('Error al enviar el comprobante')
       }
     } catch (error) {
       console.error('Purchase error:', error)
+      toast.error('Error de conexion')
     }
     setSubmitting(false)
   }

@@ -37,7 +37,8 @@ import {
   Ticket,
   Bike,
   Eye,
-  Banknote
+  Banknote,
+  RefreshCw
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -194,10 +195,23 @@ export default function RuletaAdminPage() {
             <p className="text-sm text-muted-foreground">Administracion de giros y premios</p>
           </div>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Salir
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => {
+            setEstadoFilter('todos')
+            setSearchTerm('')
+          }}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Restablecer
+          </Button>
+          <Button variant="outline" onClick={fetchData}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Actualizar
+          </Button>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Salir
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
