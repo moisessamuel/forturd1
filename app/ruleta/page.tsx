@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy } from 'lucide-react'
+import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Ticket } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -272,16 +272,40 @@ export default function RuletaPage() {
           />
         </div>
 
-        {/* Buy spin button */}
+        {/* Buy spin buttons */}
         {!canSpin && !purchaseComplete && (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-4">
             <Button
               onClick={() => setShowPurchaseModal(true)}
               className="h-14 w-72 bg-gradient-to-r from-green-600 to-green-500 text-lg font-bold hover:from-green-500 hover:to-green-400"
             >
               <Gift className="mr-2 h-5 w-5" />
-              COMPRAR GIRO
+              COMPRAR GIRO - RD$100 / US$2
             </Button>
+            
+            <div className="text-center">
+              <p className="mb-2 text-sm text-muted-foreground">o compra un boleto BMW y obtiene un giro GRATIS</p>
+              <div className="flex justify-center gap-3">
+                <a href="/bmw-x6">
+                  <Button
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary hover:text-black"
+                  >
+                    <Ticket className="mr-2 h-4 w-4" />
+                    BMW X6 - RD$490
+                  </Button>
+                </a>
+                <a href="/bmw-x7">
+                  <Button
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary hover:text-black"
+                  >
+                    <Ticket className="mr-2 h-4 w-4" />
+                    BMW X7 - RD$490
+                  </Button>
+                </a>
+              </div>
+            </div>
           </div>
         )}
 
