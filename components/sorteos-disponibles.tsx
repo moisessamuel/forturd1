@@ -74,6 +74,9 @@ export function SorteosDisponibles() {
       {activeSorteos.length > 0 && (
         <>
           <div className="mb-8 text-center">
+            <h1 className="mb-4 text-2xl font-bold italic text-primary md:text-3xl lg:text-4xl">
+              TU DECIDES TU SUERTE. UNA X6 Y UNA X7 ESPERANDO DUENO.
+            </h1>
             <p className="mb-2 text-sm font-semibold tracking-widest text-primary">
               Participa!
             </p>
@@ -88,21 +91,25 @@ export function SorteosDisponibles() {
                 key={sorteo.id} 
                 className="group overflow-hidden border-border/50 bg-card/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10"
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={sorteo.imagen_url || '/images/placeholder-vehicle.jpg'}
-                    alt={sorteo.nombre}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <Badge className="absolute left-3 top-3 bg-green-600 text-white">
-                    EN CURSO
-                  </Badge>
-                </div>
+                <Link href={`/${sorteo.slug}`} className="block">
+                  <div className="relative aspect-[4/3] cursor-pointer overflow-hidden">
+                    <Image
+                      src={sorteo.imagen_url || '/images/placeholder-vehicle.jpg'}
+                      alt={sorteo.nombre}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <Badge className="absolute left-3 top-3 bg-green-600 text-white">
+                      EN CURSO
+                    </Badge>
+                  </div>
+                </Link>
                 <CardContent className="p-4">
-                  <h3 className="mb-2 text-lg font-bold text-foreground">
-                    {sorteo.nombre}
-                  </h3>
+                  <Link href={`/${sorteo.slug}`} className="block">
+                    <h3 className="mb-2 cursor-pointer text-lg font-bold text-foreground transition-colors hover:text-primary">
+                      {sorteo.nombre}
+                    </h3>
+                  </Link>
                   <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
                     <span>CON LA VENTA DEL 100%</span>
                   </div>
