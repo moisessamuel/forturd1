@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy } from 'lucide-react'
+import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -19,6 +19,9 @@ interface FreeSpinData {
   nombre: string
   telefono: string
   used: boolean
+  total_boletos?: number  // Total tickets purchased
+  giros_usados?: number   // Spins already used
+  giros_disponibles?: number // Available free spins
 }
 
 interface Premio {
@@ -78,6 +81,10 @@ function RuletaPageContent() {
   // Free spin state
   const [freeSpinData, setFreeSpinData] = useState<FreeSpinData | null>(null)
   const [hasFreeSpinUsed, setHasFreeSpinUsed] = useState(false)
+  const [freeSpinsRemaining, setFreeSpinsRemaining] = useState(0)
+  
+  // Quantity selector state
+  const [spinQuantity, setSpinQuantity] = useState(1)
   
   // Purchase flow state
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
@@ -100,6 +107,11 @@ function RuletaPageContent() {
   const [isSpinning, setIsSpinning] = useState(false)
   const [spinResult, setSpinResult] = useState<Premio | null>(null)
   const [showResultModal, setShowResultModal] = useState(false)
+  const [paidSpinsRemaining, setPaidSpinsRemaining] = useState(0)
+  
+  // Calculate total price
+  const totalPriceDOP = spinQuantity * PRECIO_GIRO_DOP
+  const totalPriceUSD = spinQuantity * PRECIO_GIRO_USD
 
   const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
 
@@ -137,7 +149,7 @@ function RuletaPageContent() {
       .catch(console.error)
   }, [])
 
-  // Check for free spin from verificador
+  // Check for free spin from verificador - fetch from DB
   useEffect(() => {
     const isFreeSpin = searchParams.get('freeSpin') === 'true'
     if (isFreeSpin && typeof window !== 'undefined') {
@@ -145,19 +157,56 @@ function RuletaPageContent() {
       if (storedData) {
         try {
           const data: FreeSpinData = JSON.parse(storedData)
-          if (!data.used) {
-            setFreeSpinData(data)
-            setCanSpin(true)
-            // Pre-fill form data with ticket info
-            setFormData({
-              nombre: data.nombre,
-              telefono: data.telefono,
-              email: '',
+          
+          // Fetch actual spin count from database
+          fetch(`/api/ruleta/free-spin-count?numero_boleto=${data.numero_boleto}`)
+            .then(r => r.json())
+            .then(spinData => {
+              const totalBoletos = spinData.total_boletos || 1
+              const girosUsados = spinData.giros_usados || 0
+              const girosDisponibles = totalBoletos - girosUsados
+              
+              const updatedData = {
+                ...data,
+                total_boletos: totalBoletos,
+                giros_usados: girosUsados,
+                giros_disponibles: girosDisponibles,
+              }
+              
+              setFreeSpinData(updatedData)
+              setFreeSpinsRemaining(girosDisponibles)
+              
+              // Pre-fill form data with ticket info
+              setFormData({
+                nombre: data.nombre,
+                telefono: data.telefono,
+                email: '',
+              })
+              
+              if (girosDisponibles > 0) {
+                setCanSpin(true)
+                toast.success(`Bienvenido ${data.nombre}! Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} gratis.`, { duration: 4000 })
+              } else {
+                setHasFreeSpinUsed(true)
+                toast.info('Ya usaste todos tus giros gratis. Puedes comprar mas giros.', { duration: 4000 })
+              }
             })
-            toast.success(`Bienvenido ${data.nombre}! Tienes 1 giro gratis.`, { duration: 4000 })
-          } else {
-            setHasFreeSpinUsed(true)
-          }
+            .catch(() => {
+              // Fallback to stored data
+              if (!data.used) {
+                setFreeSpinData(data)
+                setFreeSpinsRemaining(1)
+                setCanSpin(true)
+                setFormData({
+                  nombre: data.nombre,
+                  telefono: data.telefono,
+                  email: '',
+                })
+                toast.success(`Bienvenido ${data.nombre}! Tienes 1 giro gratis.`, { duration: 4000 })
+              } else {
+                setHasFreeSpinUsed(true)
+              }
+            })
         } catch {
           console.error('Error parsing free spin data')
         }
@@ -194,14 +243,18 @@ function RuletaPageContent() {
 
     setSubmitting(true)
     try {
+      const totalMonto = moneda === 'DOP' ? totalPriceDOP : totalPriceUSD
+      
       const purchaseData = {
         nombre: formData.nombre,
         telefono: formData.telefono,
         email: formData.email || null,
-        monto: moneda === 'DOP' ? PRECIO_GIRO_DOP : PRECIO_GIRO_USD,
+        monto: totalMonto,
         moneda,
         metodo_pago: selectedMethod.nombre,
         comprobante_url: comprobanteUrl,
+        cantidad_giros: spinQuantity,
+        numero_boleto_referencia: freeSpinData?.numero_boleto || null,
       }
 
       const response = await fetch('/api/ruleta', {
@@ -222,8 +275,9 @@ function RuletaPageContent() {
         setJugadaId(data.jugada_id)
         setPurchaseComplete(true)
         setShowPurchaseModal(false)
+        setPaidSpinsRemaining(spinQuantity)
         setCanSpin(true)
-        toast.success('Compra completada! Ya puedes girar la ruleta.', {
+        toast.success(`Compra de ${spinQuantity} giro${spinQuantity > 1 ? 's' : ''} completada! Ya puedes girar.`, {
           duration: 3000,
         })
       } else {
@@ -243,7 +297,6 @@ function RuletaPageContent() {
   const handleSpinComplete = async (premio: Premio) => {
     setSpinResult(premio)
     setIsSpinning(false)
-    setCanSpin(false)
     setShowResultModal(true)
 
     // Record the result
@@ -259,8 +312,8 @@ function RuletaPageContent() {
       })
     }
 
-    // If this was a free spin, record it and mark as used
-    if (freeSpinData && !freeSpinData.used) {
+    // If this was a free spin, record it and decrement counter
+    if (freeSpinData && freeSpinsRemaining > 0) {
       try {
         await fetch('/api/ruleta/free-spin', {
           method: 'POST',
@@ -274,14 +327,35 @@ function RuletaPageContent() {
           }),
         })
 
-        // Mark free spin as used
-        const updatedData = { ...freeSpinData, used: true }
-        sessionStorage.setItem('freeSpin', JSON.stringify(updatedData))
-        setFreeSpinData(updatedData)
-        setHasFreeSpinUsed(true)
+        // Update free spins remaining
+        const newRemaining = freeSpinsRemaining - 1
+        setFreeSpinsRemaining(newRemaining)
+        
+        if (newRemaining <= 0) {
+          const updatedData = { ...freeSpinData, used: true, giros_disponibles: 0 }
+          sessionStorage.setItem('freeSpin', JSON.stringify(updatedData))
+          setFreeSpinData(updatedData)
+          setHasFreeSpinUsed(true)
+          setCanSpin(paidSpinsRemaining > 0)
+        } else {
+          // Still have free spins
+          setCanSpin(true)
+        }
       } catch (error) {
         console.error('Error recording free spin:', error)
       }
+    } else if (paidSpinsRemaining > 0) {
+      // Paid spin used
+      const newPaidRemaining = paidSpinsRemaining - 1
+      setPaidSpinsRemaining(newPaidRemaining)
+      
+      if (newPaidRemaining <= 0 && freeSpinsRemaining <= 0) {
+        setCanSpin(false)
+      } else {
+        setCanSpin(true)
+      }
+    } else {
+      setCanSpin(false)
     }
   }
 
@@ -336,15 +410,36 @@ function RuletaPageContent() {
         </div>
 
         {/* Free Spin Banner */}
-        {freeSpinData && !freeSpinData.used && canSpin && (
+        {freeSpinData && freeSpinsRemaining > 0 && canSpin && (
           <div className="mx-auto mb-6 max-w-lg">
             <Card className="border-green-500/50 bg-gradient-to-r from-green-500/20 to-primary/20">
               <CardContent className="p-4 text-center">
                 <p className="text-lg font-bold text-green-400">
-                  GIRO GRATIS DISPONIBLE
+                  {freeSpinsRemaining} GIRO{freeSpinsRemaining > 1 ? 'S' : ''} GRATIS DISPONIBLE{freeSpinsRemaining > 1 ? 'S' : ''}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Boleto #{freeSpinData.numero_boleto} - {freeSpinData.nombre}
+                </p>
+                {freeSpinData.total_boletos && freeSpinData.total_boletos > 1 && (
+                  <p className="mt-1 text-xs text-green-400">
+                    {freeSpinData.total_boletos} boletos = {freeSpinData.total_boletos} giros gratis
+                  </p>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Presiona el boton central de la ruleta para girar
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+        
+        {/* Paid spins remaining banner */}
+        {paidSpinsRemaining > 0 && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-primary/50 bg-gradient-to-r from-primary/20 to-yellow-500/20">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-primary">
+                  {paidSpinsRemaining} GIRO{paidSpinsRemaining > 1 ? 'S' : ''} COMPRADO{paidSpinsRemaining > 1 ? 'S' : ''} DISPONIBLE{paidSpinsRemaining > 1 ? 'S' : ''}
                 </p>
                 <p className="mt-2 text-xs text-muted-foreground">
                   Presiona el boton central de la ruleta para girar
@@ -423,6 +518,47 @@ function RuletaPageContent() {
           </DialogHeader>
 
           <div className="space-y-6 py-4">
+            {/* Quantity selector */}
+            <div>
+              <Label className="mb-2 block text-sm font-semibold">CANTIDAD DE GIROS</Label>
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSpinQuantity(Math.max(1, spinQuantity - 1))}
+                  disabled={spinQuantity <= 1}
+                  className="h-12 w-12 rounded-full"
+                >
+                  <Minus className="h-6 w-6" />
+                </Button>
+                <div className="flex h-16 w-20 items-center justify-center rounded-lg border-2 border-primary bg-primary/10">
+                  <span className="text-3xl font-bold text-primary">{spinQuantity}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setSpinQuantity(Math.min(50, spinQuantity + 1))}
+                  disabled={spinQuantity >= 50}
+                  className="h-12 w-12 rounded-full"
+                >
+                  <Plus className="h-6 w-6" />
+                </Button>
+              </div>
+              <div className="mt-2 flex justify-center gap-2">
+                {[1, 3, 5, 10].map(qty => (
+                  <Button
+                    key={qty}
+                    variant={spinQuantity === qty ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSpinQuantity(qty)}
+                    className="min-w-[40px]"
+                  >
+                    {qty}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
             {/* Currency selection */}
             <div>
               <Label className="mb-2 block text-sm font-semibold">MONEDA DE PAGO</Label>
@@ -442,9 +578,19 @@ function RuletaPageContent() {
                   USD (Dolares)
                 </Button>
               </div>
-              <p className="mt-2 text-center text-lg font-bold text-primary">
-                {moneda === 'DOP' ? `RD$${PRECIO_GIRO_DOP}` : `US$${PRECIO_GIRO_USD}`} por giro
-              </p>
+              
+              {/* Price breakdown */}
+              <div className="mt-3 rounded-lg bg-primary/10 p-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{spinQuantity} giro{spinQuantity > 1 ? 's' : ''} x {moneda === 'DOP' ? `RD$${PRECIO_GIRO_DOP}` : `US$${PRECIO_GIRO_USD}`}</span>
+                </div>
+                <div className="mt-1 flex justify-between border-t border-primary/20 pt-1">
+                  <span className="font-semibold">Total a pagar:</span>
+                  <span className="text-xl font-bold text-primary">
+                    {moneda === 'DOP' ? `RD$${totalPriceDOP.toLocaleString()}` : `US$${totalPriceUSD}`}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Personal data */}

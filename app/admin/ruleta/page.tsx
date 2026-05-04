@@ -144,20 +144,15 @@ export default function RuletaAdminPage() {
   }, [isAuthenticated, fetchData])
 
   const handleUpdateEstado = async (id: string, nuevoEstado: string, sourceTable?: string) => {
-    console.log('[v0] handleUpdateEstado called:', { id, nuevoEstado, sourceTable })
     setUpdating(id)
     try {
-      const requestBody = { id, estado: nuevoEstado, source_table: sourceTable }
-      console.log('[v0] Sending PATCH request with body:', requestBody)
-      
       const response = await fetch('/api/admin/ruleta', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ id, estado: nuevoEstado, source_table: sourceTable }),
       })
       
       const responseData = await response.json()
-      console.log('[v0] Response:', { ok: response.ok, status: response.status, data: responseData })
       
       if (response.ok) {
         if (nuevoEstado === 'confirmado') {
@@ -170,11 +165,10 @@ export default function RuletaAdminPage() {
         await fetchData()
         setShowDetailModal(false)
       } else {
-        console.error('[v0] Error response:', responseData)
         toast.error('Error al actualizar el estado: ' + (responseData.error || 'Unknown'))
       }
     } catch (error) {
-      console.error('[v0] Error updating:', error)
+      console.error('Error updating:', error)
       toast.error('Error de conexion')
     }
     setUpdating(null)
