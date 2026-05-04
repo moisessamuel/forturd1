@@ -35,21 +35,16 @@ export default function BMWX6AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/admin/login', {
+      const response = await fetch('/api/admin/bmw-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, sorteo: 'bmw-x6' }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.error || 'Credenciales inválidas')
-      }
-
-      // Verify user has access to BMW X6
-      if (data.role !== 'sorteo_bmw-x6' && data.role !== 'admin') {
-        throw new Error('No tienes acceso a este panel')
       }
 
       sessionStorage.setItem('bmwx6_admin_session', JSON.stringify(data))
