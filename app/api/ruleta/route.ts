@@ -62,7 +62,12 @@ export async function POST(request: Request) {
       player = newPlayer
     }
 
-    // Create spin record - auto-confirm all purchases
+    // Create spin record
+    // - Free spins (from verified tickets) are auto-confirmed
+    // - Paid spins stay pending until admin confirms payment
+    const isPaidSpin = !es_gratis && monto > 0
+    const estadoInicial = isPaidSpin ? 'pendiente' : 'confirmado'
+    
     const { data: jugada, error: jugadaError } = await supabase
       .from('ruleta_jugadas')
       .insert({
@@ -74,8 +79,8 @@ export async function POST(request: Request) {
         moneda: es_gratis ? 'DOP' : moneda,
         metodo_pago: es_gratis ? 'gratis' : metodo_pago,
         comprobante_url,
-        estado: 'confirmado',
-        confirmado_at: new Date().toISOString(),
+        estado: estadoInicial,
+        confirmado_at: isPaidSpin ? null : new Date().toISOString(),
         es_gratis,
         origen,
       })
@@ -90,7 +95,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ 
       success: true, 
       jugada_id: jugada.id,
-      estado: 'confirmado'
+      estado: estadoInicial,
+      requires_approval: isPaidSpin
     })
   } catch (error) {
     console.error('Error:', error)
