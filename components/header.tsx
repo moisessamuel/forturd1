@@ -30,14 +30,14 @@ export function Header() {
 
   return (
     <header className={`sticky top-0 z-50 border-b border-border/50 backdrop-blur-md transition-all duration-300 ease-in-out ${scrolled ? 'bg-background/95 shadow-lg shadow-black/20' : 'bg-background/80'}`}>
-      <div className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 ease-in-out ${scrolled ? 'h-16' : 'h-20'}`}>
+      <div className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 ease-in-out ${scrolled ? 'h-20' : 'h-28'}`}>
         <Link href="/" className="flex cursor-pointer items-center gap-2">
           <Image
             src="/images/forturd-logo-zeus.png"
             alt="FortuRD"
-            width={200}
-            height={80}
-            style={{ width: 'auto', height: scrolled ? '50px' : '70px' }}
+            width={280}
+            height={110}
+            style={{ width: 'auto', height: scrolled ? '70px' : '100px' }}
             className="object-contain mix-blend-lighten transition-all duration-300 ease-in-out"
           />
         </Link>
