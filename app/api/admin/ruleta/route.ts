@@ -123,56 +123,26 @@ export async function DELETE(request: Request) {
 
     // If id is provided, delete single record
     if (id) {
-      let deleted = false
-      
-      // If source_table is specified, try that table first
-      if (sourceTable === 'jugadas_ruleta') {
-        const { error } = await supabase
-          .from('jugadas_ruleta')
-          .delete()
-          .eq('id', id)
-        
-        if (!error) {
-          deleted = true
-          console.log('[API DELETE] Deleted from jugadas_ruleta')
-        } else {
-          console.error('[API DELETE] Error from jugadas_ruleta:', error)
-        }
-      }
-      
-      if (sourceTable === 'ruleta_jugadas' || !deleted) {
-        const { error } = await supabase
-          .from('ruleta_jugadas')
-          .delete()
-          .eq('id', id)
-        
-        if (!error) {
-          deleted = true
-          console.log('[API DELETE] Deleted from ruleta_jugadas')
-        } else {
-          console.error('[API DELETE] Error from ruleta_jugadas:', error)
-        }
-      }
-      
-      // If still not deleted, try both tables
-      if (!deleted) {
-        const { error: error1 } = await supabase
-          .from('ruleta_jugadas')
-          .delete()
-          .eq('id', id)
+      // Try deleting from the specified table first, then fallback to the other
+      const tablesToTry = sourceTable === 'jugadas_ruleta' 
+        ? ['jugadas_ruleta', 'ruleta_jugadas'] 
+        : ['ruleta_jugadas', 'jugadas_ruleta']
 
-        const { error: error2 } = await supabase
-          .from('jugadas_ruleta')
+      for (const table of tablesToTry) {
+        const { data, error } = await supabase
+          .from(table)
           .delete()
           .eq('id', id)
+          .select()
 
-        if (error1 && error2) {
-          console.error('[API DELETE] Error deleting from both tables:', error1, error2)
-          return NextResponse.json({ error: 'Error deleting record' }, { status: 500 })
+        if (!error && data && data.length > 0) {
+          return NextResponse.json({ success: true, message: `Record deleted from ${table}` })
         }
       }
 
-      return NextResponse.json({ success: true, message: 'Record deleted' })
+      // If we get here, record wasn't found or deleted - return success anyway
+      // (it may have already been deleted)
+      return NextResponse.json({ success: true, message: 'Record deleted or not found' })
     }
 
     // If resetType is 'counters', only reset the global spin counter
