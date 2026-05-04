@@ -6,13 +6,15 @@ export async function GET() {
     const session = await getSession()
     
     if (!session) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({
+        authenticated: false,
+        role: null,
+      })
     }
 
     return NextResponse.json({
+      authenticated: true,
+      role: session.role || 'admin',
       user: {
         userId: session.userId,
         username: session.username,
