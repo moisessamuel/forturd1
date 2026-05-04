@@ -176,8 +176,14 @@ export function SorteosDisponibles() {
                       {sorteo.nombre}
                     </h3>
                   </Link>
-                  <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>CON LA VENTA DEL 100%</span>
+                  <div className="mb-3 text-sm text-muted-foreground">
+                    {sorteo.slug === 'bmw-x6' ? (
+                      <span>Deportivo, elegante y potente. Disenado para destacar.</span>
+                    ) : sorteo.slug === 'bmw-x7' ? (
+                      <span>Espacioso, comodo y confortable. Ideal para toda la familia.</span>
+                    ) : (
+                      <span>CON LA VENTA DEL 100%</span>
+                    )}
                   </div>
                   
                   {/* Progress bar */}
