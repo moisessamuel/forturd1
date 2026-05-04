@@ -19,20 +19,21 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
-// Prize segments configuration based on controlled probability
+// Prize segments configuration - alternating gold/black with "SIGUE INTENTANDO" and gift boxes
+// Gift boxes (isGiftBox: true) are triggers for prizes based on global counter
 const WHEEL_SEGMENTS = [
-  { label: 'Sigue\nIntentando', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio' },
-  { label: '1 Boleto\nBMW', color: '#DAA520', textColor: '#000000', tipo: 'premio', premioKey: 'boleto' },
-  { label: 'Sigue\nIntentando', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio' },
-  { label: 'RD$5,000', color: '#2d5a1e', textColor: '#ffffff', tipo: 'premio', premioKey: 'dinero' },
-  { label: 'Sigue\nIntentando', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio' },
-  { label: 'Premio\nEspecial', color: '#8B0000', textColor: '#ffffff', tipo: 'premio', premioKey: 'especial' },
-  { label: 'Sigue\nIntentando', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio' },
-  { label: 'iPhone', color: '#4a0080', textColor: '#ffffff', tipo: 'premio', premioKey: 'iphone' },
-  { label: 'Sigue\nIntentando', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio' },
-  { label: 'Motor', color: '#0066cc', textColor: '#ffffff', tipo: 'premio', premioKey: 'motor' },
-  { label: 'Sigue\nIntentando', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio' },
-  { label: 'Patineta\nPS5/TV', color: '#ff6600', textColor: '#ffffff', tipo: 'premio', premioKey: 'tech' },
+  { label: 'SIGUE\nINTENTANDO', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio', isGiftBox: false },
+  { label: '', color: '#DAA520', textColor: '#000000', tipo: 'premio', isGiftBox: true, premioKey: 'regalo1' },
+  { label: 'SIGUE\nINTENTANDO', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio', isGiftBox: false },
+  { label: '', color: '#DAA520', textColor: '#000000', tipo: 'premio', isGiftBox: true, premioKey: 'regalo2' },
+  { label: 'SIGUE\nINTENTANDO', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio', isGiftBox: false },
+  { label: '', color: '#DAA520', textColor: '#000000', tipo: 'premio', isGiftBox: true, premioKey: 'regalo3' },
+  { label: 'SIGUE\nINTENTANDO', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio', isGiftBox: false },
+  { label: '', color: '#DAA520', textColor: '#000000', tipo: 'premio', isGiftBox: true, premioKey: 'regalo4' },
+  { label: 'SIGUE\nINTENTANDO', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio', isGiftBox: false },
+  { label: '', color: '#DAA520', textColor: '#000000', tipo: 'premio', isGiftBox: true, premioKey: 'regalo5' },
+  { label: 'SIGUE\nINTENTANDO', color: '#1a1a1a', textColor: '#DAA520', tipo: 'sin_premio', isGiftBox: false },
+  { label: '', color: '#DAA520', textColor: '#000000', tipo: 'premio', isGiftBox: true, premioKey: 'regalo6' },
 ]
 
 const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length
@@ -138,26 +139,66 @@ export function RuletaWheel({
       ctx.lineWidth = 2
       ctx.stroke()
 
-      // Draw text
+      // Draw text or gift box
       ctx.save()
       ctx.translate(centerX, centerY)
       ctx.rotate(segmentStart + angle / 2)
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       
-      const fontSize = size < 350 ? 10 : 12
-      ctx.font = `bold ${fontSize}px Arial`
-      ctx.fillStyle = segment.textColor
-      
-      // Handle multiline text
-      const lines = segment.label.split('\n')
-      const lineHeight = fontSize + 2
       const textRadius = radius * 0.65
       
-      lines.forEach((line, lineIndex) => {
-        const yOffset = (lineIndex - (lines.length - 1) / 2) * lineHeight
-        ctx.fillText(line, textRadius, yOffset)
-      })
+      if (segment.isGiftBox) {
+        // Draw gift box icon
+        const boxSize = size < 350 ? 24 : 32
+        const boxX = textRadius - boxSize / 2
+        const boxY = -boxSize / 2
+        
+        // Gift box body
+        ctx.fillStyle = '#FF4444'
+        ctx.fillRect(boxX, boxY + boxSize * 0.3, boxSize, boxSize * 0.7)
+        
+        // Gift box lid
+        ctx.fillStyle = '#FF6666'
+        ctx.fillRect(boxX - 2, boxY + boxSize * 0.2, boxSize + 4, boxSize * 0.15)
+        
+        // Ribbon vertical
+        ctx.fillStyle = '#FFD700'
+        ctx.fillRect(boxX + boxSize * 0.4, boxY + boxSize * 0.3, boxSize * 0.2, boxSize * 0.7)
+        
+        // Ribbon horizontal
+        ctx.fillRect(boxX, boxY + boxSize * 0.55, boxSize, boxSize * 0.15)
+        
+        // Bow
+        ctx.beginPath()
+        ctx.arc(boxX + boxSize * 0.35, boxY + boxSize * 0.15, boxSize * 0.12, 0, Math.PI * 2)
+        ctx.fillStyle = '#FFD700'
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(boxX + boxSize * 0.65, boxY + boxSize * 0.15, boxSize * 0.12, 0, Math.PI * 2)
+        ctx.fill()
+        
+        // Sparkles around gift
+        ctx.fillStyle = '#FFFFFF'
+        ctx.font = `${size < 350 ? 8 : 10}px Arial`
+        ctx.fillText('✦', boxX - 5, boxY)
+        ctx.fillText('✦', boxX + boxSize + 5, boxY + boxSize * 0.5)
+        ctx.fillText('✦', boxX + boxSize * 0.5, boxY - 5)
+      } else {
+        // Draw text
+        const fontSize = size < 350 ? 9 : 11
+        ctx.font = `bold ${fontSize}px Arial`
+        ctx.fillStyle = segment.textColor
+        
+        // Handle multiline text
+        const lines = segment.label.split('\n')
+        const lineHeight = fontSize + 2
+        
+        lines.forEach((line, lineIndex) => {
+          const yOffset = (lineIndex - (lines.length - 1) / 2) * lineHeight
+          ctx.fillText(line, textRadius, yOffset)
+        })
+      }
       
       ctx.restore()
     })
@@ -284,80 +325,84 @@ export function RuletaWheel({
   }, [initAudio])
 
   // Determine prize based on controlled probability (global spin counter)
-  // By default: "Sigue Intentando" 
-  // Every 201 spins -> 1 Boleto BMW (for each vehicle)
-  // Every 753 spins -> RD$5,000
-  // Every 3,504 spins -> Patineta/PS5/Smart TV
-  // Every 7,605 spins -> iPhone
-  // Every 12,506 spins -> Motor
-  const determinePrize = useCallback(async (): Promise<{ premio: Premio; targetSegment: number }> => {
+  // LOGIC:
+  // - By default, ALWAYS "Sigue Intentando"
+  // - If lands on gift box AND matches milestone, give the corresponding prize
+  // - Gift boxes that don't match any milestone = "Sigue Intentando"
+  //
+  // Milestones:
+  // - Every 201 spins -> 1 Boleto BMW (X6 + X7)
+  // - Every 753 spins -> RD$5,000
+  // - Every 3,504 spins -> Patineta/PS5/Smart TV (random)
+  // - Every 7,605 spins -> iPhone
+  // - Every 12,506 spins -> Motor
+  const determinePrize = useCallback(async (): Promise<{ premio: Premio; targetSegment: number; actualPrize: string | null }> => {
     const nextSpinCount = globalSpinCount + 1
     
     // Check controlled probability milestones (check from rarest to most common)
-    let targetPremioKey: string | null = null
+    let prizeType: string | null = null
+    let prizeName: string = 'Sigue Intentando'
     
     // Every 12,506 spins -> Motor
     if (nextSpinCount % 12506 === 0) {
-      targetPremioKey = 'motor'
+      prizeType = 'motor'
+      prizeName = 'Motor'
     }
     // Every 7,605 spins -> iPhone
     else if (nextSpinCount % 7605 === 0) {
-      targetPremioKey = 'iphone'
+      prizeType = 'iphone'
+      prizeName = 'iPhone'
     }
-    // Every 3,504 spins -> Patineta/PS5/Smart TV
+    // Every 3,504 spins -> Patineta/PS5/Smart TV (random)
     else if (nextSpinCount % 3504 === 0) {
-      targetPremioKey = 'tech'
+      prizeType = 'tech'
+      const techPrizes = ['Patineta Electrica', 'PS5', 'Smart TV']
+      prizeName = techPrizes[Math.floor(Math.random() * techPrizes.length)]
     }
     // Every 753 spins -> RD$5,000
     else if (nextSpinCount % 753 === 0) {
-      targetPremioKey = 'dinero'
+      prizeType = 'dinero'
+      prizeName = 'RD$5,000'
     }
     // Every 201 spins -> 1 Boleto BMW
     else if (nextSpinCount % 201 === 0) {
-      targetPremioKey = 'boleto'
+      prizeType = 'boleto'
+      prizeName = '1 Boleto BMW X6 + 1 Boleto BMW X7'
     }
-    // All other spins -> "Sigue Intentando" (default, no prize)
     
-    // Find the segment index for the target prize
+    // Find the target segment
     let targetSegment: number
     
-    if (targetPremioKey) {
-      // Find segment with matching premioKey
-      const segmentIndex = WHEEL_SEGMENTS.findIndex(s => s.premioKey === targetPremioKey)
-      targetSegment = segmentIndex !== -1 ? segmentIndex : 0 // Default to first "Sigue Intentando"
+    if (prizeType) {
+      // Prize milestone - land on a random gift box segment
+      const giftBoxSegments = WHEEL_SEGMENTS
+        .map((s, i) => ({ ...s, index: i }))
+        .filter(s => s.isGiftBox)
+      targetSegment = giftBoxSegments[Math.floor(Math.random() * giftBoxSegments.length)].index
     } else {
-      // Default: "Sigue Intentando" - pick random "sin_premio" segment
+      // No prize - land on a "SIGUE INTENTANDO" segment
       const noWinSegments = WHEEL_SEGMENTS
         .map((s, i) => ({ ...s, index: i }))
-        .filter(s => s.tipo === 'sin_premio')
+        .filter(s => !s.isGiftBox)
       targetSegment = noWinSegments[Math.floor(Math.random() * noWinSegments.length)].index
     }
 
-    // Get the corresponding premio from the premios array
-    const segmentInfo = WHEEL_SEGMENTS[targetSegment]
+    // Create the premio object
     let premio: Premio
     
-    if (segmentInfo.tipo === 'premio') {
-      // Find matching premio from database
-      const prizeNames: Record<string, string[]> = {
-        'boleto': ['1 Boleto', 'Boleto BMW', 'BMW'],
-        'dinero': ['RD$5,000', '5000', 'Dinero'],
-        'especial': ['Premio Especial', 'Especial'],
-        'iphone': ['iPhone'],
-        'motor': ['Motor', 'Motocicleta'],
-        'tech': ['Patineta', 'PS5', 'Smart TV', 'TV'],
-      }
-      
-      const searchTerms = prizeNames[segmentInfo.premioKey || ''] || []
+    if (prizeType) {
+      // Find matching premio from database or create one
       premio = premios.find(p => 
         p.tipo === 'premio' && 
-        searchTerms.some(term => p.nombre.toLowerCase().includes(term.toLowerCase()))
-      ) || premios.find(p => p.tipo === 'premio') || {
-        id: 'prize-' + targetSegment,
-        nombre: segmentInfo.label.replace('\n', ' '),
+        p.nombre.toLowerCase().includes(prizeType!.toLowerCase())
+      ) || {
+        id: 'prize-' + prizeType,
+        nombre: prizeName,
         tipo: 'premio' as const,
         probabilidad: 1
       }
+      // Override the name with the actual prize
+      premio = { ...premio, nombre: prizeName }
     } else {
       // "Sigue Intentando"
       premio = premios.find(p => p.tipo === 'sin_premio') || {
@@ -368,7 +413,7 @@ export function RuletaWheel({
       }
     }
 
-    return { premio, targetSegment }
+    return { premio, targetSegment, actualPrize: prizeType ? prizeName : null }
   }, [premios, globalSpinCount])
 
   // Animate the wheel spin with easing
@@ -425,8 +470,14 @@ export function RuletaWheel({
           setTimeout(() => setShowParticles(false), 3000)
         }
         
-        // Update global spin count
+        // Update global spin count (local state and API)
         setGlobalSpinCount(prev => prev + 1)
+        
+        // Persist to database
+        fetch('/api/ruleta/spin-count', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }).catch(console.error)
         
         // Notify parent
         onSpinComplete(premio)
