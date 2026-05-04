@@ -400,9 +400,10 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Número de Boleto</TableHead>
                       <TableHead>Comprador</TableHead>
-                      <TableHead>Boletos</TableHead>
                       <TableHead>Telefono</TableHead>
+                      <TableHead>Boletos</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
                       <TableHead>Estado</TableHead>
@@ -413,35 +414,31 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                   <TableBody>
                     {compras.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        <TableCell colSpan={9} className="text-center text-muted-foreground">
                           No hay compras para este sorteo
                         </TableCell>
                       </TableRow>
                     ) : (
                       compras.map((compra) => (
                         <TableRow key={compra.id}>
-                          <TableCell className="font-medium">
-                            {compra.nombre || compra.player?.nombre || 'N/A'}
-                          </TableCell>
                           <TableCell>
                             {compra.numeros_boletos && compra.numeros_boletos.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
-                                {compra.numeros_boletos.slice(0, 5).map((num: string) => (
+                                {compra.numeros_boletos.map((num: string) => (
                                   <Badge key={num} variant="outline" className="text-xs font-mono text-primary border-primary/50">
                                     #{num}
                                   </Badge>
                                 ))}
-                                {compra.numeros_boletos.length > 5 && (
-                                  <Badge variant="outline" className="text-xs text-muted-foreground">
-                                    +{compra.numeros_boletos.length - 5} mas
-                                  </Badge>
-                                )}
                               </div>
                             ) : (
-                              <span className="text-muted-foreground">{compra.cantidad_boletos || 1}</span>
+                              <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
+                          <TableCell className="font-medium">
+                            {compra.nombre || compra.player?.nombre || 'N/A'}
+                          </TableCell>
                           <TableCell>{compra.telefono || compra.player?.phone_number || 'N/A'}</TableCell>
+                          <TableCell>{compra.cantidad_boletos || compra.total_tickets || 1}</TableCell>
                           <TableCell>
                             {formatCurrency(compra.monto, compra.moneda)}
                           </TableCell>
