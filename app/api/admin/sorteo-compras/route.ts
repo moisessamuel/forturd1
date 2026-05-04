@@ -95,6 +95,20 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'id and estado are required' }, { status: 400 })
     }
 
+    // Map estado to ticket status
+    const ticketStatus = estado === 'aprobado' ? 'verified' : estado === 'rechazado' ? 'rejected' : 'pending'
+
+    // Update all tickets in this purchase group
+    const { error: ticketsError } = await supabase
+      .from('tickets')
+      .update({ status: ticketStatus })
+      .eq('purchase_group_id', id)
+
+    if (ticketsError) {
+      console.error('Update tickets status error:', ticketsError)
+      // Don't fail, continue to update purchase group
+    }
+
     // Update purchase_groups status
     const { data, error } = await supabase
       .from('purchase_groups')
