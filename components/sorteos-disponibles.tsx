@@ -241,6 +241,18 @@ export function SorteosDisponibles() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Verify Ticket Button */}
+        <div className="mt-6 text-center">
+          <Link href="/verificar">
+            <Button 
+              variant="outline" 
+              className="h-14 w-full max-w-xl border-2 border-primary/60 bg-primary/5 px-8 text-lg font-bold text-primary transition-all hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_20px_rgba(218,165,32,0.4)]"
+            >
+              Verifica tu boleto aqui y obtiene tu giro gratis
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Sold Out Sorteos */}
