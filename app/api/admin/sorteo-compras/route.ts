@@ -58,6 +58,22 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Get ticket numbers for each purchase group
+    const purchaseIds = result.map(c => c.id)
+    const { data: allTickets } = await supabase
+      .from('tickets')
+      .select('purchase_group_id, numero_boleto')
+      .in('purchase_group_id', purchaseIds)
+
+    // Group tickets by purchase_group_id
+    const ticketsByPurchase: Record<string, string[]> = {}
+    allTickets?.forEach(ticket => {
+      if (!ticketsByPurchase[ticket.purchase_group_id]) {
+        ticketsByPurchase[ticket.purchase_group_id] = []
+      }
+      ticketsByPurchase[ticket.purchase_group_id].push(ticket.numero_boleto)
+    })
+
     // Transform to match the expected format in the admin panel
     const transformed = result.map(compra => ({
       id: compra.id,
@@ -66,6 +82,7 @@ export async function GET(request: NextRequest) {
       email: compra.player?.email || null,
       cantidad_boletos: compra.total_tickets || 1,
       total_tickets: compra.total_tickets || 1,
+      numeros_boletos: ticketsByPurchase[compra.id] || [],
       monto: compra.monto,
       moneda: compra.moneda || 'DOP',
       banco: compra.banco || 'N/A',

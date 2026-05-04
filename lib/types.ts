@@ -94,6 +94,12 @@ export interface PurchaseGroup {
   player?: Player
   qr_code?: QRCode
   tickets?: Ticket[]
+  // Admin panel fields
+  numeros_boletos?: string[]
+  nombre?: string
+  telefono?: string
+  sorteo_slug?: string
+  cantidad_boletos?: number
 }
 
 export interface Ticket {
