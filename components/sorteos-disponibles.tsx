@@ -243,14 +243,23 @@ export function SorteosDisponibles() {
         </Card>
 
         {/* Verify Ticket Button */}
-        <div className="mt-6 text-center">
-          <Link href="/verificar">
-            <Button 
-              variant="outline" 
-              className="h-14 w-full max-w-xl border-2 border-primary/60 bg-primary/5 px-8 text-lg font-bold text-primary transition-all hover:border-primary hover:bg-primary/10 hover:shadow-[0_0_20px_rgba(218,165,32,0.4)]"
-            >
-              Verifica tu boleto aqui y obtiene tu giro gratis
-            </Button>
+        <div className="mt-8">
+          <Link href="/verificar" className="block">
+            <div className="group relative mx-auto overflow-hidden rounded-2xl border-2 border-primary bg-gradient-to-r from-primary/20 via-yellow-500/15 to-primary/20 p-1 shadow-[0_0_30px_rgba(218,165,32,0.4)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_50px_rgba(218,165,32,0.6)]">
+              <div className="rounded-xl bg-background/95 px-6 py-6 text-center backdrop-blur-sm transition-all group-hover:bg-background/90 md:px-10 md:py-8">
+                <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-primary/80">
+                  Ya compraste tu boleto?
+                </p>
+                <p 
+                  className="text-xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.7)] md:text-2xl lg:text-3xl"
+                  style={{ textShadow: '0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.3)' }}
+                >
+                  Verifica tu boleto aqui y obtiene tu giro gratis
+                </p>
+              </div>
+              {/* Animated shimmer effect */}
+              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-transparent via-primary/30 to-transparent opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+            </div>
           </Link>
         </div>
       </div>
