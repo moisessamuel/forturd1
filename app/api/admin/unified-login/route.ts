@@ -16,17 +16,12 @@ export async function POST(request: Request) {
 
     const supabase = await createClient()
 
-    console.log('[v0] Login attempt for username:', username)
-
     // Find admin user (case-insensitive search)
     const { data: admin, error: adminError } = await supabase
       .from('admin_users')
       .select('id, username, password_hash, role')
       .ilike('username', username)
       .single()
-
-    console.log('[v0] Admin found:', admin ? { username: admin.username, role: admin.role } : 'not found')
-    console.log('[v0] Admin error:', adminError)
 
     if (adminError || !admin) {
       return NextResponse.json(
@@ -43,26 +38,20 @@ export async function POST(request: Request) {
       // It's a bcrypt hash, use bcrypt.compare
       try {
         isValid = await bcrypt.compare(password, admin.password_hash)
-        console.log('[v0] bcrypt compare result:', isValid)
-      } catch (bcryptError) {
-        console.log('[v0] bcrypt error:', bcryptError)
+      } catch {
         isValid = false
       }
     } else {
       // It's plain text password (legacy), compare directly
       isValid = admin.password_hash === password
-      console.log('[v0] Plain text compare result:', isValid)
     }
 
     if (!isValid) {
-      console.log('[v0] Password verification failed')
       return NextResponse.json(
         { error: 'Credenciales invalidas' },
         { status: 401 }
       )
     }
-
-    console.log('[v0] Login successful for:', admin.username)
 
     // Create session with role
     try {

@@ -6,9 +6,11 @@ const MAINTENANCE_MODE = true
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Permitir acceso a la página de mantenimiento y archivos internos
+  // Permitir acceso a la página de mantenimiento, admin y archivos internos
   if (
     pathname.startsWith('/mantenimiento') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
     pathname.includes('.') // permite imágenes, favicon, etc.
   ) {
