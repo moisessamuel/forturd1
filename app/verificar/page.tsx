@@ -20,6 +20,7 @@ interface TicketResult {
   moneda: string
   fecha: string
   banco?: string
+  sorteo_slug?: string
 }
 
 export default function VerificarPage() {
@@ -219,6 +220,12 @@ export default function VerificarPage() {
               <h2 className="mb-2 text-center text-xl font-bold">
                 Estado: {getStatusConfig(singleResult.estado).label}
               </h2>
+              
+              {singleResult.sorteo_slug && (
+                <p className="mb-2 text-center text-xl font-bold">
+                  {singleResult.sorteo_slug === 'bmw-x6' ? 'BMW X6' : singleResult.sorteo_slug === 'bmw-x7' ? 'BMW X7' : singleResult.sorteo_slug.toUpperCase()}
+                </p>
+              )}
 
               <div className="mb-4 text-center">
                 <p className="text-sm text-muted-foreground">Número de Boleto</p>
@@ -284,6 +291,12 @@ export default function VerificarPage() {
                           </span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                          {ticket.sorteo_slug && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Sorteo: </span>
+                              <span className="font-bold">{ticket.sorteo_slug === 'bmw-x6' ? 'BMW X6' : ticket.sorteo_slug === 'bmw-x7' ? 'BMW X7' : ticket.sorteo_slug.toUpperCase()}</span>
+                            </div>
+                          )}
                           <div>
                             <span className="text-muted-foreground">Monto: </span>
                             <span className="font-medium">{formatCurrency(ticket.monto, ticket.moneda)}</span>
