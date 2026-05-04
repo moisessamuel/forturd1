@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Gift } from 'lucide-react'
@@ -20,6 +20,15 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
+// The wheel image has 12 segments alternating prize/no-prize
+// Starting from top going clockwise:
+// 1. Sin premio (black) - 0 degrees
+// 2. Premio (gold) - 30 degrees
+// 3. Sin premio (black) - 60 degrees
+// etc.
+const SEGMENTS = 12
+const SEGMENT_ANGLE = 360 / SEGMENTS
+
 export function RuletaWheel({ 
   premios, 
   onSpinComplete, 
@@ -28,7 +37,6 @@ export function RuletaWheel({
   onStartSpin 
 }: RuletaWheelProps) {
   const [rotation, setRotation] = useState(0)
-  const [selectedPrize, setSelectedPrize] = useState<Premio | null>(null)
   const wheelRef = useRef<HTMLDivElement>(null)
 
   // Calculate prize based on weighted probability
@@ -45,6 +53,18 @@ export function RuletaWheel({
     return premios[premios.length - 1]
   }
 
+  // Map prize type to segment on the wheel image
+  // Gold segments (prizes): positions 1, 3, 5, 7, 9, 11 (30, 90, 150, 210, 270, 330 degrees)
+  // Black segments (no prize): positions 0, 2, 4, 6, 8, 10 (0, 60, 120, 180, 240, 300 degrees)
+  const getSegmentAngle = (isPrize: boolean): number => {
+    const prizeAngles = [30, 90, 150, 210, 270, 330]
+    const noPrizeAngles = [0, 60, 120, 180, 240, 300]
+    
+    const angles = isPrize ? prizeAngles : noPrizeAngles
+    const randomIndex = Math.floor(Math.random() * angles.length)
+    return angles[randomIndex]
+  }
+
   const spinWheel = () => {
     if (!canSpin || isSpinning) return
 
@@ -52,16 +72,15 @@ export function RuletaWheel({
     
     // Select prize based on probability
     const prize = selectPrizeByProbability()
-    setSelectedPrize(prize)
-
-    // Calculate rotation to land on selected prize
-    const prizeIndex = premios.findIndex(p => p.id === prize.id)
-    const segmentAngle = 360 / premios.length
-    const prizeAngle = prizeIndex * segmentAngle
+    const isPrize = prize.tipo === 'premio'
     
-    // Add multiple full rotations + offset to land on prize
+    // Get target angle based on prize type
+    const targetAngle = getSegmentAngle(isPrize)
+    
+    // Add multiple full rotations + offset to land on the correct segment
+    // The pointer is at the top (0 degrees), so we need to rotate to bring the target segment to the top
     const spins = 5 + Math.random() * 3 // 5-8 full spins
-    const finalRotation = rotation + (spins * 360) + (360 - prizeAngle) + (segmentAngle / 2)
+    const finalRotation = rotation + (spins * 360) + (360 - targetAngle)
     
     setRotation(finalRotation)
 
@@ -71,124 +90,35 @@ export function RuletaWheel({
     }, 5000)
   }
 
-  // Generate wheel segments
-  const segmentAngle = 360 / premios.length
-
   return (
     <div className="relative flex flex-col items-center">
-      {/* Pointer/Arrow at top */}
-      <div className="absolute -top-2 left-1/2 z-20 -translate-x-1/2">
+      {/* Wheel Container with the actual image */}
+      <div className="relative">
+        {/* Sparkle effects */}
         <div 
-          className="h-0 w-0 border-l-[20px] border-r-[20px] border-t-[35px] border-l-transparent border-r-transparent border-t-primary drop-shadow-lg"
-          style={{ filter: 'drop-shadow(0 0 10px rgba(218,165,32,0.8))' }}
-        />
-      </div>
-
-      {/* Wheel Container */}
-      <div className="relative h-[320px] w-[320px] md:h-[400px] md:w-[400px]">
-        {/* Outer glow ring */}
-        <div 
-          className="absolute inset-0 rounded-full"
+          className="pointer-events-none absolute inset-0 z-10"
           style={{
-            background: 'radial-gradient(circle, rgba(218,165,32,0.3) 0%, transparent 70%)',
-            filter: 'blur(20px)',
+            background: 'radial-gradient(circle at 50% 50%, rgba(218,165,32,0.1) 0%, transparent 60%)',
           }}
         />
 
-        {/* Wheel border with lights effect */}
-        <div 
-          className="absolute inset-0 rounded-full border-8 border-primary"
-          style={{
-            boxShadow: '0 0 30px rgba(218,165,32,0.6), inset 0 0 30px rgba(218,165,32,0.3)',
-          }}
-        />
-
-        {/* Spinning wheel */}
+        {/* Spinning wheel image */}
         <div
           ref={wheelRef}
-          className="absolute inset-2 rounded-full overflow-hidden transition-transform ease-out"
+          className="relative transition-transform ease-out"
           style={{
             transform: `rotate(${rotation}deg)`,
             transitionDuration: isSpinning ? '5s' : '0s',
             transitionTimingFunction: 'cubic-bezier(0.17, 0.67, 0.12, 0.99)',
           }}
         >
-          {/* SVG Wheel segments */}
-          <svg viewBox="0 0 100 100" className="h-full w-full">
-            {premios.map((premio, index) => {
-              const startAngle = index * segmentAngle
-              const endAngle = (index + 1) * segmentAngle
-              const startRad = (startAngle - 90) * (Math.PI / 180)
-              const endRad = (endAngle - 90) * (Math.PI / 180)
-              
-              const x1 = 50 + 50 * Math.cos(startRad)
-              const y1 = 50 + 50 * Math.sin(startRad)
-              const x2 = 50 + 50 * Math.cos(endRad)
-              const y2 = 50 + 50 * Math.sin(endRad)
-              
-              const largeArc = segmentAngle > 180 ? 1 : 0
-              const isWinning = premio.tipo === 'premio'
-              
-              return (
-                <g key={premio.id}>
-                  <path
-                    d={`M 50 50 L ${x1} ${y1} A 50 50 0 ${largeArc} 1 ${x2} ${y2} Z`}
-                    fill={isWinning ? '#DAA520' : '#1a1a1a'}
-                    stroke="#333"
-                    strokeWidth="0.5"
-                  />
-                  {/* Text label */}
-                  <text
-                    x="50"
-                    y="20"
-                    textAnchor="middle"
-                    fontSize="3.5"
-                    fontWeight="bold"
-                    fill={isWinning ? '#000' : '#DAA520'}
-                    transform={`rotate(${startAngle + segmentAngle / 2}, 50, 50)`}
-                  >
-                    {premio.tipo === 'sin_premio' ? 'SIGUE' : ''}
-                  </text>
-                  <text
-                    x="50"
-                    y="24"
-                    textAnchor="middle"
-                    fontSize="3"
-                    fontWeight="bold"
-                    fill={isWinning ? '#000' : '#DAA520'}
-                    transform={`rotate(${startAngle + segmentAngle / 2}, 50, 50)`}
-                  >
-                    {premio.tipo === 'sin_premio' ? 'INTENTANDO' : premio.nombre.substring(0, 10)}
-                  </text>
-                  {/* Gift icon indicator for prizes */}
-                  {isWinning && (
-                    <circle
-                      cx="50"
-                      cy="15"
-                      r="4"
-                      fill="white"
-                      transform={`rotate(${startAngle + segmentAngle / 2}, 50, 50)`}
-                    />
-                  )}
-                </g>
-              )
-            })}
-          </svg>
-        </div>
-
-        {/* Center logo */}
-        <div 
-          className="absolute left-1/2 top-1/2 z-10 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 border-primary bg-background md:h-28 md:w-28"
-          style={{
-            boxShadow: '0 0 20px rgba(218,165,32,0.8)',
-          }}
-        >
           <Image
-            src="/images/forturd-logo-zeus.png"
-            alt="FortuRD"
-            width={100}
-            height={100}
-            className="h-20 w-20 object-contain mix-blend-lighten md:h-24 md:w-24"
+            src="/images/ruleta-forturd.png"
+            alt="Ruleta FortuRD"
+            width={500}
+            height={500}
+            className="h-[320px] w-[320px] object-contain md:h-[450px] md:w-[450px] lg:h-[500px] lg:w-[500px]"
+            priority
           />
         </div>
       </div>
