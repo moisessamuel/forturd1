@@ -153,21 +153,30 @@ export default function RuletaPage() {
 
     setSubmitting(true)
     try {
+      const purchaseData = {
+        nombre: formData.nombre,
+        telefono: formData.telefono,
+        email: formData.email || null,
+        monto: moneda === 'DOP' ? PRECIO_GIRO_DOP : PRECIO_GIRO_USD,
+        moneda,
+        metodo_pago: selectedMethod.nombre,
+        comprobante_url: comprobanteUrl,
+      }
+
       const response = await fetch('/api/ruleta', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          telefono: formData.telefono,
-          email: formData.email,
-          monto: moneda === 'DOP' ? PRECIO_GIRO_DOP : PRECIO_GIRO_USD,
-          moneda,
-          metodo_pago: selectedMethod.nombre,
-          comprobante_url: comprobanteUrl,
-        }),
+        body: JSON.stringify(purchaseData),
       })
 
       const data = await response.json()
+      
+      if (!response.ok) {
+        toast.error(data.error || 'Error al enviar el comprobante')
+        setSubmitting(false)
+        return
+      }
+
       if (data.success) {
         setJugadaId(data.jugada_id)
         setPurchaseComplete(true)
@@ -178,22 +187,27 @@ export default function RuletaPage() {
         })
         // Check payment status periodically
         const checkStatus = async () => {
-          const res = await fetch(`/api/ruleta/check-status?id=${data.jugada_id}`)
-          const statusData = await res.json()
-          if (statusData.estado === 'confirmado') {
-            setCanSpin(true)
-            toast.success('Pago confirmado! Ya puedes girar la ruleta.')
-          } else if (statusData.estado === 'pendiente') {
+          try {
+            const res = await fetch(`/api/ruleta/check-status?id=${data.jugada_id}`)
+            const statusData = await res.json()
+            if (statusData.estado === 'confirmado') {
+              setCanSpin(true)
+              toast.success('Pago confirmado! Ya puedes girar la ruleta.')
+            } else if (statusData.estado === 'pendiente') {
+              setTimeout(checkStatus, 5000)
+            }
+          } catch {
+            // Silently retry
             setTimeout(checkStatus, 5000)
           }
         }
         checkStatus()
       } else {
-        toast.error('Error al enviar el comprobante')
+        toast.error(data.error || 'Error al enviar el comprobante')
       }
     } catch (error) {
       console.error('Purchase error:', error)
-      toast.error('Error de conexion')
+      toast.error('Error de conexion. Intenta de nuevo.')
     }
     setSubmitting(false)
   }
