@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Gift, Sparkles } from 'lucide-react'
 
@@ -20,7 +19,9 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
-const SEGMENTS = 12
+const TOTAL_SEGMENTS = 20
+const PRIZE_SEGMENTS = [0, 3, 6, 10, 13, 17] // 6 prize positions
+const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS
 
 export function RuletaWheel({ 
   premios, 
@@ -29,13 +30,26 @@ export function RuletaWheel({
   isSpinning,
   onStartSpin 
 }: RuletaWheelProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [rotation, setRotation] = useState(0)
   const [showParticles, setShowParticles] = useState(false)
   const [pulseButton, setPulseButton] = useState(true)
-  const [glowIntensity, setGlowIntensity] = useState(0)
-  const wheelRef = useRef<HTMLDivElement>(null)
+  const [idleRotation, setIdleRotation] = useState(0)
   const audioContextRef = useRef<AudioContext | null>(null)
-  const tickSoundRef = useRef<OscillatorNode | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
+  const idleIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Idle auto-rotation every 5 seconds
+  useEffect(() => {
+    if (!isSpinning && !canSpin) {
+      idleIntervalRef.current = setInterval(() => {
+        setIdleRotation(prev => prev + 15)
+      }, 5000)
+    }
+    return () => {
+      if (idleIntervalRef.current) clearInterval(idleIntervalRef.current)
+    }
+  }, [isSpinning, canSpin])
 
   // Pulsing animation for button when can spin
   useEffect(() => {
@@ -47,15 +61,236 @@ export function RuletaWheel({
     }
   }, [canSpin, isSpinning])
 
-  // Glow animation during spin
-  useEffect(() => {
-    if (isSpinning) {
-      const interval = setInterval(() => {
-        setGlowIntensity(prev => (prev + 1) % 100)
-      }, 50)
-      return () => clearInterval(interval)
+  // Draw the wheel on canvas
+  const drawWheel = useCallback((ctx: CanvasRenderingContext2D, size: number, currentRotation: number) => {
+    const centerX = size / 2
+    const centerY = size / 2
+    const radius = size / 2 - 20
+    const innerRadius = radius * 0.28
+
+    ctx.clearRect(0, 0, size, size)
+    ctx.save()
+    ctx.translate(centerX, centerY)
+    ctx.rotate((currentRotation * Math.PI) / 180)
+
+    // Draw outer golden ring with lights
+    const outerRingGradient = ctx.createRadialGradient(0, 0, radius - 10, 0, 0, radius + 10)
+    outerRingGradient.addColorStop(0, '#8B6914')
+    outerRingGradient.addColorStop(0.5, '#DAA520')
+    outerRingGradient.addColorStop(1, '#8B6914')
+    
+    ctx.beginPath()
+    ctx.arc(0, 0, radius + 8, 0, 2 * Math.PI)
+    ctx.strokeStyle = outerRingGradient
+    ctx.lineWidth = 16
+    ctx.stroke()
+
+    // Draw light bulbs around the ring
+    const numLights = 32
+    for (let i = 0; i < numLights; i++) {
+      const angle = (i / numLights) * 2 * Math.PI
+      const x = Math.cos(angle) * (radius + 8)
+      const y = Math.sin(angle) * (radius + 8)
+      
+      ctx.beginPath()
+      ctx.arc(x, y, 5, 0, 2 * Math.PI)
+      ctx.fillStyle = i % 2 === 0 ? '#FFD700' : '#FFF8DC'
+      ctx.fill()
+      
+      // Add glow effect
+      ctx.shadowColor = '#FFD700'
+      ctx.shadowBlur = 8
+      ctx.fill()
+      ctx.shadowBlur = 0
     }
-  }, [isSpinning])
+
+    // Draw segments
+    for (let i = 0; i < TOTAL_SEGMENTS; i++) {
+      const startAngle = (i * SEGMENT_ANGLE - 90) * (Math.PI / 180)
+      const endAngle = ((i + 1) * SEGMENT_ANGLE - 90) * (Math.PI / 180)
+      const isPrize = PRIZE_SEGMENTS.includes(i)
+
+      ctx.beginPath()
+      ctx.moveTo(0, 0)
+      ctx.arc(0, 0, radius - 8, startAngle, endAngle)
+      ctx.closePath()
+
+      // Gold or black segment
+      if (isPrize) {
+        const goldGradient = ctx.createRadialGradient(0, 0, innerRadius, 0, 0, radius)
+        goldGradient.addColorStop(0, '#DAA520')
+        goldGradient.addColorStop(0.5, '#FFD700')
+        goldGradient.addColorStop(1, '#B8860B')
+        ctx.fillStyle = goldGradient
+      } else {
+        const blackGradient = ctx.createRadialGradient(0, 0, innerRadius, 0, 0, radius)
+        blackGradient.addColorStop(0, '#1a1a1a')
+        blackGradient.addColorStop(1, '#000000')
+        ctx.fillStyle = blackGradient
+      }
+      ctx.fill()
+
+      // Segment border
+      ctx.strokeStyle = '#DAA520'
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // Draw content in segment
+      ctx.save()
+      const midAngle = ((i + 0.5) * SEGMENT_ANGLE - 90) * (Math.PI / 180)
+      const textRadius = radius * 0.68
+      
+      ctx.rotate(midAngle)
+      ctx.translate(textRadius, 0)
+      ctx.rotate(Math.PI / 2)
+
+      if (isPrize) {
+        // Draw gift box icon
+        ctx.fillStyle = '#FFFFFF'
+        ctx.strokeStyle = '#DAA520'
+        ctx.lineWidth = 2
+        
+        // Box body
+        ctx.fillRect(-15, -10, 30, 24)
+        ctx.strokeRect(-15, -10, 30, 24)
+        
+        // Ribbon vertical
+        ctx.fillStyle = '#DAA520'
+        ctx.fillRect(-3, -10, 6, 24)
+        
+        // Ribbon horizontal
+        ctx.fillRect(-15, 0, 30, 5)
+        
+        // Bow
+        ctx.beginPath()
+        ctx.ellipse(-8, -14, 6, 4, 0, 0, 2 * Math.PI)
+        ctx.fill()
+        ctx.beginPath()
+        ctx.ellipse(8, -14, 6, 4, 0, 0, 2 * Math.PI)
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(0, -12, 3, 0, 2 * Math.PI)
+        ctx.fill()
+      } else {
+        // Draw "SIGUE INTENTANDO" text
+        ctx.fillStyle = '#DAA520'
+        ctx.font = 'bold 8px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('SIGUE', 0, -4)
+        ctx.fillText('INTENTANDO', 0, 6)
+        
+        // Stars
+        ctx.font = '6px Arial'
+        ctx.fillText('★ ★ ★', 0, 16)
+      }
+
+      ctx.restore()
+    }
+
+    // Draw inner golden ring
+    const innerRingGradient = ctx.createRadialGradient(0, 0, innerRadius - 5, 0, 0, innerRadius + 5)
+    innerRingGradient.addColorStop(0, '#8B6914')
+    innerRingGradient.addColorStop(0.5, '#DAA520')
+    innerRingGradient.addColorStop(1, '#8B6914')
+    
+    ctx.beginPath()
+    ctx.arc(0, 0, innerRadius, 0, 2 * Math.PI)
+    ctx.strokeStyle = innerRingGradient
+    ctx.lineWidth = 8
+    ctx.stroke()
+
+    // Draw center circle (black background)
+    ctx.beginPath()
+    ctx.arc(0, 0, innerRadius - 4, 0, 2 * Math.PI)
+    const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, innerRadius)
+    centerGradient.addColorStop(0, '#1a1a1a')
+    centerGradient.addColorStop(1, '#000000')
+    ctx.fillStyle = centerGradient
+    ctx.fill()
+
+    // Draw FortuRD text in center
+    ctx.rotate((-currentRotation * Math.PI) / 180) // Counter-rotate for text to stay upright
+    
+    ctx.fillStyle = '#DAA520'
+    ctx.font = 'bold 24px Arial'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    
+    // Add glow to text
+    ctx.shadowColor = '#FFD700'
+    ctx.shadowBlur = 10
+    ctx.fillText('FortuRD', 0, 0)
+    ctx.shadowBlur = 0
+
+    ctx.restore()
+
+    // Draw pointer (arrow at top) - outside rotation
+    ctx.save()
+    ctx.translate(centerX, 15)
+    
+    ctx.beginPath()
+    ctx.moveTo(0, 0)
+    ctx.lineTo(-15, -25)
+    ctx.lineTo(15, -25)
+    ctx.closePath()
+    
+    const pointerGradient = ctx.createLinearGradient(0, -25, 0, 0)
+    pointerGradient.addColorStop(0, '#DAA520')
+    pointerGradient.addColorStop(0.5, '#FFD700')
+    pointerGradient.addColorStop(1, '#DAA520')
+    ctx.fillStyle = pointerGradient
+    ctx.fill()
+    
+    ctx.strokeStyle = '#8B6914'
+    ctx.lineWidth = 2
+    ctx.stroke()
+    
+    // Pointer glow
+    ctx.shadowColor = '#FFD700'
+    ctx.shadowBlur = 15
+    ctx.fill()
+    ctx.shadowBlur = 0
+    
+    ctx.restore()
+  }, [])
+
+  // Canvas rendering loop
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const size = canvas.width
+    const totalRotation = rotation + idleRotation
+
+    drawWheel(ctx, size, totalRotation)
+  }, [rotation, idleRotation, drawWheel])
+
+  // Initialize canvas size
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const updateSize = () => {
+      const container = canvas.parentElement
+      if (!container) return
+      
+      const size = Math.min(container.clientWidth, 500)
+      canvas.width = size
+      canvas.height = size
+      
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        drawWheel(ctx, size, rotation + idleRotation)
+      }
+    }
+
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [drawWheel, rotation, idleRotation])
 
   // Initialize audio context
   const initAudio = useCallback(() => {
@@ -78,12 +313,12 @@ export function RuletaWheel({
       oscillator.frequency.value = 800 + Math.random() * 400
       oscillator.type = 'sine'
       
-      gainNode.gain.setValueAtTime(0.1, ctx.currentTime)
+      gainNode.gain.setValueAtTime(0.15, ctx.currentTime)
       gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
       
       oscillator.start(ctx.currentTime)
       oscillator.stop(ctx.currentTime + 0.05)
-    } catch (e) {
+    } catch {
       // Audio not supported
     }
   }, [initAudio])
@@ -105,34 +340,49 @@ export function RuletaWheel({
         oscillator.type = 'sine'
         
         const startTime = ctx.currentTime + i * 0.15
-        gainNode.gain.setValueAtTime(0.2, startTime)
+        gainNode.gain.setValueAtTime(0.25, startTime)
         gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4)
         
         oscillator.start(startTime)
         oscillator.stop(startTime + 0.4)
       })
-    } catch (e) {
+    } catch {
       // Audio not supported
     }
   }, [initAudio])
 
-  // Play spinning sound with tick intervals
-  const playSpinningSound = useCallback(() => {
-    let tickCount = 0
-    const maxTicks = 50
-    
-    const tick = () => {
-      if (tickCount < maxTicks) {
+  // Animated spin with tick sounds
+  const animateSpin = useCallback((targetRotation: number, duration: number, onComplete: () => void) => {
+    const startRotation = rotation + idleRotation
+    const startTime = performance.now()
+    let lastTickAngle = startRotation
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      
+      // Easing function for realistic deceleration
+      const easeOut = 1 - Math.pow(1 - progress, 4)
+      const currentRotation = startRotation + (targetRotation - startRotation) * easeOut
+      
+      // Play tick sound at segment boundaries
+      const segmentsPassed = Math.floor(currentRotation / SEGMENT_ANGLE) - Math.floor(lastTickAngle / SEGMENT_ANGLE)
+      if (segmentsPassed > 0 && progress < 0.95) {
         playTickSound()
-        tickCount++
-        // Slow down ticks as wheel slows
-        const delay = 50 + (tickCount * tickCount * 0.8)
-        setTimeout(tick, Math.min(delay, 500))
+      }
+      lastTickAngle = currentRotation
+      
+      setRotation(currentRotation - idleRotation)
+      
+      if (progress < 1) {
+        animationFrameRef.current = requestAnimationFrame(animate)
+      } else {
+        onComplete()
       }
     }
-    
-    tick()
-  }, [playTickSound])
+
+    animationFrameRef.current = requestAnimationFrame(animate)
+  }, [rotation, idleRotation, playTickSound])
 
   // Calculate prize based on weighted probability
   const selectPrizeByProbability = (): Premio => {
@@ -148,44 +398,47 @@ export function RuletaWheel({
     return premios[premios.length - 1]
   }
 
-  // Map prize type to segment on the wheel image
-  const getSegmentAngle = (isPrize: boolean): number => {
-    const prizeAngles = [30, 90, 150, 210, 270, 330]
-    const noPrizeAngles = [0, 60, 120, 180, 240, 300]
-    
-    const angles = isPrize ? prizeAngles : noPrizeAngles
-    const randomIndex = Math.floor(Math.random() * angles.length)
-    return angles[randomIndex]
+  // Get segment index based on prize type
+  const getTargetSegment = (isPrize: boolean): number => {
+    if (isPrize) {
+      const randomIndex = Math.floor(Math.random() * PRIZE_SEGMENTS.length)
+      return PRIZE_SEGMENTS[randomIndex]
+    } else {
+      // Get non-prize segments
+      const noPrizeSegments = Array.from({ length: TOTAL_SEGMENTS }, (_, i) => i)
+        .filter(i => !PRIZE_SEGMENTS.includes(i))
+      const randomIndex = Math.floor(Math.random() * noPrizeSegments.length)
+      return noPrizeSegments[randomIndex]
+    }
   }
 
   const spinWheel = () => {
     if (!canSpin || isSpinning) return
 
     onStartSpin()
-    playSpinningSound()
     
     // Select prize based on probability
     const prize = selectPrizeByProbability()
     const isPrize = prize.tipo === 'premio'
     
-    // Get target angle based on prize type
-    const targetAngle = getSegmentAngle(isPrize)
+    // Get target segment
+    const targetSegment = getTargetSegment(isPrize)
+    const targetAngle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
     
-    // Add multiple full rotations + offset to land on the correct segment
-    const spins = 6 + Math.random() * 4 // 6-10 full spins
-    const finalRotation = rotation + (spins * 360) + (360 - targetAngle)
+    // Add multiple full rotations
+    const currentTotal = rotation + idleRotation
+    const spins = 8 + Math.floor(Math.random() * 4) // 8-11 full spins
+    const finalRotation = currentTotal + (spins * 360) + (360 - targetAngle)
     
-    setRotation(finalRotation)
-
-    // After animation completes, trigger callback
-    setTimeout(() => {
+    // Animate the spin
+    animateSpin(finalRotation, 6000, () => {
       if (isPrize) {
         setShowParticles(true)
         playWinSound()
         setTimeout(() => setShowParticles(false), 3000)
       }
       onSpinComplete(prize)
-    }, 5500)
+    })
   }
 
   return (
@@ -194,15 +447,15 @@ export function RuletaWheel({
       <div 
         className="pointer-events-none absolute -inset-10 z-0"
         style={{
-          background: `radial-gradient(circle at 50% 50%, rgba(218,165,32,${isSpinning ? 0.3 + (glowIntensity / 200) : 0.15}) 0%, transparent 60%)`,
-          transition: 'all 0.1s',
+          background: `radial-gradient(circle at 50% 50%, rgba(218,165,32,${isSpinning ? 0.4 : 0.2}) 0%, transparent 60%)`,
+          transition: 'all 0.3s',
         }}
       />
 
       {/* Particle effects when winning */}
       {showParticles && (
         <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
-          {[...Array(30)].map((_, i) => (
+          {[...Array(40)].map((_, i) => (
             <div
               key={i}
               className="absolute animate-bounce"
@@ -216,8 +469,9 @@ export function RuletaWheel({
               <Sparkles 
                 className="text-yellow-400" 
                 style={{ 
-                  fontSize: `${12 + Math.random() * 24}px`,
-                  filter: 'drop-shadow(0 0 6px gold)',
+                  width: `${12 + Math.random() * 24}px`,
+                  height: `${12 + Math.random() * 24}px`,
+                  filter: 'drop-shadow(0 0 8px gold)',
                 }} 
               />
             </div>
@@ -228,14 +482,14 @@ export function RuletaWheel({
       {/* Light rays during spin */}
       {isSpinning && (
         <div className="pointer-events-none absolute inset-0 z-10">
-          {[...Array(8)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <div
               key={i}
-              className="absolute left-1/2 top-1/2 h-[300px] w-2 origin-bottom -translate-x-1/2 animate-pulse"
+              className="absolute left-1/2 top-1/2 h-[350px] w-3 origin-bottom animate-pulse"
               style={{
-                transform: `translate(-50%, -100%) rotate(${i * 45}deg)`,
-                background: 'linear-gradient(to top, rgba(218,165,32,0.5), transparent)',
-                animationDelay: `${i * 0.1}s`,
+                transform: `translate(-50%, -100%) rotate(${i * 30}deg)`,
+                background: 'linear-gradient(to top, rgba(218,165,32,0.6), transparent)',
+                animationDelay: `${i * 0.08}s`,
               }}
             />
           ))}
@@ -243,46 +497,22 @@ export function RuletaWheel({
       )}
 
       {/* Wheel Container */}
-      <div className="relative">
-        {/* Outer glow ring */}
-        <div 
-          className={`absolute -inset-4 rounded-full transition-all duration-300 ${isSpinning ? 'animate-pulse' : ''}`}
+      <div 
+        className="relative w-full max-w-[500px]"
+        style={{
+          filter: isSpinning 
+            ? 'drop-shadow(0 0 30px rgba(218,165,32,0.8))' 
+            : 'drop-shadow(0 0 20px rgba(218,165,32,0.5))',
+          transition: 'filter 0.3s',
+        }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="h-auto w-full cursor-pointer"
+          onClick={spinWheel}
           style={{
-            background: `radial-gradient(circle, transparent 45%, rgba(218,165,32,${isSpinning ? 0.6 : 0.3}) 50%, transparent 55%)`,
-            filter: isSpinning ? 'blur(8px)' : 'blur(4px)',
-          }}
-        />
-
-        {/* Spinning wheel image */}
-        <div
-          ref={wheelRef}
-          className={`relative z-20 ${isSpinning ? '' : 'hover:scale-[1.02]'} transition-transform`}
-          style={{
-            transform: `rotate(${rotation}deg)`,
-            transitionDuration: isSpinning ? '5.5s' : '0.3s',
-            transitionTimingFunction: isSpinning 
-              ? 'cubic-bezier(0.15, 0.60, 0.20, 1.00)' 
-              : 'ease-out',
-            filter: isSpinning 
-              ? `drop-shadow(0 0 ${20 + (glowIntensity / 5)}px rgba(218,165,32,0.8))` 
-              : 'drop-shadow(0 0 15px rgba(218,165,32,0.5))',
-          }}
-        >
-          <Image
-            src="/images/ruleta-forturd.png"
-            alt="Ruleta FortuRD"
-            width={500}
-            height={500}
-            className="h-[320px] w-[320px] object-contain md:h-[450px] md:w-[450px] lg:h-[500px] lg:w-[500px]"
-            priority
-          />
-        </div>
-
-        {/* Pointer highlight effect */}
-        <div 
-          className={`absolute left-1/2 top-0 z-30 h-8 w-8 -translate-x-1/2 -translate-y-1/2 ${isSpinning ? 'animate-bounce' : ''}`}
-          style={{
-            filter: 'drop-shadow(0 0 10px gold)',
+            maxWidth: '500px',
+            maxHeight: '500px',
           }}
         />
       </div>
@@ -309,7 +539,7 @@ export function RuletaWheel({
         ) : (
           <span className="flex items-center gap-3">
             <Gift className="h-6 w-6" />
-            {canSpin ? 'GIRAR RULETA' : 'COMPRA PARA GIRAR'}
+            {canSpin ? 'PRESIONA AQUI' : 'COMPRA PARA GIRAR'}
           </span>
         )}
       </Button>
@@ -317,17 +547,17 @@ export function RuletaWheel({
       {/* Decorative sparkles around button when can spin */}
       {canSpin && !isSpinning && (
         <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2">
-          {[...Array(6)].map((_, i) => (
+          {[...Array(8)].map((_, i) => (
             <Sparkles
               key={i}
               className="absolute animate-pulse text-yellow-400"
               style={{
-                left: `${-80 + i * 32}px`,
-                top: `${Math.sin(i) * 10 - 20}px`,
-                animationDelay: `${i * 0.2}s`,
-                opacity: 0.7,
+                left: `${-100 + i * 28}px`,
+                top: `${Math.sin(i) * 12 - 20}px`,
+                animationDelay: `${i * 0.15}s`,
+                opacity: 0.8,
               }}
-              size={16}
+              size={18}
             />
           ))}
         </div>
