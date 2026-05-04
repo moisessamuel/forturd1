@@ -16,16 +16,20 @@ interface TicketEmailData {
   moneda: string
   qrCodeUrl: string
   purchaseDate: string
+  sorteoName?: string // BMW X6, BMW X7, etc.
 }
 
 export async function sendTicketApprovalEmail(data: TicketEmailData) {
-  const { playerName, playerEmail, ticketNumbers, totalAmount, moneda, qrCodeUrl, purchaseDate } = data
+  const { playerName, playerEmail, ticketNumbers, totalAmount, moneda, purchaseDate, sorteoName } = data
 
   const formattedAmount = moneda === 'USD' 
     ? `US$ ${totalAmount.toLocaleString('en-US')}` 
     : `${totalAmount.toLocaleString('es-DO')} DOP`
 
   const ticketList = ticketNumbers.map(num => `<li style="padding: 8px 0; border-bottom: 1px solid #333;">#${num}</li>`).join('')
+  
+  const sorteoDisplay = sorteoName || 'FortuRD'
+  const sorteoSubtitle = sorteoName ? `Sorteo ${sorteoName}` : 'Tu suerte empieza aqui'
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -43,7 +47,7 @@ export async function sendTicketApprovalEmail(data: TicketEmailData) {
           <tr>
             <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); padding: 40px 30px; text-align: center; border-bottom: 2px solid #DAA520;">
               <h1 style="margin: 0; color: #DAA520; font-size: 32px; font-weight: bold; text-shadow: 0 0 20px rgba(218, 165, 32, 0.5);">FortuRD</h1>
-              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Tu suerte empieza aqui</p>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">${sorteoSubtitle}</p>
             </td>
           </tr>
           
@@ -73,6 +77,12 @@ export async function sendTicketApprovalEmail(data: TicketEmailData) {
                 <h3 style="margin: 0 0 20px; color: #DAA520; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px;">Detalles de la Compra</h3>
                 
                 <table width="100%" cellpadding="0" cellspacing="0">
+                  ${sorteoName ? `
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px;">Sorteo:</td>
+                    <td style="padding: 10px 0; color: #DAA520; font-size: 14px; font-weight: bold; text-align: right;">${sorteoName}</td>
+                  </tr>
+                  ` : ''}
                   <tr>
                     <td style="padding: 10px 0; color: #888; font-size: 14px;">Fecha:</td>
                     <td style="padding: 10px 0; color: #fff; font-size: 14px; text-align: right;">${purchaseDate}</td>
@@ -129,13 +139,15 @@ export async function sendTicketApprovalEmail(data: TicketEmailData) {
 
 // Email for pending purchase (when purchase is created)
 export async function sendTicketPendingEmail(data: TicketEmailData) {
-  const { playerName, playerEmail, ticketNumbers, totalAmount, moneda, purchaseDate } = data
+  const { playerName, playerEmail, ticketNumbers, totalAmount, moneda, purchaseDate, sorteoName } = data
 
   const formattedAmount = moneda === 'USD' 
     ? `US$ ${totalAmount.toLocaleString('en-US')}` 
     : `${totalAmount.toLocaleString('es-DO')} DOP`
 
   const ticketList = ticketNumbers.map(num => `<li style="padding: 8px 0; border-bottom: 1px solid #333;">#${num}</li>`).join('')
+  
+  const sorteoSubtitle = sorteoName ? `Sorteo ${sorteoName}` : 'Tu suerte empieza aqui'
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -153,7 +165,7 @@ export async function sendTicketPendingEmail(data: TicketEmailData) {
           <tr>
             <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); padding: 40px 30px; text-align: center; border-bottom: 2px solid #DAA520;">
               <h1 style="margin: 0; color: #DAA520; font-size: 32px; font-weight: bold; text-shadow: 0 0 20px rgba(218, 165, 32, 0.5);">FortuRD</h1>
-              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Tu suerte empieza aqui</p>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">${sorteoSubtitle}</p>
             </td>
           </tr>
           
@@ -184,6 +196,12 @@ export async function sendTicketPendingEmail(data: TicketEmailData) {
                 <h3 style="margin: 0 0 20px; color: #DAA520; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px;">Detalles de la Compra</h3>
                 
                 <table width="100%" cellpadding="0" cellspacing="0">
+                  ${sorteoName ? `
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px;">Sorteo:</td>
+                    <td style="padding: 10px 0; color: #DAA520; font-size: 14px; font-weight: bold; text-align: right;">${sorteoName}</td>
+                  </tr>
+                  ` : ''}
                   <tr>
                     <td style="padding: 10px 0; color: #888; font-size: 14px;">Estado:</td>
                     <td style="padding: 10px 0; color: #eab308; font-size: 14px; font-weight: bold; text-align: right;">Pendiente</td>
@@ -268,16 +286,19 @@ interface AdminNotificationData {
   banco: string
   purchaseDate: string
   referidoCodigo?: string
+  sorteoName?: string
 }
 
 export async function sendAdminPurchaseNotification(data: AdminNotificationData) {
-  const { playerName, playerPhone, playerEmail, ticketNumbers, totalAmount, moneda, banco, purchaseDate, referidoCodigo } = data
+  const { playerName, playerPhone, playerEmail, ticketNumbers, totalAmount, moneda, banco, purchaseDate, referidoCodigo, sorteoName } = data
 
   const formattedAmount = moneda === 'USD' 
     ? `US$ ${totalAmount.toLocaleString('en-US')}` 
     : `${totalAmount.toLocaleString('es-DO')} DOP`
 
   const ticketList = ticketNumbers.map(num => `<li style="padding: 6px 0; border-bottom: 1px solid #333; font-family: monospace;">#${num}</li>`).join('')
+  
+  const sorteoDisplay = sorteoName ? ` - ${sorteoName}` : ''
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -294,7 +315,7 @@ export async function sendAdminPurchaseNotification(data: AdminNotificationData)
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); padding: 30px; text-align: center; border-bottom: 2px solid #DAA520;">
-              <h1 style="margin: 0; color: #DAA520; font-size: 28px; font-weight: bold;">FortuRD - Nueva Compra</h1>
+              <h1 style="margin: 0; color: #DAA520; font-size: 28px; font-weight: bold;">FortuRD - Nueva Compra${sorteoDisplay}</h1>
               <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Notificación de compra pendiente</p>
             </td>
           </tr>
@@ -347,6 +368,12 @@ export async function sendAdminPurchaseNotification(data: AdminNotificationData)
                 <h3 style="margin: 0 0 15px; color: #DAA520; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 10px;">Detalles de la Compra</h3>
                 
                 <table width="100%" cellpadding="0" cellspacing="0">
+                  ${sorteoName ? `
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Sorteo:</td>
+                    <td style="padding: 8px 0; color: #DAA520; font-size: 13px; font-weight: bold; text-align: right;">${sorteoName}</td>
+                  </tr>
+                  ` : ''}
                   <tr>
                     <td style="padding: 8px 0; color: #888; font-size: 13px;">Fecha:</td>
                     <td style="padding: 8px 0; color: #fff; font-size: 13px; text-align: right;">${purchaseDate}</td>
@@ -408,7 +435,7 @@ export async function sendAdminPurchaseNotification(data: AdminNotificationData)
   const mailOptions = {
     from: `"FortuRD Sistema" <${process.env.EMAIL_USER}>`,
     to: ADMIN_EMAIL,
-    subject: `Nueva compra: ${playerName} - ${ticketNumbers.length} boleto(s) - ${formattedAmount}`,
+    subject: `Nueva compra${sorteoDisplay}: ${playerName} - ${ticketNumbers.length} boleto(s) - ${formattedAmount}`,
     html: htmlContent,
   }
 
