@@ -16,44 +16,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'sorteo_slug is required' }, { status: 400 })
     }
 
-    // Query purchase_groups for this sorteo
+    // Query compras table for this sorteo
     let query = supabase
-      .from('purchase_groups')
-      .select('*, player:players(*), tickets(*)')
+      .from('compras')
+      .select('*')
       .eq('sorteo_slug', sorteoSlug)
       .order('created_at', { ascending: false })
 
-    if (estado && estado !== 'todos') {
-      query = query.eq('estado', estado)
+    if (estado && estado !== 'Todos' && estado !== 'todos') {
+      query = query.eq('estado', estado.toLowerCase())
     }
 
-    const { data: groups, error } = await query
+    if (search) {
+      query = query.or(`nombre_comprador.ilike.%${search}%,telefono.ilike.%${search}%,numero_boleto.ilike.%${search}%`)
+    }
+
+    const { data: compras, error } = await query
 
     if (error) {
       console.error('Sorteo compras fetch error:', error)
       return NextResponse.json({ error: 'Error al obtener compras' }, { status: 500 })
     }
 
-    // Transform to include total_tickets count
-    let result = (groups || []).map(group => ({
-      ...group,
-      total_tickets: group.tickets?.length || group.total_tickets || 0,
+    // Transform to match the expected format in the admin panel
+    const result = (compras || []).map(compra => ({
+      id: compra.id,
+      nombre: compra.nombre_comprador,
+      telefono: compra.telefono,
+      email: compra.email,
+      cedula: compra.cedula,
+      numero_boleto: compra.numero_boleto,
+      cantidad_boletos: compra.cantidad_boletos || 1,
+      total_tickets: compra.cantidad_boletos || 1,
+      monto: compra.monto,
+      moneda: compra.moneda || 'DOP',
+      banco: compra.banco,
+      metodo_pago: compra.metodo_pago,
+      comprobante_url: compra.comprobante_url,
+      estado: compra.estado,
+      referido_codigo: compra.referido_codigo,
+      sorteo_slug: compra.sorteo_slug,
+      created_at: compra.created_at,
+      updated_at: compra.updated_at,
     }))
-
-    // Filter by search if provided
-    if (search) {
-      const s = search.toLowerCase()
-      result = result.filter((g) => {
-        const player = g.player as Record<string, string> | null
-        const tickets = g.tickets as Array<Record<string, string>> | null
-        return (
-          player?.nombre?.toLowerCase().includes(s) ||
-          player?.phone_number?.toLowerCase().includes(s) ||
-          player?.cedula?.toLowerCase().includes(s) ||
-          tickets?.some((t) => t.numero_boleto?.toLowerCase().includes(s))
-        )
-      })
-    }
 
     return NextResponse.json(result)
   } catch (error) {
@@ -62,7 +67,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Update estado (approve/reject)
+// Update estado (approve/reject/reset)
 export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -74,28 +79,20 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'id and estado are required' }, { status: 400 })
     }
 
-    // Update purchase group status
+    // Update compra status
     const { data, error } = await supabase
-      .from('purchase_groups')
+      .from('compras')
       .update({ 
         estado,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .select('*, player:players(*), tickets(*)')
+      .select()
       .single()
 
     if (error) {
       console.error('Update estado error:', error)
       return NextResponse.json({ error: 'Error al actualizar estado' }, { status: 500 })
-    }
-
-    // If approved, update all tickets to 'active'
-    if (estado === 'aprobado') {
-      await supabase
-        .from('tickets')
-        .update({ status: 'active' })
-        .eq('purchase_group_id', id)
     }
 
     return NextResponse.json(data)
