@@ -296,6 +296,15 @@ export async function POST(request: NextRequest) {
       minute: '2-digit',
     })
 
+    // Get sorteo name for emails
+    const getSorteoName = (slug: string | undefined) => {
+      if (!slug || slug === 'default') return undefined
+      if (slug === 'bmw-x6') return 'BMW X6'
+      if (slug === 'bmw-x7') return 'BMW X7'
+      return slug.toUpperCase()
+    }
+    const sorteoName = getSorteoName(body.sorteo_slug)
+
     // Send admin notification email (always)
     try {
       await sendAdminPurchaseNotification({
@@ -308,6 +317,7 @@ export async function POST(request: NextRequest) {
         banco: body.banco,
         purchaseDate,
         referidoCodigo: body.referido_codigo?.toUpperCase() || undefined,
+        sorteoName,
       })
     } catch (emailError) {
       console.error('Error sending admin notification email:', emailError)
@@ -325,6 +335,7 @@ export async function POST(request: NextRequest) {
           moneda: body.moneda || 'DOP',
           qrCodeUrl: '',
           purchaseDate,
+          sorteoName,
         })
       } catch (emailError) {
         console.error('Error sending pending email:', emailError)
