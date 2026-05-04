@@ -284,10 +284,16 @@ export function RuletaWheel({
   }, [initAudio])
 
   // Determine prize based on controlled probability (global spin counter)
+  // By default: "Sigue Intentando" 
+  // Every 201 spins -> 1 Boleto BMW (for each vehicle)
+  // Every 753 spins -> RD$5,000
+  // Every 3,504 spins -> Patineta/PS5/Smart TV
+  // Every 7,605 spins -> iPhone
+  // Every 12,506 spins -> Motor
   const determinePrize = useCallback(async (): Promise<{ premio: Premio; targetSegment: number }> => {
     const nextSpinCount = globalSpinCount + 1
     
-    // Check controlled probability milestones
+    // Check controlled probability milestones (check from rarest to most common)
     let targetPremioKey: string | null = null
     
     // Every 12,506 spins -> Motor
@@ -298,7 +304,7 @@ export function RuletaWheel({
     else if (nextSpinCount % 7605 === 0) {
       targetPremioKey = 'iphone'
     }
-    // Every 3,504 spins -> Random tech prize (Patineta, PS5, Smart TV)
+    // Every 3,504 spins -> Patineta/PS5/Smart TV
     else if (nextSpinCount % 3504 === 0) {
       targetPremioKey = 'tech'
     }
@@ -310,6 +316,7 @@ export function RuletaWheel({
     else if (nextSpinCount % 201 === 0) {
       targetPremioKey = 'boleto'
     }
+    // All other spins -> "Sigue Intentando" (default, no prize)
     
     // Find the segment index for the target prize
     let targetSegment: number
