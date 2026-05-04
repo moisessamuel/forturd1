@@ -181,27 +181,10 @@ export default function RuletaPage() {
         setJugadaId(data.jugada_id)
         setPurchaseComplete(true)
         setShowPurchaseModal(false)
-        toast.success('Comprobante enviado correctamente', {
-          description: 'Tu pago esta siendo verificado. Podras girar la ruleta una vez confirmado.',
-          duration: 5000,
+        setCanSpin(true)
+        toast.success('Compra completada! Ya puedes girar la ruleta.', {
+          duration: 3000,
         })
-        // Check payment status periodically
-        const checkStatus = async () => {
-          try {
-            const res = await fetch(`/api/ruleta/check-status?id=${data.jugada_id}`)
-            const statusData = await res.json()
-            if (statusData.estado === 'confirmado') {
-              setCanSpin(true)
-              toast.success('Pago confirmado! Ya puedes girar la ruleta.')
-            } else if (statusData.estado === 'pendiente') {
-              setTimeout(checkStatus, 5000)
-            }
-          } catch {
-            // Silently retry
-            setTimeout(checkStatus, 5000)
-          }
-        }
-        checkStatus()
       } else {
         toast.error(data.error || 'Error al enviar el comprobante')
       }
@@ -286,55 +269,26 @@ export default function RuletaPage() {
           />
         </div>
 
-        {/* BMW Promo Section */}
+        {/* Girar Ruleta Section */}
         {!canSpin && !purchaseComplete && (
-          <Card className="mx-auto mb-6 max-w-lg border-primary/30 bg-gradient-to-r from-primary/10 to-yellow-500/10">
-            <CardContent className="p-4 text-center">
-              <p className="mb-3 text-sm font-semibold text-primary">
-                COMPRA BOLETOS BMW Y OBTIENE UN GIRO GRATIS
-              </p>
-              <div className="flex justify-center gap-3">
-                <a href="/bmw-x6">
-                  <Button
-                    variant="outline"
-                    className="border-primary bg-black/50 text-primary hover:bg-primary hover:text-black"
-                  >
-                    <img 
-                      src="/images/sorteos/bmw-x6.png" 
-                      alt="BMW X6" 
-                      className="mr-2 h-6 w-6 object-contain"
-                    />
-                    BMW X6
-                  </Button>
-                </a>
-                <a href="/bmw-x7">
-                  <Button
-                    variant="outline"
-                    className="border-primary bg-black/50 text-primary hover:bg-primary hover:text-black"
-                  >
-                    <img 
-                      src="/images/sorteos/bmw-x7.png" 
-                      alt="BMW X7" 
-                      className="mr-2 h-6 w-6 object-contain"
-                    />
-                    BMW X7
-                  </Button>
-                </a>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Buy spin button */}
-        {!canSpin && !purchaseComplete && (
-          <div className="flex justify-center">
-            <Button
-              onClick={() => setShowPurchaseModal(true)}
-              className="h-14 w-72 bg-gradient-to-r from-green-600 to-green-500 text-lg font-bold hover:from-green-500 hover:to-green-400"
-            >
-              <Gift className="mr-2 h-5 w-5" />
-              COMPRAR GIRO
-            </Button>
+          <div className="mx-auto mb-6 max-w-lg text-center">
+            <Card className="border-primary/30 bg-gradient-to-r from-primary/10 to-yellow-500/10">
+              <CardContent className="p-6">
+                <p className="mb-4 text-lg font-bold text-primary">
+                  GIRAR RULETA
+                </p>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Compra un giro por RD${PRECIO_GIRO_DOP} o US${PRECIO_GIRO_USD} y participa al instante
+                </p>
+                <Button
+                  onClick={() => setShowPurchaseModal(true)}
+                  className="h-14 w-full bg-gradient-to-r from-primary to-yellow-500 text-lg font-bold text-black hover:from-yellow-500 hover:to-primary"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  COMPRAR Y GIRAR
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         )}
 
