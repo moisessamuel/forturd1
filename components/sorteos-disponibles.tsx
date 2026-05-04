@@ -97,7 +97,7 @@ export function SorteosDisponibles() {
                       src={sorteo.imagen_url || '/images/placeholder-vehicle.jpg'}
                       alt={sorteo.nombre}
                       fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-cover"
                     />
                     <Badge className="absolute left-3 top-3 bg-green-600 text-white">
                       EN CURSO
