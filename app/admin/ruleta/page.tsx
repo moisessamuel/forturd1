@@ -56,7 +56,9 @@ interface RuletaJugada {
   estado: string
   resultado: string | null
   es_gratis: boolean
+  es_giro_gratis: boolean
   origen: string
+  numero_boleto_referencia: string | null
   created_at: string
   confirmado_at: string | null
   jugado_at: string | null
@@ -443,8 +445,8 @@ export default function RuletaAdminPage() {
                   <TableHead>Fecha</TableHead>
                   <TableHead>Jugador</TableHead>
                   <TableHead>Telefono</TableHead>
+                  <TableHead>Boleto Ref.</TableHead>
                   <TableHead>Monto</TableHead>
-                  <TableHead>Metodo</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Resultado</TableHead>
@@ -466,8 +468,15 @@ export default function RuletaAdminPage() {
                     <TableCell className="font-medium">{jugada.nombre}</TableCell>
                     <TableCell>{jugada.telefono}</TableCell>
                     <TableCell>
-                      {jugada.es_gratis ? (
-                        <Badge variant="secondary">GRATIS</Badge>
+                      {jugada.numero_boleto_referencia ? (
+                        <span className="font-mono text-sm font-bold text-primary">#{jugada.numero_boleto_referencia}</span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {jugada.es_gratis || jugada.es_giro_gratis ? (
+                        <Badge variant="secondary" className="bg-green-500/20 text-green-400">GRATIS</Badge>
                       ) : (
                         <span className="font-medium">
                           {jugada.moneda === 'DOP' ? 'RD$' : 'US$'}
@@ -475,10 +484,9 @@ export default function RuletaAdminPage() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>{jugada.metodo_pago}</TableCell>
                     <TableCell>
-                      {jugada.es_gratis ? (
-                        <Badge className="bg-blue-500">{jugada.origen?.replace('compra_', '')}</Badge>
+                      {jugada.es_gratis || jugada.es_giro_gratis ? (
+                        <Badge className="bg-blue-500">Verificador</Badge>
                       ) : (
                         <Badge variant="outline">Compra</Badge>
                       )}

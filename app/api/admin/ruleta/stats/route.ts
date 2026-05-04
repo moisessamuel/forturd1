@@ -5,10 +5,15 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
-    // Get all jugadas
-    const { data: jugadas } = await supabase
+    // Get paid jugadas from ruleta_jugadas
+    const { data: paidJugadas } = await supabase
       .from('ruleta_jugadas')
       .select('monto, moneda, estado, es_gratis, resultado, player_id')
+
+    // Get free jugadas from jugadas_ruleta
+    const { data: freeJugadas } = await supabase
+      .from('jugadas_ruleta')
+      .select('monto, moneda, estado, es_giro_gratis, resultado, telefono')
 
     let ventasDOP = 0
     let ventasUSD = 0
@@ -16,9 +21,11 @@ export async function GET() {
     let confirmados = 0
     let jugados = 0
     let premiosEntregados = 0
-    let girosTotales = jugadas?.length || 0
     let girosGratis = 0
     const uniquePlayers = new Set<string>()
+    
+    // Process paid jugadas
+    const jugadas = paidJugadas || []
 
     for (const j of jugadas || []) {
       if (j.player_id) {
@@ -46,6 +53,28 @@ export async function GET() {
         }
       }
     }
+
+    // Process free jugadas from jugadas_ruleta
+    for (const j of freeJugadas || []) {
+      if (j.telefono) {
+        uniquePlayers.add(j.telefono)
+      }
+
+      girosGratis++
+
+      if (j.estado === 'pendiente') {
+        pendientes++
+      } else if (j.estado === 'confirmado') {
+        confirmados++
+      } else if (j.estado === 'jugado') {
+        jugados++
+        if (j.resultado && j.resultado !== 'Sigue Intentando') {
+          premiosEntregados++
+        }
+      }
+    }
+
+    const girosTotales = (paidJugadas?.length || 0) + (freeJugadas?.length || 0)
 
     return NextResponse.json({
       ventas_dop: ventasDOP,
