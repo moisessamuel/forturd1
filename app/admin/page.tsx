@@ -44,6 +44,9 @@ export default function AdminLoginPage() {
   }, [router])
 
   useEffect(() => {
+    // Only run on client-side where sessionStorage is available
+    if (typeof window === 'undefined') return
+    
     // Check sessionStorage for existing sessions first
     const bmwx6Session = sessionStorage.getItem('bmwx6_admin_session')
     const bmwx7Session = sessionStorage.getItem('bmwx7_admin_session')

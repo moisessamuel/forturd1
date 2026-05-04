@@ -94,10 +94,16 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
       const statsData = await statsRes.json()
       setStats(statsData)
       
-      // Fetch compras for this sorteo
-      const comprasRes = await fetch(`/api/compras?sorteo_slug=${sorteoSlug}&estado=${estadoFilter}&search=${searchTerm}`)
+      // Fetch compras for this sorteo using the dedicated admin endpoint
+      const comprasRes = await fetch(`/api/admin/sorteo-compras?sorteo_slug=${sorteoSlug}&estado=${estadoFilter}&search=${searchTerm}`)
       const comprasData = await comprasRes.json()
-      setCompras(comprasData)
+      
+      if (Array.isArray(comprasData)) {
+        setCompras(comprasData)
+      } else {
+        console.error('Invalid compras data:', comprasData)
+        setCompras([])
+      }
       
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -139,7 +145,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
 
   const handleApprove = async (id: string) => {
     try {
-      const response = await fetch('/api/compras', {
+      const response = await fetch('/api/admin/sorteo-compras', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, estado: 'aprobado' }),
@@ -157,7 +163,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
 
   const handleReject = async (id: string) => {
     try {
-      const response = await fetch('/api/compras', {
+      const response = await fetch('/api/admin/sorteo-compras', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, estado: 'rechazado' }),
@@ -170,6 +176,24 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     } catch (error) {
       console.error(error)
       toast.error('Error al rechazar la compra')
+    }
+  }
+
+  const handleReset = async (id: string) => {
+    try {
+      const response = await fetch('/api/admin/sorteo-compras', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, estado: 'pendiente' }),
+      })
+      
+      if (!response.ok) throw new Error('Error al restablecer')
+      
+      toast.success('Compra restablecida a pendiente')
+      fetchData()
+    } catch (error) {
+      console.error(error)
+      toast.error('Error al restablecer la compra')
     }
   }
 
@@ -390,26 +414,41 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                             )}
                           </TableCell>
                           <TableCell>
-                            {compra.estado === 'pendiente' && (
-                              <div className="flex gap-1">
+                            <div className="flex gap-1">
+                              {compra.estado === 'pendiente' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-green-500 hover:text-green-600"
+                                    onClick={() => handleApprove(compra.id)}
+                                    title="Aprobar"
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-red-500 hover:text-red-600"
+                                    onClick={() => handleReject(compra.id)}
+                                    title="Rechazar"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </>
+                              )}
+                              {(compra.estado === 'rechazado' || compra.estado === 'aprobado') && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="text-green-500 hover:text-green-600"
-                                  onClick={() => handleApprove(compra.id)}
+                                  className="text-yellow-500 hover:text-yellow-600"
+                                  onClick={() => handleReset(compra.id)}
+                                  title="Restablecer a pendiente"
                                 >
-                                  <Check className="h-4 w-4" />
+                                  <RotateCcw className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-red-500 hover:text-red-600"
-                                  onClick={() => handleReject(compra.id)}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))
