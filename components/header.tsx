@@ -7,6 +7,7 @@ import { Home, Phone, Search } from 'lucide-react'
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -19,17 +20,25 @@ export function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4">
+    <header className={`sticky top-0 z-50 border-b border-border/50 backdrop-blur-md transition-all duration-300 ease-in-out ${scrolled ? 'bg-background/95 shadow-lg shadow-black/20' : 'bg-background/80'}`}>
+      <div className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 ease-in-out ${scrolled ? 'h-16' : 'h-20'}`}>
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/images/forturd-logo.png"
+            src="/images/forturd-logo-zeus.png"
             alt="FortuRD"
             width={200}
-            height={70}
-            style={{ width: 'auto', height: '60px' }}
-            className="object-contain"
+            height={80}
+            style={{ width: 'auto', height: scrolled ? '50px' : '70px' }}
+            className="object-contain transition-all duration-300 ease-in-out"
           />
         </Link>
 
