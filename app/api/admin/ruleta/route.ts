@@ -116,24 +116,60 @@ export async function DELETE(request: Request) {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const sourceTable = searchParams.get('source_table')
     const resetType = searchParams.get('reset')
+
+    console.log('[API DELETE] Params:', { id, sourceTable, resetType })
 
     // If id is provided, delete single record
     if (id) {
-      // Try deleting from both tables
-      const { error: error1 } = await supabase
-        .from('ruleta_jugadas')
-        .delete()
-        .eq('id', id)
+      let deleted = false
+      
+      // If source_table is specified, try that table first
+      if (sourceTable === 'jugadas_ruleta') {
+        const { error } = await supabase
+          .from('jugadas_ruleta')
+          .delete()
+          .eq('id', id)
+        
+        if (!error) {
+          deleted = true
+          console.log('[API DELETE] Deleted from jugadas_ruleta')
+        } else {
+          console.error('[API DELETE] Error from jugadas_ruleta:', error)
+        }
+      }
+      
+      if (sourceTable === 'ruleta_jugadas' || !deleted) {
+        const { error } = await supabase
+          .from('ruleta_jugadas')
+          .delete()
+          .eq('id', id)
+        
+        if (!error) {
+          deleted = true
+          console.log('[API DELETE] Deleted from ruleta_jugadas')
+        } else {
+          console.error('[API DELETE] Error from ruleta_jugadas:', error)
+        }
+      }
+      
+      // If still not deleted, try both tables
+      if (!deleted) {
+        const { error: error1 } = await supabase
+          .from('ruleta_jugadas')
+          .delete()
+          .eq('id', id)
 
-      const { error: error2 } = await supabase
-        .from('jugadas_ruleta')
-        .delete()
-        .eq('id', id)
+        const { error: error2 } = await supabase
+          .from('jugadas_ruleta')
+          .delete()
+          .eq('id', id)
 
-      if (error1 && error2) {
-        console.error('Error deleting jugada:', error1, error2)
-        return NextResponse.json({ error: 'Error deleting record' }, { status: 500 })
+        if (error1 && error2) {
+          console.error('[API DELETE] Error deleting from both tables:', error1, error2)
+          return NextResponse.json({ error: 'Error deleting record' }, { status: 500 })
+        }
       }
 
       return NextResponse.json({ success: true, message: 'Record deleted' })
