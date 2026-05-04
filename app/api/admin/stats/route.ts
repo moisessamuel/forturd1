@@ -17,15 +17,17 @@ export async function GET() {
       .select('total_boletos')
       .single()
 
-    // Get purchase groups (new system)
+    // Get purchase groups (new system) - EXCLUDE bmw-x6 and bmw-x7 from general panel
     const { data: purchaseGroups } = await supabase
       .from('purchase_groups')
-      .select('monto, estado, total_tickets, moneda')
+      .select('monto, estado, total_tickets, moneda, sorteo_slug')
+      .or('sorteo_slug.is.null,sorteo_slug.eq.default,sorteo_slug.not.in.(bmw-x6,bmw-x7)')
 
-    // Get old compras (legacy)
+    // Get old compras (legacy) - EXCLUDE bmw-x6 and bmw-x7
     const { data: compras } = await supabase
       .from('compras')
-      .select('monto, estado, cantidad_boletos, moneda')
+      .select('monto, estado, cantidad_boletos, moneda, sorteo_slug')
+      .or('sorteo_slug.is.null,sorteo_slug.eq.default,sorteo_slug.not.in.(bmw-x6,bmw-x7)')
 
     // Get active referidos count
     const { count: agentesActivos } = await supabase

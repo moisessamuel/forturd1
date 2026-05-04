@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     // Get purchase groups for this sorteo
     const { data: groups, error: groupsError } = await supabase
       .from('purchase_groups')
-      .select('id, monto, moneda, estado')
+      .select('id, monto, moneda, estado, player_id')
       .eq('sorteo_slug', slug)
 
     if (groupsError) {
@@ -40,8 +40,12 @@ export async function GET(request: Request) {
     let ventasUSD = 0
     let pagosPendientes = 0
     let boletosVendidos = 0
+    const uniquePlayerIds = new Set<string>()
 
     for (const group of groups || []) {
+      if (group.player_id) {
+        uniquePlayerIds.add(group.player_id)
+      }
       if (group.estado === 'aprobado') {
         if (group.moneda === 'USD') {
           ventasUSD += Number(group.monto)
@@ -89,6 +93,7 @@ export async function GET(request: Request) {
       boletos_vendidos: boletosVendidos,
       boletos_disponibles: totalBoletos - boletosVendidos,
       total_boletos: totalBoletos,
+      usuarios_unicos: uniquePlayerIds.size,
     })
   } catch (error) {
     console.error('Error in sorteo-stats API:', error)

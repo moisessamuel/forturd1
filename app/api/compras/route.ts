@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const estado = searchParams.get('estado')
     const search = searchParams.get('search')
     const sorteoSlug = searchParams.get('sorteo_slug')
+    const excludeBmw = searchParams.get('exclude_bmw')
 
     let query = supabase
       .from('purchase_groups')
@@ -30,6 +31,11 @@ export async function GET(request: NextRequest) {
 
     if (sorteoSlug) {
       query = query.eq('sorteo_slug', sorteoSlug)
+    }
+
+    // Exclude BMW X6 and X7 from general admin panel
+    if (excludeBmw === 'true') {
+      query = query.or('sorteo_slug.is.null,sorteo_slug.eq.default,and(sorteo_slug.neq.bmw-x6,sorteo_slug.neq.bmw-x7)')
     }
 
     const { data: groups, error } = await query

@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       const [statsRes, configRes, comprasRes, referidosRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/config'),
-        fetch(`/api/compras?estado=${estadoFilter}&search=${searchTerm}`),
+        fetch(`/api/compras?estado=${estadoFilter}&search=${searchTerm}&exclude_bmw=true`),
         fetch('/api/referidos'),
       ])
 
