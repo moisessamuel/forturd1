@@ -608,5 +608,6 @@ export default function RuletaAdminPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
+
