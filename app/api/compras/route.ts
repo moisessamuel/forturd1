@@ -257,6 +257,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Error al crear boletos' }, { status: 500 })
     }
 
+    // 6. Create free roulette spin for BMW purchases (1 spin per purchase)
+    if (body.sorteo_slug && (body.sorteo_slug === 'bmw-x6' || body.sorteo_slug === 'bmw-x7')) {
+      try {
+        await supabase
+          .from('ruleta_jugadas')
+          .insert({
+            player_id: player.id,
+            nombre: body.nombre,
+            telefono: body.telefono,
+            email: body.email || null,
+            monto: 0,
+            moneda: 'DOP',
+            metodo_pago: 'gratis',
+            estado: 'confirmado',
+            es_gratis: true,
+            origen: `compra_${body.sorteo_slug}`,
+          })
+      } catch (spinError) {
+        console.error('Error creating free spin:', spinError)
+        // Don't fail the purchase if spin creation fails
+      }
+    }
+
     // Return the full purchase group with tickets and QR
     const { data: fullPG } = await supabase
       .from('purchase_groups')

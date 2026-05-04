@@ -147,6 +147,39 @@ export function SorteosDisponibles() {
         </>
       )}
 
+      {/* Roulette Promo */}
+      <div className="mt-12">
+        <Card className="overflow-hidden border-primary/30 bg-gradient-to-r from-primary/10 to-yellow-500/10">
+          <CardContent className="flex flex-col items-center gap-6 p-8 md:flex-row">
+            <div className="flex-shrink-0">
+              <Image
+                src="/images/ruleta-forturd.png"
+                alt="Ruleta FortuRD"
+                width={200}
+                height={200}
+                className="h-40 w-40 object-contain md:h-48 md:w-48"
+              />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="mb-2 text-2xl font-bold text-primary" style={{ textShadow: '0 0 10px rgba(218,165,32,0.5)' }}>
+                RULETA DE LA FORTUNA
+              </h3>
+              <p className="mb-4 text-muted-foreground">
+                Gira la ruleta y gana increibles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho mas!
+              </p>
+              <p className="mb-4 text-sm text-primary">
+                Al comprar boletos BMW recibes un giro GRATIS!
+              </p>
+              <Link href="/ruleta">
+                <Button className="bg-gradient-to-r from-primary to-yellow-500 font-bold text-black hover:from-yellow-500 hover:to-primary">
+                  GIRAR AHORA
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Sold Out Sorteos */}
       {soldOutSorteos.length > 0 && (
         <div className="mt-12">
