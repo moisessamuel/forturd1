@@ -737,7 +737,7 @@ function RuletaPageContent() {
                     )}
 
                     <p className="text-center text-sm font-bold text-primary">
-                      Monto a pagar: {moneda === 'DOP' ? `RD$${PRECIO_GIRO_DOP}` : `US$${PRECIO_GIRO_USD}`}
+                      Monto a pagar: {moneda === 'DOP' ? `RD$${totalPriceDOP.toLocaleString()}` : `US$${totalPriceUSD}`}
                     </p>
                   </CardContent>
                 </Card>
