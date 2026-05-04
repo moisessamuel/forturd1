@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
         moneda: string
         fecha: string
         banco: string
+        sorteo_slug: string
         source: string
       }> = []
 
@@ -80,6 +81,7 @@ export async function GET(request: NextRequest) {
               moneda: pg?.moneda || 'DOP',
               fecha: ticket.created_at,
               banco: pg?.banco || '',
+              sorteo_slug: pg?.sorteo_slug || '',
               source: 'new',
             })
           }
@@ -113,6 +115,7 @@ export async function GET(request: NextRequest) {
                 moneda: pg.moneda,
                 fecha: ticket.created_at,
                 banco: pg.banco || '',
+                sorteo_slug: pg.sorteo_slug || '',
                 source: 'new',
               })
             }
@@ -151,6 +154,7 @@ export async function GET(request: NextRequest) {
               moneda: compra.moneda,
               fecha: compra.created_at || compra.fecha,
               banco: compra.banco || '',
+              sorteo_slug: compra.sorteo_slug || '',
               source: 'legacy',
             })
           }
@@ -208,6 +212,7 @@ export async function GET(request: NextRequest) {
         moneda: ticket.purchase_group?.moneda || 'DOP',
         fecha: ticket.created_at,
         banco: ticket.purchase_group?.banco || '',
+        sorteo_slug: ticket.purchase_group?.sorteo_slug || '',
         source: 'new',
       })
     }
@@ -230,6 +235,7 @@ export async function GET(request: NextRequest) {
         moneda: compra.moneda,
         fecha: compra.created_at,
         banco: compra.banco || '',
+        sorteo_slug: compra.sorteo_slug || '',
         source: 'legacy',
       })
     }

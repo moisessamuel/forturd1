@@ -8,27 +8,62 @@ export async function GET(request: Request) {
     const estado = searchParams.get('estado')
     const search = searchParams.get('search')
 
-    let query = supabase
+    // Fetch from ruleta_jugadas (paid spins)
+    let query1 = supabase
       .from('ruleta_jugadas')
       .select('*, premio:ruleta_premios(*)')
       .order('created_at', { ascending: false })
 
     if (estado && estado !== 'todos') {
-      query = query.eq('estado', estado)
+      query1 = query1.eq('estado', estado)
     }
 
     if (search && search.trim()) {
-      query = query.or(`nombre.ilike.%${search}%,telefono.ilike.%${search}%`)
+      query1 = query1.or(`nombre.ilike.%${search}%,telefono.ilike.%${search}%`)
     }
 
-    const { data, error } = await query
+    const { data: paidJugadas, error: error1 } = await query1
 
-    if (error) {
-      console.error('Error fetching jugadas:', error)
-      return NextResponse.json({ error: 'Error fetching data' }, { status: 500 })
+    // Fetch from jugadas_ruleta (free spins from verificador)
+    let query2 = supabase
+      .from('jugadas_ruleta')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (estado && estado !== 'todos') {
+      query2 = query2.eq('estado', estado)
     }
 
-    return NextResponse.json({ jugadas: data })
+    if (search && search.trim()) {
+      query2 = query2.or(`nombre.ilike.%${search}%,telefono.ilike.%${search}%`)
+    }
+
+    const { data: freeJugadas, error: error2 } = await query2
+
+    if (error1) {
+      console.error('Error fetching paid jugadas:', error1)
+    }
+
+    if (error2) {
+      console.error('Error fetching free jugadas:', error2)
+    }
+
+    // Combine and normalize both results
+    const allJugadas = [
+      ...(paidJugadas || []).map(j => ({
+        ...j,
+        es_giro_gratis: false,
+        numero_boleto_referencia: null,
+      })),
+      ...(freeJugadas || []).map(j => ({
+        ...j,
+        es_giro_gratis: j.es_giro_gratis || true,
+        numero_boleto_referencia: j.numero_boleto_referencia,
+        metodo_pago: 'Verificador',
+      })),
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    return NextResponse.json({ jugadas: allJugadas })
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

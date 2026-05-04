@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Header } from '@/components/header'
-import { Search, Shield, CheckCircle, Clock, XCircle, Ticket, Phone } from 'lucide-react'
+import { Search, Shield, CheckCircle, Clock, XCircle, Ticket, Phone, Gift } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -20,15 +21,28 @@ interface TicketResult {
   moneda: string
   fecha: string
   banco?: string
+  sorteo_slug?: string
 }
 
 export default function VerificarPage() {
+  const router = useRouter()
   const [searchMode, setSearchMode] = useState<SearchMode>('boleto')
   const [searchValue, setSearchValue] = useState('')
   const [singleResult, setSingleResult] = useState<TicketResult | null>(null)
   const [multiResults, setMultiResults] = useState<TicketResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+
+  const handleFreeSpinClick = (ticket: TicketResult) => {
+    // Store ticket info in sessionStorage for the free spin
+    sessionStorage.setItem('freeSpin', JSON.stringify({
+      numero_boleto: ticket.numero_boleto,
+      nombre: ticket.nombre,
+      telefono: ticket.telefono || '',
+      used: false
+    }))
+    router.push('/ruleta?freeSpin=true')
+  }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -219,6 +233,12 @@ export default function VerificarPage() {
               <h2 className="mb-2 text-center text-xl font-bold">
                 Estado: {getStatusConfig(singleResult.estado).label}
               </h2>
+              
+              {singleResult.sorteo_slug && (
+                <p className="mb-2 text-center text-xl font-bold">
+                  {singleResult.sorteo_slug === 'bmw-x6' ? 'BMW X6' : singleResult.sorteo_slug === 'bmw-x7' ? 'BMW X7' : singleResult.sorteo_slug.toUpperCase()}
+                </p>
+              )}
 
               <div className="mb-4 text-center">
                 <p className="text-sm text-muted-foreground">Número de Boleto</p>
@@ -250,6 +270,20 @@ export default function VerificarPage() {
                   <span className="text-muted-foreground">Fecha de compra:</span>
                   <span className="text-sm font-medium">{formatDate(singleResult.fecha)}</span>
                 </div>
+              </div>
+
+              {/* Free Spin Button */}
+              <div className="mt-4">
+                <Button
+                  onClick={() => handleFreeSpinClick(singleResult)}
+                  className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  GIRADA GRATIS
+                </Button>
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  Gira la ruleta gratis. Los giros comprados seran atribuidos a este boleto.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -284,6 +318,12 @@ export default function VerificarPage() {
                           </span>
                         </div>
                         <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                          {ticket.sorteo_slug && (
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Sorteo: </span>
+                              <span className="font-bold">{ticket.sorteo_slug === 'bmw-x6' ? 'BMW X6' : ticket.sorteo_slug === 'bmw-x7' ? 'BMW X7' : ticket.sorteo_slug.toUpperCase()}</span>
+                            </div>
+                          )}
                           <div>
                             <span className="text-muted-foreground">Monto: </span>
                             <span className="font-medium">{formatCurrency(ticket.monto, ticket.moneda)}</span>
@@ -297,6 +337,16 @@ export default function VerificarPage() {
                           <div className="col-span-2">
                             <span className="text-muted-foreground">Fecha: </span>
                             <span className="font-medium">{formatDate(ticket.fecha)}</span>
+                          </div>
+                          <div className="col-span-2 mt-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleFreeSpinClick(ticket)}
+                              className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
+                            >
+                              <Gift className="mr-2 h-4 w-4" />
+                              GIRADA GRATIS
+                            </Button>
                           </div>
                         </div>
                       </div>

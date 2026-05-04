@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/header'
 import { RuletaWheel } from '@/components/ruleta-wheel'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,13 @@ import { Badge } from '@/components/ui/badge'
 import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
+
+interface FreeSpinData {
+  numero_boleto: string
+  nombre: string
+  telefono: string
+  used: boolean
+}
 
 interface Premio {
   id: string
@@ -63,8 +71,13 @@ const titulares: Record<string, { nombre: string; cedula: string }> = {
 }
 
 export default function RuletaPage() {
+  const searchParams = useSearchParams()
   const [premios, setPremios] = useState<Premio[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Free spin state
+  const [freeSpinData, setFreeSpinData] = useState<FreeSpinData | null>(null)
+  const [hasFreeSpinUsed, setHasFreeSpinUsed] = useState(false)
   
   // Purchase flow state
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
@@ -123,6 +136,34 @@ export default function RuletaPage() {
       })
       .catch(console.error)
   }, [])
+
+  // Check for free spin from verificador
+  useEffect(() => {
+    const isFreeSpin = searchParams.get('freeSpin') === 'true'
+    if (isFreeSpin && typeof window !== 'undefined') {
+      const storedData = sessionStorage.getItem('freeSpin')
+      if (storedData) {
+        try {
+          const data: FreeSpinData = JSON.parse(storedData)
+          if (!data.used) {
+            setFreeSpinData(data)
+            setCanSpin(true)
+            // Pre-fill form data with ticket info
+            setFormData({
+              nombre: data.nombre,
+              telefono: data.telefono,
+              email: '',
+            })
+            toast.success(`Bienvenido ${data.nombre}! Tienes 1 giro gratis.`, { duration: 4000 })
+          } else {
+            setHasFreeSpinUsed(true)
+          }
+        } catch {
+          console.error('Error parsing free spin data')
+        }
+      }
+    }
+  }, [searchParams])
 
   const handleFileUpload = async (file: File) => {
     setUploading(true)
@@ -217,6 +258,31 @@ export default function RuletaPage() {
         }),
       })
     }
+
+    // If this was a free spin, record it and mark as used
+    if (freeSpinData && !freeSpinData.used) {
+      try {
+        await fetch('/api/ruleta/free-spin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            numero_boleto: freeSpinData.numero_boleto,
+            nombre: freeSpinData.nombre,
+            telefono: freeSpinData.telefono,
+            premio_id: premio.id,
+            resultado: premio.nombre,
+          }),
+        })
+
+        // Mark free spin as used
+        const updatedData = { ...freeSpinData, used: true }
+        sessionStorage.setItem('freeSpin', JSON.stringify(updatedData))
+        setFreeSpinData(updatedData)
+        setHasFreeSpinUsed(true)
+      } catch (error) {
+        console.error('Error recording free spin:', error)
+      }
+    }
   }
 
 
@@ -269,16 +335,38 @@ export default function RuletaPage() {
           />
         </div>
 
+        {/* Free Spin Banner */}
+        {freeSpinData && !freeSpinData.used && canSpin && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-green-500/50 bg-gradient-to-r from-green-500/20 to-primary/20">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-green-400">
+                  GIRO GRATIS DISPONIBLE
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Boleto #{freeSpinData.numero_boleto} - {freeSpinData.nombre}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Presiona el boton central de la ruleta para girar
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Girar Ruleta Section */}
         {!canSpin && !purchaseComplete && (
           <div className="mx-auto mb-6 max-w-lg text-center">
             <Card className="border-primary/30 bg-gradient-to-r from-primary/10 to-yellow-500/10">
               <CardContent className="p-6">
                 <p className="mb-4 text-lg font-bold text-primary">
-                  GIRAR RULETA
+                  {hasFreeSpinUsed ? 'COMPRAR MAS GIROS' : 'GIRAR RULETA'}
                 </p>
                 <p className="mb-4 text-sm text-muted-foreground">
-                  Compra un giro por RD${PRECIO_GIRO_DOP} o US${PRECIO_GIRO_USD} y participa al instante
+                  {hasFreeSpinUsed 
+                    ? `Compra mas giros por RD$${PRECIO_GIRO_DOP} o US$${PRECIO_GIRO_USD}. Todos los giros se atribuyen al boleto #${freeSpinData?.numero_boleto || ''}`
+                    : `Compra un giro por RD$${PRECIO_GIRO_DOP} o US$${PRECIO_GIRO_USD} y participa al instante`
+                  }
                 </p>
                 <Button
                   onClick={() => setShowPurchaseModal(true)}
