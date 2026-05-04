@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { Gift, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
+import Image from 'next/image'
 
 interface Premio {
   id: string
@@ -19,8 +20,8 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
-const TOTAL_SEGMENTS = 20
-const PRIZE_SEGMENTS = [0, 3, 6, 10, 13, 17] // 6 prize positions
+// 12 segments like the image: 6 prizes (gold with gift), 6 "sigue intentando" (black)
+const TOTAL_SEGMENTS = 12
 const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS
 
 export function RuletaWheel({ 
@@ -30,7 +31,6 @@ export function RuletaWheel({
   isSpinning,
   onStartSpin 
 }: RuletaWheelProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [rotation, setRotation] = useState(0)
   const [showParticles, setShowParticles] = useState(false)
   const [pulseButton, setPulseButton] = useState(true)
@@ -47,237 +47,7 @@ export function RuletaWheel({
     }
   }, [canSpin, isSpinning])
 
-  // Draw the wheel on canvas
-  const drawWheel = useCallback((ctx: CanvasRenderingContext2D, size: number, currentRotation: number) => {
-    const centerX = size / 2
-    const centerY = size / 2
-    const radius = size / 2 - 20
-    const innerRadius = radius * 0.28
-
-    ctx.clearRect(0, 0, size, size)
-    ctx.save()
-    ctx.translate(centerX, centerY)
-    ctx.rotate((currentRotation * Math.PI) / 180)
-
-    // Draw outer golden ring with lights
-    const outerRingGradient = ctx.createRadialGradient(0, 0, radius - 10, 0, 0, radius + 10)
-    outerRingGradient.addColorStop(0, '#8B6914')
-    outerRingGradient.addColorStop(0.5, '#DAA520')
-    outerRingGradient.addColorStop(1, '#8B6914')
-    
-    ctx.beginPath()
-    ctx.arc(0, 0, radius + 8, 0, 2 * Math.PI)
-    ctx.strokeStyle = outerRingGradient
-    ctx.lineWidth = 16
-    ctx.stroke()
-
-    // Draw light bulbs around the ring
-    const numLights = 32
-    for (let i = 0; i < numLights; i++) {
-      const angle = (i / numLights) * 2 * Math.PI
-      const x = Math.cos(angle) * (radius + 8)
-      const y = Math.sin(angle) * (radius + 8)
-      
-      ctx.beginPath()
-      ctx.arc(x, y, 5, 0, 2 * Math.PI)
-      ctx.fillStyle = i % 2 === 0 ? '#FFD700' : '#FFF8DC'
-      ctx.fill()
-      
-      // Add glow effect
-      ctx.shadowColor = '#FFD700'
-      ctx.shadowBlur = 8
-      ctx.fill()
-      ctx.shadowBlur = 0
-    }
-
-    // Draw segments
-    for (let i = 0; i < TOTAL_SEGMENTS; i++) {
-      const startAngle = (i * SEGMENT_ANGLE - 90) * (Math.PI / 180)
-      const endAngle = ((i + 1) * SEGMENT_ANGLE - 90) * (Math.PI / 180)
-      const isPrize = PRIZE_SEGMENTS.includes(i)
-
-      ctx.beginPath()
-      ctx.moveTo(0, 0)
-      ctx.arc(0, 0, radius - 8, startAngle, endAngle)
-      ctx.closePath()
-
-      // Gold or black segment
-      if (isPrize) {
-        const goldGradient = ctx.createRadialGradient(0, 0, innerRadius, 0, 0, radius)
-        goldGradient.addColorStop(0, '#DAA520')
-        goldGradient.addColorStop(0.5, '#FFD700')
-        goldGradient.addColorStop(1, '#B8860B')
-        ctx.fillStyle = goldGradient
-      } else {
-        const blackGradient = ctx.createRadialGradient(0, 0, innerRadius, 0, 0, radius)
-        blackGradient.addColorStop(0, '#1a1a1a')
-        blackGradient.addColorStop(1, '#000000')
-        ctx.fillStyle = blackGradient
-      }
-      ctx.fill()
-
-      // Segment border
-      ctx.strokeStyle = '#DAA520'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      // Draw content in segment
-      ctx.save()
-      const midAngle = ((i + 0.5) * SEGMENT_ANGLE - 90) * (Math.PI / 180)
-      const textRadius = radius * 0.68
-      
-      ctx.rotate(midAngle)
-      ctx.translate(textRadius, 0)
-      ctx.rotate(Math.PI / 2)
-
-      if (isPrize) {
-        // Draw gift box icon
-        ctx.fillStyle = '#FFFFFF'
-        ctx.strokeStyle = '#DAA520'
-        ctx.lineWidth = 2
-        
-        // Box body
-        ctx.fillRect(-15, -10, 30, 24)
-        ctx.strokeRect(-15, -10, 30, 24)
-        
-        // Ribbon vertical
-        ctx.fillStyle = '#DAA520'
-        ctx.fillRect(-3, -10, 6, 24)
-        
-        // Ribbon horizontal
-        ctx.fillRect(-15, 0, 30, 5)
-        
-        // Bow
-        ctx.beginPath()
-        ctx.ellipse(-8, -14, 6, 4, 0, 0, 2 * Math.PI)
-        ctx.fill()
-        ctx.beginPath()
-        ctx.ellipse(8, -14, 6, 4, 0, 0, 2 * Math.PI)
-        ctx.fill()
-        ctx.beginPath()
-        ctx.arc(0, -12, 3, 0, 2 * Math.PI)
-        ctx.fill()
-      } else {
-        // Draw "SIGUE INTENTANDO" text
-        ctx.fillStyle = '#DAA520'
-        ctx.font = 'bold 8px Arial'
-        ctx.textAlign = 'center'
-        ctx.fillText('SIGUE', 0, -4)
-        ctx.fillText('INTENTANDO', 0, 6)
-        
-        // Stars
-        ctx.font = '6px Arial'
-        ctx.fillText('★ ★ ★', 0, 16)
-      }
-
-      ctx.restore()
-    }
-
-    // Draw inner golden ring
-    const innerRingGradient = ctx.createRadialGradient(0, 0, innerRadius - 5, 0, 0, innerRadius + 5)
-    innerRingGradient.addColorStop(0, '#8B6914')
-    innerRingGradient.addColorStop(0.5, '#DAA520')
-    innerRingGradient.addColorStop(1, '#8B6914')
-    
-    ctx.beginPath()
-    ctx.arc(0, 0, innerRadius, 0, 2 * Math.PI)
-    ctx.strokeStyle = innerRingGradient
-    ctx.lineWidth = 8
-    ctx.stroke()
-
-    // Draw center circle (black background)
-    ctx.beginPath()
-    ctx.arc(0, 0, innerRadius - 4, 0, 2 * Math.PI)
-    const centerGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, innerRadius)
-    centerGradient.addColorStop(0, '#1a1a1a')
-    centerGradient.addColorStop(1, '#000000')
-    ctx.fillStyle = centerGradient
-    ctx.fill()
-
-    // Draw FortuRD text in center
-    ctx.rotate((-currentRotation * Math.PI) / 180) // Counter-rotate for text to stay upright
-    
-    ctx.fillStyle = '#DAA520'
-    ctx.font = 'bold 24px Arial'
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    
-    // Add glow to text
-    ctx.shadowColor = '#FFD700'
-    ctx.shadowBlur = 10
-    ctx.fillText('FortuRD', 0, 0)
-    ctx.shadowBlur = 0
-
-    ctx.restore()
-
-    // Draw pointer (arrow at top) - outside rotation
-    ctx.save()
-    ctx.translate(centerX, 15)
-    
-    ctx.beginPath()
-    ctx.moveTo(0, 0)
-    ctx.lineTo(-15, -25)
-    ctx.lineTo(15, -25)
-    ctx.closePath()
-    
-    const pointerGradient = ctx.createLinearGradient(0, -25, 0, 0)
-    pointerGradient.addColorStop(0, '#DAA520')
-    pointerGradient.addColorStop(0.5, '#FFD700')
-    pointerGradient.addColorStop(1, '#DAA520')
-    ctx.fillStyle = pointerGradient
-    ctx.fill()
-    
-    ctx.strokeStyle = '#8B6914'
-    ctx.lineWidth = 2
-    ctx.stroke()
-    
-    // Pointer glow
-    ctx.shadowColor = '#FFD700'
-    ctx.shadowBlur = 15
-    ctx.fill()
-    ctx.shadowBlur = 0
-    
-    ctx.restore()
-  }, [])
-
-  // Canvas rendering loop
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    const size = canvas.width
-
-    drawWheel(ctx, size, rotation)
-  }, [rotation, drawWheel])
-
-  // Initialize canvas size
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const updateSize = () => {
-      const container = canvas.parentElement
-      if (!container) return
-      
-      const size = Math.min(container.clientWidth, 500)
-      canvas.width = size
-      canvas.height = size
-      
-      const ctx = canvas.getContext('2d')
-      if (ctx) {
-        drawWheel(ctx, size, rotation)
-      }
-    }
-
-    updateSize()
-    window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
-  }, [drawWheel, rotation])
-
-  // Initialize audio context
+  // Initialize Audio Context
   const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
@@ -295,16 +65,15 @@ export function RuletaWheel({
       oscillator.connect(gainNode)
       gainNode.connect(ctx.destination)
       
-      oscillator.frequency.value = 800 + Math.random() * 400
+      oscillator.frequency.value = 800
       oscillator.type = 'sine'
-      
-      gainNode.gain.setValueAtTime(0.15, ctx.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05)
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime)
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05)
       
       oscillator.start(ctx.currentTime)
       oscillator.stop(ctx.currentTime + 0.05)
-    } catch {
-      // Audio not supported
+    } catch (e) {
+      console.log('Audio not available')
     }
   }, [initAudio])
 
@@ -312,7 +81,7 @@ export function RuletaWheel({
   const playWinSound = useCallback(() => {
     try {
       const ctx = initAudio()
-      const notes = [523, 659, 784, 1047] // C5, E5, G5, C6
+      const notes = [523.25, 659.25, 783.99, 1046.50]
       
       notes.forEach((freq, i) => {
         const oscillator = ctx.createOscillator()
@@ -325,14 +94,14 @@ export function RuletaWheel({
         oscillator.type = 'sine'
         
         const startTime = ctx.currentTime + i * 0.15
-        gainNode.gain.setValueAtTime(0.25, startTime)
-        gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4)
+        gainNode.gain.setValueAtTime(0.2, startTime)
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3)
         
         oscillator.start(startTime)
-        oscillator.stop(startTime + 0.4)
+        oscillator.stop(startTime + 0.3)
       })
-    } catch {
-      // Audio not supported
+    } catch (e) {
+      console.log('Audio not available')
     }
   }, [initAudio])
 
@@ -369,8 +138,8 @@ export function RuletaWheel({
     animationFrameRef.current = requestAnimationFrame(animate)
   }, [rotation, playTickSound])
 
-  // Calculate prize based on weighted probability
-  const selectPrizeByProbability = (): Premio => {
+  // Determine prize based on weighted probability
+  const determinePrize = useCallback((): Premio => {
     const totalProbability = premios.reduce((sum, p) => sum + p.probabilidad, 0)
     let random = Math.random() * totalProbability
     
@@ -380,173 +149,187 @@ export function RuletaWheel({
         return premio
       }
     }
-    return premios[premios.length - 1]
-  }
+    
+    return premios.find(p => p.tipo === 'sin_premio') || premios[premios.length - 1]
+  }, [premios])
 
-  // Get segment index based on prize type
-  const getTargetSegment = (isPrize: boolean): number => {
-    if (isPrize) {
-      const randomIndex = Math.floor(Math.random() * PRIZE_SEGMENTS.length)
-      return PRIZE_SEGMENTS[randomIndex]
-    } else {
-      // Get non-prize segments
-      const noPrizeSegments = Array.from({ length: TOTAL_SEGMENTS }, (_, i) => i)
-        .filter(i => !PRIZE_SEGMENTS.includes(i))
-      const randomIndex = Math.floor(Math.random() * noPrizeSegments.length)
-      return noPrizeSegments[randomIndex]
-    }
-  }
-
-  const spinWheel = () => {
+  // Handle spin
+  const spinWheel = useCallback(() => {
     if (!canSpin || isSpinning) return
 
     onStartSpin()
+    initAudio()
+
+    const prize = determinePrize()
+    const isWin = prize.tipo === 'premio'
     
-    // Select prize based on probability
-    const prize = selectPrizeByProbability()
-    const isPrize = prize.tipo === 'premio'
-    
-    // Get target segment
-    const targetSegment = getTargetSegment(isPrize)
-    const targetAngle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
-    
-    // Add multiple full rotations
+    // Calculate target segment (alternating: 0,2,4,6,8,10 = black/sin_premio, 1,3,5,7,9,11 = gold/premio)
+    // In the image, gold segments have gifts (prizes), black segments say "sigue intentando"
+    let targetSegment: number
+    if (isWin) {
+      // Prize segments (gold with gifts): 1, 3, 5, 7, 9, 11
+      const prizeSegments = [1, 3, 5, 7, 9, 11]
+      targetSegment = prizeSegments[Math.floor(Math.random() * prizeSegments.length)]
+    } else {
+      // "Sigue intentando" segments (black): 0, 2, 4, 6, 8, 10
+      const noWinSegments = [0, 2, 4, 6, 8, 10]
+      targetSegment = noWinSegments[Math.floor(Math.random() * noWinSegments.length)]
+    }
+
+    // Calculate rotation to land on target segment
+    // The pointer is at the top (12 o'clock position)
     const currentTotal = rotation
-    const spins = 8 + Math.floor(Math.random() * 4) // 8-11 full spins
-    const finalRotation = currentTotal + (spins * 360) + (360 - targetAngle)
+    const fullSpins = 8 + Math.floor(Math.random() * 4) // 8-11 full spins
+    const targetAngle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
+    // We need to rotate so that the target segment ends up at the top (where pointer is)
+    const finalRotation = currentTotal + (fullSpins * 360) + (360 - targetAngle + 90)
     
-    // Animate the spin
-    animateSpin(finalRotation, 6000, () => {
-      if (isPrize) {
-        setShowParticles(true)
+    const duration = 6000 + Math.random() * 2000 // 6-8 seconds
+
+    animateSpin(finalRotation, duration, () => {
+      if (isWin) {
         playWinSound()
+        setShowParticles(true)
         setTimeout(() => setShowParticles(false), 3000)
       }
       onSpinComplete(prize)
     })
-  }
+  }, [canSpin, isSpinning, onStartSpin, determinePrize, rotation, animateSpin, playWinSound, onSpinComplete, initAudio])
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div className="relative flex flex-col items-center">
-      {/* Ambient glow effect */}
+      {/* Glow effect behind wheel */}
       <div 
-        className="pointer-events-none absolute -inset-10 z-0"
+        className="absolute inset-0 rounded-full opacity-60 blur-3xl"
         style={{
-          background: `radial-gradient(circle at 50% 50%, rgba(218,165,32,${isSpinning ? 0.4 : 0.2}) 0%, transparent 60%)`,
-          transition: 'all 0.3s',
+          background: 'radial-gradient(circle, rgba(218,165,32,0.4) 0%, transparent 70%)',
+          transform: 'scale(1.2)',
         }}
       />
 
-      {/* Particle effects when winning */}
-      {showParticles && (
-        <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
-          {[...Array(40)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute animate-bounce"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 0.5}s`,
-                animationDuration: `${0.5 + Math.random() * 1}s`,
-              }}
-            >
-              <Sparkles 
-                className="text-yellow-400" 
-                style={{ 
-                  width: `${12 + Math.random() * 24}px`,
-                  height: `${12 + Math.random() * 24}px`,
-                  filter: 'drop-shadow(0 0 8px gold)',
-                }} 
-              />
-            </div>
-          ))}
+      {/* Main wheel container */}
+      <div className="relative">
+        {/* Fixed pointer at top - outside the rotating wheel */}
+        <div 
+          className="absolute left-1/2 -top-2 z-20 -translate-x-1/2"
+          style={{ filter: 'drop-shadow(0 0 10px rgba(218,165,32,0.8))' }}
+        >
+          <div 
+            className="h-0 w-0"
+            style={{
+              borderLeft: '20px solid transparent',
+              borderRight: '20px solid transparent',
+              borderTop: '35px solid #DAA520',
+            }}
+          />
         </div>
-      )}
 
-      {/* Light rays during spin */}
-      {isSpinning && (
-        <div className="pointer-events-none absolute inset-0 z-10">
-          {[...Array(12)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute left-1/2 top-1/2 h-[350px] w-3 origin-bottom animate-pulse"
-              style={{
-                transform: `translate(-50%, -100%) rotate(${i * 30}deg)`,
-                background: 'linear-gradient(to top, rgba(218,165,32,0.6), transparent)',
-                animationDelay: `${i * 0.08}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Wheel Container */}
-      <div 
-        className="relative w-full max-w-[500px]"
-        style={{
-          filter: isSpinning 
-            ? 'drop-shadow(0 0 30px rgba(218,165,32,0.8))' 
-            : 'drop-shadow(0 0 20px rgba(218,165,32,0.5))',
-          transition: 'filter 0.3s',
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          className="h-auto w-full cursor-pointer"
-          onClick={spinWheel}
+        {/* Rotating wheel image */}
+        <div
+          className="relative transition-none"
           style={{
-            maxWidth: '500px',
-            maxHeight: '500px',
+            transform: `rotate(${rotation}deg)`,
+            transformOrigin: 'center center',
+            width: 'min(400px, 90vw)',
+            height: 'min(400px, 90vw)',
           }}
-        />
+        >
+          <Image
+            src="/images/ruleta-forturd.png"
+            alt="Ruleta FortuRD"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+
+        {/* Sparkle particles on win */}
+        {showParticles && (
+          <div className="pointer-events-none absolute inset-0 z-30">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute animate-ping"
+                style={{
+                  left: `${20 + Math.random() * 60}%`,
+                  top: `${20 + Math.random() * 60}%`,
+                  animationDelay: `${Math.random() * 0.5}s`,
+                  animationDuration: `${0.5 + Math.random() * 0.5}s`,
+                }}
+              >
+                <Sparkles className="h-6 w-6 text-yellow-400" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Light rays during spin */}
+        {isSpinning && (
+          <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden rounded-full">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute left-1/2 top-1/2 h-full w-1 origin-bottom -translate-x-1/2 bg-gradient-to-t from-transparent via-yellow-400/30 to-transparent"
+                style={{
+                  transform: `translateX(-50%) rotate(${i * 45}deg)`,
+                  animation: `pulse 0.5s ease-in-out infinite`,
+                  animationDelay: `${i * 0.1}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Spin button */}
-      <Button
-        onClick={spinWheel}
-        disabled={!canSpin || isSpinning}
-        className={`mt-8 h-16 w-72 bg-gradient-to-r from-primary to-yellow-500 text-xl font-bold text-black transition-all hover:scale-105 hover:from-yellow-500 hover:to-primary disabled:opacity-50 ${
-          canSpin && !isSpinning && pulseButton ? 'scale-105' : 'scale-100'
-        }`}
-        style={{
-          boxShadow: canSpin && !isSpinning 
-            ? `0 0 ${pulseButton ? 40 : 20}px rgba(218,165,32,${pulseButton ? 0.8 : 0.5})` 
-            : 'none',
-          transition: 'all 0.3s ease-in-out',
-        }}
-      >
-        {isSpinning ? (
-          <span className="flex items-center gap-3">
-            <div className="h-6 w-6 animate-spin rounded-full border-3 border-black border-t-transparent" />
-            GIRANDO...
-          </span>
-        ) : (
-          <span className="flex items-center gap-3">
-            <Gift className="h-6 w-6" />
-            {canSpin ? 'PRESIONA AQUI' : 'COMPRA PARA GIRAR'}
-          </span>
-        )}
-      </Button>
-
-      {/* Decorative sparkles around button when can spin */}
-      {canSpin && !isSpinning && (
-        <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2">
-          {[...Array(8)].map((_, i) => (
-            <Sparkles
-              key={i}
-              className="absolute animate-pulse text-yellow-400"
+      <div className="mt-8">
+        {canSpin && !isSpinning ? (
+          <Button
+            onClick={spinWheel}
+            className={`relative h-16 w-64 overflow-hidden bg-gradient-to-r from-yellow-600 via-yellow-500 to-yellow-600 text-xl font-bold text-black transition-all hover:scale-105 hover:from-yellow-500 hover:via-yellow-400 hover:to-yellow-500 ${
+              pulseButton ? 'shadow-[0_0_30px_rgba(218,165,32,0.8)]' : 'shadow-[0_0_15px_rgba(218,165,32,0.5)]'
+            }`}
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <Sparkles className="h-6 w-6" />
+              PRESIONA AQUI
+              <Sparkles className="h-6 w-6" />
+            </span>
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
               style={{
-                left: `${-100 + i * 28}px`,
-                top: `${Math.sin(i) * 12 - 20}px`,
-                animationDelay: `${i * 0.15}s`,
-                opacity: 0.8,
+                animation: 'shimmer 2s infinite',
+                transform: 'translateX(-100%)',
               }}
-              size={18}
             />
-          ))}
-        </div>
-      )}
+          </Button>
+        ) : isSpinning ? (
+          <div className="flex h-16 w-64 items-center justify-center rounded-md bg-primary/20 text-xl font-bold text-primary">
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              GIRANDO...
+            </div>
+          </div>
+        ) : (
+          <div className="h-16 w-64 rounded-md bg-muted/50" />
+        )}
+      </div>
+
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   )
 }
