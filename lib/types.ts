@@ -149,3 +149,20 @@ export interface AdminStats {
   boletos_asignados: number
   boletos_disponibles: number
 }
+
+export interface Sorteo {
+  id: string
+  slug: string
+  nombre: string
+  descripcion: string | null
+  imagen_url: string | null
+  precio_dop: number
+  precio_usd: number
+  total_boletos: number
+  boletos_vendidos: number
+  activo: boolean
+  agotado: boolean
+  fecha_sorteo: string | null
+  created_at: string
+  updated_at: string
+}

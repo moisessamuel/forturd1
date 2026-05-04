@@ -20,7 +20,13 @@ interface FormData {
   comprobanteUrl: string
 }
 
-export function UnifiedPurchaseSection() {
+interface UnifiedPurchaseSectionProps {
+  sorteoSlug?: string
+  precioDop?: number
+  precioUsd?: number
+}
+
+export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: UnifiedPurchaseSectionProps = {}) {
   const copyToClipboard = (text: string, label: string) => {
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
@@ -118,10 +124,15 @@ export function UnifiedPurchaseSection() {
     nombre: 'Rosio Guzman',
     cedula: '',
   }
+  const titularPayPal = {
+    nombre: 'Moises Samuel',
+    cedula: '',
+  }
   const getTitular = (bancoId: string) => {
     if (bancoId === 'bhd' || bancoId === 'popular') return titularMoises
     if (bancoId === 'zelle') return titularRobinson
     if (bancoId === 'cashapp') return titularCashApp
+    if (bancoId === 'paypal') return titularPayPal
     return titularMoises
   }
   const titular = selectedBanco ? getTitular(selectedBanco.id) : titularMoises
@@ -130,19 +141,30 @@ export function UnifiedPurchaseSection() {
   const total = (parseInt(quantity) || 0) * precioActual
 
   useEffect(() => {
-    fetch('/api/config')
-      .then((res) => res.json())
-      .then((data) => {
-        setPrecioBoleto(data.precio_boleto_dop)
-        setPrecioBoletoUsd(data.precio_boleto_usd || 20)
-      })
-      .catch(console.error)
+    // If sorteo-specific prices are provided, use them
+    if (precioDop !== undefined) {
+      setPrecioBoleto(precioDop)
+    }
+    if (precioUsd !== undefined) {
+      setPrecioBoletoUsd(precioUsd)
+    }
+    
+    // Otherwise fetch from config
+    if (precioDop === undefined || precioUsd === undefined) {
+      fetch('/api/config')
+        .then((res) => res.json())
+        .then((data) => {
+          if (precioDop === undefined) setPrecioBoleto(data.precio_boleto_dop)
+          if (precioUsd === undefined) setPrecioBoletoUsd(data.precio_boleto_usd || 20)
+        })
+        .catch(console.error)
+    }
 
     fetch('/api/bancos')
       .then((res) => res.json())
       .then((data) => setBancos(data))
       .catch(console.error)
-  }, [])
+  }, [precioDop, precioUsd])
 
   const formatCurrency = (amount: number) => {
     if (moneda === 'USD') {
@@ -271,6 +293,7 @@ export function UnifiedPurchaseSection() {
           moneda,
           comprobante_url: formData.comprobanteUrl,
           referido_codigo: referralCode || null,
+          sorteo_slug: sorteoSlug || 'default',
         }),
       })
 
@@ -653,6 +676,21 @@ export function UnifiedPurchaseSection() {
                       </div>
                     )}
                     
+                    {method.id === 'zelle' && (
+                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                        <span className="text-muted-foreground">Teléfono Zelle</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-primary">+1 (504) 777-1271</span>
+                          <button
+                            onClick={() => copyToClipboard('+15047771271', 'Teléfono')}
+                            className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
                     {method.cuenta && (
                       <>
                         <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
@@ -687,14 +725,28 @@ export function UnifiedPurchaseSection() {
                     </div>
                     
                     {method.isPaypal && (
-                      <a
-                        href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * (parseInt(quantity) || 0)}USD`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
-                      >
-                        Pagar con PayPal
-                      </a>
+                      <>
+                        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
+                          <span className="text-muted-foreground">Email PayPal</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-primary">moisessamuel1@paypal.com</span>
+                            <button
+                              onClick={() => copyToClipboard('moisessamuel1@paypal.com', 'Email')}
+                              className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <a
+                          href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * (parseInt(quantity) || 0)}USD`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
+                        >
+                          Pagar con PayPal
+                        </a>
+                      </>
                     )}
                     
                     {method.isCashApp && (
