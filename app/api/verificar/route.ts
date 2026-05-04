@@ -1,5 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { SupabaseClient } from '@supabase/supabase-js'
+
+// Helper function to get free spins available for a ticket
+async function getFreeSpinCount(supabase: SupabaseClient, purchaseGroupId: string, ticketNumber: string) {
+  try {
+    // Count total tickets in the purchase group
+    const { count: totalBoletos } = await supabase
+      .from('tickets')
+      .select('*', { count: 'exact', head: true })
+      .eq('purchase_group_id', purchaseGroupId)
+
+    // Get all ticket numbers in the purchase group
+    const { data: ticketsInGroup } = await supabase
+      .from('tickets')
+      .select('numero_boleto')
+      .eq('purchase_group_id', purchaseGroupId)
+
+    const ticketNumbers = ticketsInGroup?.map(t => t.numero_boleto) || [ticketNumber]
+
+    // Count free spins already used for any ticket in this group
+    const { count: girosUsados } = await supabase
+      .from('jugadas_ruleta')
+      .select('*', { count: 'exact', head: true })
+      .in('numero_boleto_referencia', ticketNumbers)
+      .eq('es_giro_gratis', true)
+
+    return {
+      total_boletos: totalBoletos || 1,
+      giros_usados: girosUsados || 0,
+      giros_disponibles: (totalBoletos || 1) - (girosUsados || 0),
+    }
+  } catch {
+    return { total_boletos: 1, giros_usados: 0, giros_disponibles: 1 }
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -202,18 +237,23 @@ export async function GET(request: NextRequest) {
       // Determine ticket-specific status from ticket.status field
       const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
       
+      // Get free spin count for this purchase group
+      const spinCount = await getFreeSpinCount(supabase, ticket.purchase_group?.id, ticket.numero_boleto)
+      
       return NextResponse.json({
         numero_boleto: ticket.numero_boleto,
         nombre: playerInfo?.nombre || 'N/A',
         telefono: playerInfo?.phone_number || '',
         estado: ticketStatus,
-        cantidad_boletos: 1, // Each ticket is individual
+        cantidad_boletos: spinCount.total_boletos,
         monto: individualMonto,
         moneda: ticket.purchase_group?.moneda || 'DOP',
         fecha: ticket.created_at,
         banco: ticket.purchase_group?.banco || '',
         sorteo_slug: ticket.purchase_group?.sorteo_slug || '',
         source: 'new',
+        giros_gratis_disponibles: spinCount.giros_disponibles,
+        giros_gratis_usados: spinCount.giros_usados,
       })
     }
 

@@ -22,6 +22,8 @@ interface TicketResult {
   fecha: string
   banco?: string
   sorteo_slug?: string
+  giros_gratis_disponibles?: number
+  giros_gratis_usados?: number
 }
 
 export default function VerificarPage() {
@@ -35,11 +37,15 @@ export default function VerificarPage() {
 
   const handleFreeSpinClick = (ticket: TicketResult) => {
     // Store ticket info in sessionStorage for the free spin
+    const girosDisponibles = ticket.giros_gratis_disponibles ?? ticket.cantidad_boletos
     sessionStorage.setItem('freeSpin', JSON.stringify({
       numero_boleto: ticket.numero_boleto,
       nombre: ticket.nombre,
       telefono: ticket.telefono || '',
-      used: false
+      used: girosDisponibles <= 0,
+      total_boletos: ticket.cantidad_boletos,
+      giros_usados: ticket.giros_gratis_usados || 0,
+      giros_disponibles: girosDisponibles,
     }))
     router.push('/ruleta?freeSpin=true')
   }
@@ -274,16 +280,28 @@ export default function VerificarPage() {
 
               {/* Free Spin Button */}
               <div className="mt-4">
-                <Button
-                  onClick={() => handleFreeSpinClick(singleResult)}
-                  className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
-                >
-                  <Gift className="mr-2 h-5 w-5" />
-                  GIRADA GRATIS
-                </Button>
-                <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Gira la ruleta gratis. Los giros comprados seran atribuidos a este boleto.
-                </p>
+                {(() => {
+                  const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
+                  const girosUsados = singleResult.giros_gratis_usados ?? 0
+                  return (
+                    <>
+                      <Button
+                        onClick={() => handleFreeSpinClick(singleResult)}
+                        className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
+                      >
+                        <Gift className="mr-2 h-5 w-5" />
+                        {girosDisponibles > 0 
+                          ? `${girosDisponibles} GIRO${girosDisponibles > 1 ? 'S' : ''} GRATIS` 
+                          : 'COMPRAR GIROS'}
+                      </Button>
+                      <p className="mt-2 text-center text-xs text-muted-foreground">
+                        {girosDisponibles > 0 
+                          ? `${singleResult.cantidad_boletos} boleto${singleResult.cantidad_boletos > 1 ? 's' : ''} = ${singleResult.cantidad_boletos} giro${singleResult.cantidad_boletos > 1 ? 's' : ''} gratis. Usados: ${girosUsados}`
+                          : 'Ya usaste tus giros gratis. Puedes comprar mas giros.'}
+                      </p>
+                    </>
+                  )
+                })()}
               </div>
             </CardContent>
           </Card>
@@ -339,14 +357,21 @@ export default function VerificarPage() {
                             <span className="font-medium">{formatDate(ticket.fecha)}</span>
                           </div>
                           <div className="col-span-2 mt-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleFreeSpinClick(ticket)}
-                              className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
-                            >
-                              <Gift className="mr-2 h-4 w-4" />
-                              GIRADA GRATIS
-                            </Button>
+                            {(() => {
+                              const girosDisponibles = ticket.giros_gratis_disponibles ?? ticket.cantidad_boletos
+                              return (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleFreeSpinClick(ticket)}
+                                  className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
+                                >
+                                  <Gift className="mr-2 h-4 w-4" />
+                                  {girosDisponibles > 0 
+                                    ? `${girosDisponibles} GIRO${girosDisponibles > 1 ? 'S' : ''} GRATIS` 
+                                    : 'COMPRAR GIROS'}
+                                </Button>
+                              )
+                            })()}
                           </div>
                         </div>
                       </div>
