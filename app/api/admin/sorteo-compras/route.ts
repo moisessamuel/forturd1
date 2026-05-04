@@ -123,8 +123,16 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get('id')
+    
+    // Accept id from either body or query params
+    let id: string | null = null
+    try {
+      const body = await request.json()
+      id = body.id
+    } catch {
+      const { searchParams } = new URL(request.url)
+      id = searchParams.get('id')
+    }
 
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 })
