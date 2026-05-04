@@ -12,8 +12,11 @@ export default function AdminBMWX6Page() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     
-    const session = sessionStorage.getItem('bmwx6_admin_session')
-    if (!session) {
+    // Check for admin session (can access all panels) or specific sorteo session
+    const adminSession = sessionStorage.getItem('admin_session')
+    const sorteoSession = sessionStorage.getItem('bmwx6_admin_session')
+    
+    if (!adminSession && !sorteoSession) {
       router.push('/admin')
     } else {
       setIsAuthenticated(true)

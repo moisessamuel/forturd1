@@ -118,6 +118,14 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     // Only run on client-side
     if (typeof window === 'undefined') return
     
+    // Check for admin session (pocoyo or admin users can access all panels)
+    const adminSession = sessionStorage.getItem('admin_session')
+    if (adminSession) {
+      fetchData()
+      return
+    }
+    
+    // Check for specific sorteo admin session
     let isAuth = false
     if (sorteoSlug === 'bmw-x6') {
       isAuth = !!sessionStorage.getItem('bmwx6_admin_session')
