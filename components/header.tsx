@@ -46,7 +46,7 @@ export function Header() {
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="animate-pulse-glow flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background transition-all hover:border-primary hover:shadow-[0_0_24px_rgba(218,165,32,0.6)]"
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background transition-all hover:border-primary hover:shadow-[0_0_24px_rgba(218,165,32,0.6)]"
             aria-label="Menu"
           >
             <Image

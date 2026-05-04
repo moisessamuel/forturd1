@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { 
   DollarSign, 
   Users, 
@@ -38,9 +38,11 @@ import {
   Bike,
   Eye,
   Banknote,
-  RefreshCw
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react'
 import Image from 'next/image'
+import { toast } from 'sonner'
 
 interface RuletaJugada {
   id: string
@@ -92,11 +94,13 @@ export default function RuletaAdminPage() {
   const [updating, setUpdating] = useState<string | null>(null)
   const [selectedJugada, setSelectedJugada] = useState<RuletaJugada | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [isResetting, setIsResetting] = useState(false)
 
   useEffect(() => {
     const session = sessionStorage.getItem('ruleta_admin_session')
     if (!session) {
-      router.push('/admin/ruleta/login')
+      router.push('/admin')
     } else {
       setIsAuthenticated(true)
       setIsLoading(false)
@@ -149,6 +153,33 @@ export default function RuletaAdminPage() {
     router.push('/admin/ruleta/login')
   }
 
+  const handleReset = async () => {
+    setIsResetting(true)
+    try {
+      const response = await fetch('/api/admin/ruleta', {
+        method: 'DELETE',
+      })
+      
+      if (response.ok) {
+        toast.success('Todos los datos han sido eliminados')
+        setShowResetModal(false)
+        await fetchData()
+      } else {
+        toast.error('Error al restablecer los datos')
+      }
+    } catch (error) {
+      console.error('Error resetting:', error)
+      toast.error('Error de conexion')
+    }
+    setIsResetting(false)
+  }
+
+  const handleRefresh = async () => {
+    toast.info('Actualizando datos...')
+    await fetchData()
+    toast.success('Datos actualizados')
+  }
+
   const getNextPrizeMilestone = (currentSpins: number) => {
     for (const milestone of PRIZE_MILESTONES) {
       if (currentSpins < milestone.spins) {
@@ -198,17 +229,15 @@ export default function RuletaAdminPage() {
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
-            onClick={() => {
-              setEstadoFilter('todos')
-              setSearchTerm('')
-            }}
+            className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+            onClick={() => setShowResetModal(true)}
           >
-            <RotateCcw className="mr-2 h-4 w-4" />
+            <AlertTriangle className="mr-2 h-4 w-4" />
             Restablecer
           </Button>
           <Button 
             variant="outline" 
-            onClick={fetchData}
+            onClick={handleRefresh}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Actualizar
@@ -611,6 +640,46 @@ export default function RuletaAdminPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Confirmation Modal */}
+      <Dialog open={showResetModal} onOpenChange={setShowResetModal}>
+        <DialogContent className="max-w-md border-red-500 bg-background">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <AlertTriangle className="h-5 w-5" />
+              Confirmar Restablecimiento
+            </DialogTitle>
+            <DialogDescription>
+              Esta accion eliminara TODOS los datos de la ruleta de forma permanente, incluyendo:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 rounded-lg bg-red-500/10 p-4 text-sm">
+            <p>• Todos los giros registrados</p>
+            <p>• Historial de jugadores</p>
+            <p>• Comprobantes de pago</p>
+            <p>• Estadisticas y contadores</p>
+          </div>
+          <p className="text-center text-sm font-bold text-red-500">
+            Esta accion NO se puede deshacer
+          </p>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowResetModal(false)}
+              disabled={isResetting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleReset}
+              disabled={isResetting}
+            >
+              {isResetting ? 'Eliminando...' : 'Si, Eliminar Todo'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

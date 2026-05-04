@@ -12,7 +12,7 @@ export default function AdminBMWX6Page() {
   useEffect(() => {
     const session = sessionStorage.getItem('bmwx6_admin_session')
     if (!session) {
-      router.push('/admin/bmw-x6/login')
+      router.push('/admin')
     } else {
       setIsAuthenticated(true)
     }

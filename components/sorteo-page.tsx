@@ -86,16 +86,15 @@ export function SorteoPage({ slug }: SorteoPageProps) {
               Volver
             </Button>
           </Link>
-          <div className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Image
               src="/images/logo.png"
               alt="FortuRD"
-              width={32}
-              height={32}
-              className="h-8 w-8"
+              width={120}
+              height={40}
+              className="h-10 w-auto object-contain"
             />
-            <span className="text-lg font-bold text-primary">FortuRD</span>
-          </div>
+          </Link>
         </div>
       </div>
 
