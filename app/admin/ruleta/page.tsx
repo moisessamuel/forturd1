@@ -135,15 +135,26 @@ export default function RuletaAdminPage() {
   const handleUpdateEstado = async (id: string, nuevoEstado: string) => {
     setUpdating(id)
     try {
-      await fetch('/api/admin/ruleta', {
+      const response = await fetch('/api/admin/ruleta', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, estado: nuevoEstado }),
       })
-      await fetchData()
-      setShowDetailModal(false)
+      
+      if (response.ok) {
+        if (nuevoEstado === 'confirmado') {
+          toast.success('Giro confirmado exitosamente')
+        } else if (nuevoEstado === 'cancelado') {
+          toast.success('Giro rechazado')
+        }
+        await fetchData()
+        setShowDetailModal(false)
+      } else {
+        toast.error('Error al actualizar el estado')
+      }
     } catch (error) {
       console.error('Error updating:', error)
+      toast.error('Error de conexion')
     }
     setUpdating(null)
   }
