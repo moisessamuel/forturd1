@@ -175,22 +175,17 @@ export default function RuletaAdminPage() {
   }
 
   const handleDeleteJugada = async () => {
-    if (!jugadaToDelete) {
-      console.log('[v0] handleDeleteJugada: No jugada to delete')
-      return
-    }
-    console.log('[v0] handleDeleteJugada called for:', jugadaToDelete)
+    if (!jugadaToDelete) return
+    
     setIsDeleting(true)
     try {
       const deleteUrl = `/api/admin/ruleta?id=${jugadaToDelete.id}&source_table=${jugadaToDelete.source_table || 'ruleta_jugadas'}`
-      console.log('[v0] Sending DELETE request to:', deleteUrl)
       
       const response = await fetch(deleteUrl, {
         method: 'DELETE',
       })
       
       const responseData = await response.json()
-      console.log('[v0] Delete response:', { ok: response.ok, status: response.status, data: responseData })
       
       if (response.ok) {
         toast.success('Registro eliminado exitosamente')
@@ -198,11 +193,10 @@ export default function RuletaAdminPage() {
         setJugadaToDelete(null)
         await fetchData()
       } else {
-        console.error('[v0] Delete error:', responseData)
         toast.error('Error al eliminar: ' + (responseData.error || 'Unknown'))
       }
     } catch (error) {
-      console.error('[v0] Error deleting:', error)
+      console.error('Error deleting:', error)
       toast.error('Error de conexion')
     }
     setIsDeleting(false)

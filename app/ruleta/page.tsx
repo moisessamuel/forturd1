@@ -275,11 +275,23 @@ function RuletaPageContent() {
         setJugadaId(data.jugada_id)
         setPurchaseComplete(true)
         setShowPurchaseModal(false)
-        setPaidSpinsRemaining(spinQuantity)
-        setCanSpin(true)
-        toast.success(`Compra de ${spinQuantity} giro${spinQuantity > 1 ? 's' : ''} completada! Ya puedes girar.`, {
-          duration: 3000,
-        })
+        
+        // Check if this requires admin approval (paid spins)
+        if (data.requires_approval) {
+          // Paid spin - needs admin confirmation before spinning
+          setPaidSpinsRemaining(0)
+          setCanSpin(false)
+          toast.info('Comprobante enviado. Tu pago sera verificado pronto y podras girar una vez aprobado.', {
+            duration: 5000,
+          })
+        } else {
+          // Free spin or auto-approved - can spin immediately
+          setPaidSpinsRemaining(spinQuantity)
+          setCanSpin(true)
+          toast.success(`Compra de ${spinQuantity} giro${spinQuantity > 1 ? 's' : ''} completada! Ya puedes girar.`, {
+            duration: 3000,
+          })
+        }
       } else {
         toast.error(data.error || 'Error al enviar el comprobante')
       }
