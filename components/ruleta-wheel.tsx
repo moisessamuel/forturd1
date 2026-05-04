@@ -19,7 +19,8 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
-// 20 segments: 10 black "SIGUE INTENTANDO" alternating with 10 gold "gift box"
+// 20 segments: 14 black "SIGUE INTENTANDO" and 6 gold "gift box"
+// Gift boxes are distributed evenly throughout the wheel
 const WHEEL_SEGMENTS: Array<{
   label: string
   color: string
@@ -28,18 +29,12 @@ const WHEEL_SEGMENTS: Array<{
   isGiftBox: boolean
 }> = []
 
-// Generate 20 alternating segments
+// Gift box positions: evenly distributed among 20 segments (roughly every 3-4 segments)
+const giftBoxPositions = [2, 5, 8, 11, 14, 17] // 6 gift boxes
+
+// Generate 20 segments
 for (let i = 0; i < 20; i++) {
-  if (i % 2 === 0) {
-    // Black segment with "SIGUE INTENTANDO"
-    WHEEL_SEGMENTS.push({
-      label: 'SIGUE\nINTENTANDO',
-      color: '#1a1a1a',
-      textColor: '#DAA520',
-      tipo: 'sin_premio',
-      isGiftBox: false,
-    })
-  } else {
+  if (giftBoxPositions.includes(i)) {
     // Gold segment with gift box
     WHEEL_SEGMENTS.push({
       label: '',
@@ -47,6 +42,15 @@ for (let i = 0; i < 20; i++) {
       textColor: '#000000',
       tipo: 'premio',
       isGiftBox: true,
+    })
+  } else {
+    // Black segment with "SIGUE INTENTANDO"
+    WHEEL_SEGMENTS.push({
+      label: 'SIGUE\nINTENTANDO',
+      color: '#1a1a1a',
+      textColor: '#DAA520',
+      tipo: 'sin_premio',
+      isGiftBox: false,
     })
   }
 }
@@ -63,13 +67,16 @@ export function RuletaWheel({
 }: RuletaWheelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [rotation, setRotation] = useState(0)
+  const [idleRotation, setIdleRotation] = useState(0)
   const [showParticles, setShowParticles] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const [globalSpinCount, setGlobalSpinCount] = useState(0)
   const [logoLoaded, setLogoLoaded] = useState(false)
+  const [pulsePhase, setPulsePhase] = useState(0)
   const logoRef = useRef<HTMLImageElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const animationRef = useRef<number | null>(null)
+  const idleAnimationRef = useRef<number | null>(null)
 
   // Load the logo image
   useEffect(() => {
@@ -93,6 +100,37 @@ export function RuletaWheel({
       })
       .catch(console.error)
   }, [])
+
+  // Idle rotation animation (slow continuous rotation when not spinning)
+  useEffect(() => {
+    if (isAnimating) {
+      if (idleAnimationRef.current) {
+        cancelAnimationFrame(idleAnimationRef.current)
+      }
+      return
+    }
+
+    let lastTime = performance.now()
+    const animate = (currentTime: number) => {
+      const delta = currentTime - lastTime
+      lastTime = currentTime
+      
+      // Slow rotation: 360 degrees in 60 seconds = 6 degrees per second
+      setIdleRotation(prev => (prev + (delta / 1000) * 6) % 360)
+      // Pulse animation phase
+      setPulsePhase(prev => (prev + delta / 500) % (Math.PI * 2))
+      
+      idleAnimationRef.current = requestAnimationFrame(animate)
+    }
+    
+    idleAnimationRef.current = requestAnimationFrame(animate)
+    
+    return () => {
+      if (idleAnimationRef.current) {
+        cancelAnimationFrame(idleAnimationRef.current)
+      }
+    }
+  }, [isAnimating])
 
   // Draw the wheel on canvas
   useEffect(() => {
@@ -148,8 +186,9 @@ export function RuletaWheel({
     ctx.lineWidth = 10
     ctx.stroke()
 
-    // Draw segments
-    const startAngle = (rotation * Math.PI) / 180
+    // Draw segments - use idle rotation when not spinning, actual rotation when spinning
+    const currentRotation = isAnimating ? rotation : idleRotation
+    const startAngle = (currentRotation * Math.PI) / 180
     
     WHEEL_SEGMENTS.forEach((segment, index) => {
       const angle = (2 * Math.PI) / TOTAL_SEGMENTS
@@ -192,39 +231,58 @@ export function RuletaWheel({
       const textRadius = radius * 0.68
       
       if (segment.isGiftBox) {
-        // Draw gift box icon
-        const boxSize = size < 400 ? 18 : 22
+        // Draw gift box icon with pulse effect (bigger size)
+        const baseBoxSize = size < 400 ? 24 : 30
+        // Pulse scale between 1.0 and 1.15
+        const pulseScale = isAnimating ? 1 : 1 + Math.sin(pulsePhase + index) * 0.15
+        const boxSize = baseBoxSize * pulseScale
+        
+        // Glow effect for gift boxes
+        if (!isAnimating) {
+          const glowIntensity = 0.3 + Math.sin(pulsePhase + index) * 0.2
+          ctx.shadowColor = `rgba(255, 215, 0, ${glowIntensity})`
+          ctx.shadowBlur = 15
+        }
         
         // Box body (white)
         ctx.fillStyle = '#FFFFFF'
-        ctx.fillRect(textRadius - boxSize/2, -boxSize/2 + 4, boxSize, boxSize * 0.7)
+        ctx.fillRect(textRadius - boxSize/2, -boxSize/2 + 5, boxSize, boxSize * 0.7)
         
         // Box lid
         ctx.fillStyle = '#FFFFFF'
-        ctx.fillRect(textRadius - boxSize/2 - 2, -boxSize/2, boxSize + 4, boxSize * 0.25)
+        ctx.fillRect(textRadius - boxSize/2 - 3, -boxSize/2, boxSize + 6, boxSize * 0.28)
+        
+        // Reset shadow
+        ctx.shadowColor = 'transparent'
+        ctx.shadowBlur = 0
         
         // Ribbon vertical
         ctx.fillStyle = '#FFD700'
-        ctx.fillRect(textRadius - 2, -boxSize/2, 4, boxSize * 0.95)
+        ctx.fillRect(textRadius - 3, -boxSize/2, 6, boxSize * 0.98)
         
         // Ribbon horizontal  
-        ctx.fillRect(textRadius - boxSize/2, -boxSize/2 + boxSize * 0.35, boxSize, 4)
+        ctx.fillRect(textRadius - boxSize/2, -boxSize/2 + boxSize * 0.38, boxSize, 5)
         
-        // Bow circles
+        // Bow circles (bigger)
         ctx.beginPath()
-        ctx.arc(textRadius - 5, -boxSize/2 - 2, 4, 0, Math.PI * 2)
+        ctx.arc(textRadius - 7, -boxSize/2 - 3, 6, 0, Math.PI * 2)
         ctx.fillStyle = '#FFD700'
         ctx.fill()
         ctx.beginPath()
-        ctx.arc(textRadius + 5, -boxSize/2 - 2, 4, 0, Math.PI * 2)
+        ctx.arc(textRadius + 7, -boxSize/2 - 3, 6, 0, Math.PI * 2)
+        ctx.fill()
+        // Center bow knot
+        ctx.beginPath()
+        ctx.arc(textRadius, -boxSize/2 - 1, 4, 0, Math.PI * 2)
         ctx.fill()
         
-        // Sparkles
-        ctx.font = `${size < 400 ? 6 : 8}px Arial`
+        // Animated sparkles
+        const sparkleOffset = Math.sin(pulsePhase * 2 + index) * 3
+        ctx.font = `${size < 400 ? 8 : 10}px Arial`
         ctx.fillStyle = '#FFD700'
-        ctx.fillText('✦', textRadius - boxSize/2 - 6, -boxSize/2 + 4)
-        ctx.fillText('✦', textRadius + boxSize/2 + 2, -boxSize/2 + 4)
-        ctx.fillText('✦', textRadius, -boxSize/2 - 8)
+        ctx.fillText('✦', textRadius - boxSize/2 - 8, -boxSize/2 + 4 + sparkleOffset)
+        ctx.fillText('✦', textRadius + boxSize/2 + 4, -boxSize/2 + 4 - sparkleOffset)
+        ctx.fillText('✦', textRadius, -boxSize/2 - 12 + sparkleOffset)
       } else {
         // Draw "SIGUE INTENTANDO" text
         const fontSize = size < 400 ? 7 : 9
@@ -282,7 +340,7 @@ export function RuletaWheel({
     ctx.lineWidth = 3
     ctx.stroke()
 
-  }, [rotation, isAnimating, logoLoaded])
+  }, [rotation, idleRotation, isAnimating, logoLoaded, pulsePhase])
 
   // Initialize Audio Context
   const initAudio = useCallback(() => {
