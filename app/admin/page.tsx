@@ -26,6 +26,9 @@ export default function AdminLoginPage() {
   const [currentUser, setCurrentUser] = useState<UserSession | null>(null)
 
   useEffect(() => {
+    // Only run on client-side
+    if (typeof window === 'undefined') return
+    
     // Check if already logged in via cookie session
     fetch('/api/admin/session')
       .then((res) => res.json())

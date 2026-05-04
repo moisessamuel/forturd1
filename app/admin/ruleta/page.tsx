@@ -98,6 +98,8 @@ export default function RuletaAdminPage() {
   const [isResetting, setIsResetting] = useState(false)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const session = sessionStorage.getItem('ruleta_admin_session')
     if (!session) {
       router.push('/admin')
