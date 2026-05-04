@@ -33,15 +33,8 @@ export async function POST(request: NextRequest) {
     // Verify password
     let isValid = false
     try {
-      // Generate hash for debugging - this shows what the correct hash should be
-      const correctHash = await bcrypt.hash(password, 10)
-      console.log('[v0] Correct hash for password:', correctHash)
-      console.log('[v0] Stored hash:', admin.password_hash)
-      
       isValid = await bcrypt.compare(password, admin.password_hash)
-      console.log('[v0] Password comparison result:', isValid)
-    } catch (e) {
-      console.error('[v0] Bcrypt error:', e)
+    } catch {
       isValid = false
     }
 
