@@ -101,8 +101,6 @@ export async function PUT(
 
     const supabase = await createClient()
 
-    console.log(`[v0] Attempting to update progress for ${slug} to ${porcentaje}%`)
-
     // First, try to get current sorteo and metadata
     let { data: sorteo, error: selectError } = await supabase
       .from('sorteos')
@@ -128,8 +126,6 @@ export async function PUT(
       ultima_actualizacion: new Date().toISOString(),
     }
 
-    console.log(`[v0] Updating metadata for ${slug}:`, updatedMetadata)
-
     // Update the metadata field in sorteos table
     const { data: updateData, error: updateError } = await supabase
       .from('sorteos')
@@ -148,8 +144,6 @@ export async function PUT(
         { status: 500 }
       )
     }
-
-    console.log(`[v0] Successfully updated progress for ${slug}`)
 
     return NextResponse.json(
       { 
