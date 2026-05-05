@@ -336,10 +336,9 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
       banco: '',
       comprobante: null,
       comprobanteUrl: '',
-    })
-    setSelectedBanco(null)
-    setExpandedBanco(null)
-    setTicketNumbers([])
+  })
+  setSelectedBanco(null)
+  setTicketNumbers([])
     setQrValue('')
     setPurchaseComplete(false)
   }
@@ -438,474 +437,311 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-      {/* Section 1: Ticket Selection */}
-      <Card className="border-border/50 bg-card/50">
-        <CardContent className="p-6">
-          <h3 className="mb-2 text-center text-3xl font-extrabold uppercase text-primary md:text-4xl" style={{ textShadow: '0 0 10px rgba(218, 165, 32, 0.6), 0 0 20px rgba(218, 165, 32, 0.3)' }}>
+    <div className="mx-auto max-w-lg space-y-4 px-4 py-6">
+      {/* Unified Purchase Card */}
+      <Card className="border-primary/30 bg-card/80">
+        <CardContent className="p-5">
+          <h3 className="mb-1 text-center text-2xl font-extrabold uppercase text-primary" style={{ textShadow: '0 0 10px rgba(218, 165, 32, 0.5)' }}>
             COMPRA TUS BOLETOS
           </h3>
-          <p className="mb-6 text-center text-base text-muted-foreground md:text-lg">
-            Ingresa la cantidad deseada y procede al pago por transferencia bancaria.
+          <p className="mb-4 text-center text-sm text-muted-foreground">
+            Completa el formulario para adquirir tus boletos
           </p>
 
           <div className="space-y-4">
-            {/* Ticket Counter */}
-            <div>
-              <label className="mb-3 block text-center text-sm font-medium uppercase tracking-wider text-muted-foreground">
-                BOLETOS
-              </label>
-              <div className="flex items-center justify-center gap-4">
+            {/* Quantity + Currency Row */}
+            <div className="flex items-center justify-between gap-4">
+              {/* Ticket Counter - Compact */}
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={decrementQuantity}
                   disabled={!quantity || parseInt(quantity) <= 0}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
                 >
-                  <Minus className="h-6 w-6" />
+                  <Minus className="h-4 w-4" />
                 </button>
-                <div className="flex h-16 w-24 items-center justify-center rounded-xl border-2 border-primary/50 bg-card">
-                  <span className="text-3xl font-bold text-primary">{quantity || '0'}</span>
+                <div className="flex h-12 w-14 items-center justify-center rounded-lg border-2 border-primary/50 bg-card">
+                  <span className="text-2xl font-bold text-primary">{quantity || '0'}</span>
                 </div>
                 <button
                   type="button"
                   onClick={incrementQuantity}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground"
                 >
-                  <Plus className="h-6 w-6" />
+                  <Plus className="h-4 w-4" />
                 </button>
+              </div>
+              
+              {/* Quick Quantity Buttons */}
+              <div className="flex gap-1">
+                {[1, 3, 5, 10].map(qty => (
+                  <button
+                    key={qty}
+                    onClick={() => setQuantity(qty.toString())}
+                    className={`h-8 w-8 rounded-md text-xs font-bold transition-all ${
+                      parseInt(quantity) === qty 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-primary/10 text-primary hover:bg-primary/20'
+                    }`}
+                  >
+                    {qty}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <div>
-              <label className="mb-2 block text-base font-medium">
-                Código de Referido (Opcional)
-              </label>
-              <Input
-                type="text"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                placeholder="Ej. JUANPEREZ"
-                className="bg-input text-base"
-              />
+            {/* Currency Toggle */}
+            <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-2">
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setMoneda('DOP')}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    moneda === 'DOP' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  DOP
+                </button>
+                <button
+                  onClick={() => setMoneda('USD')}
+                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
+                    moneda === 'USD' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  USD
+                </button>
+              </div>
+              <span className="text-sm font-bold text-primary">
+                {formatCurrency(total || 0)}
+              </span>
             </div>
 
-            {/* Order Summary */}
-            {parseInt(quantity) > 0 && (
-              <Card className="border-primary/50 bg-primary/10">
-                <CardContent className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Boletos: <span className="font-medium text-foreground">{quantity}</span></p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Total</p>
-                    <p className="text-xl font-bold text-primary">{formatCurrency(total)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 2: Buyer Data */}
-      <Card ref={buyerDataRef} className="border-border/50 bg-card/50">
-        <CardContent className="p-6">
-          <div className="mb-6 flex flex-col items-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary">
-              <User className="h-8 w-8 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold">Datos del Comprador</h2>
-              <p className="text-sm text-muted-foreground">
-                Completa tus datos personales para procesar tu compra de boletos.
-              </p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                <User className="h-4 w-4 text-primary" />
-                Nombre Completo <span className="text-destructive">*</span>
-              </label>
-              <Input
-                value={formData.nombre}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                placeholder="Ej. Juan Perez"
-                className="bg-input"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                <span className="text-primary">Tel</span>
-                Número de Celular <span className="text-destructive">*</span>
-              </label>
-              <Input
-                value={formData.telefono}
-                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                placeholder="Ej. +1 809-555-1234"
-                className="bg-input"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Ingresa tu número con código de país (ej. +1, +52, +34).
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-                <span className="text-primary">@</span>
-                Correo Electronico <span className="text-muted-foreground font-normal">(opcional)</span>
-              </label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Ej. juan@correo.com"
-                className="bg-input"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 3: Payment Methods */}
-      <Card ref={paymentMethodRef} className="border-border/50 bg-card/50">
-        <CardContent className="p-6">
-          <h2 className="mb-2 text-center text-2xl font-bold text-primary">MODOS DE PAGO</h2>
-          <p className="mb-4 text-center text-muted-foreground">Elige una opción.</p>
-
-          {/* Currency Selector */}
-          <div className="mb-6">
-            <p className="mb-2 text-center text-sm font-medium text-muted-foreground">MONEDA DE PAGO</p>
-            <div className="flex justify-center gap-2">
-              <Button
-                variant={moneda === 'DOP' ? 'default' : 'outline'}
-                onClick={() => setMoneda('DOP')}
-                className={moneda === 'DOP' ? 'bg-primary text-primary-foreground' : ''}
-              >
-                DOP (Pesos)
-              </Button>
-              <Button
-                variant={moneda === 'USD' ? 'default' : 'outline'}
-                onClick={() => setMoneda('USD')}
-                className={moneda === 'USD' ? 'bg-primary text-primary-foreground' : ''}
-              >
-                USD (Dólares)
-              </Button>
-            </div>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              {moneda === 'DOP' 
-                ? `RD$ ${new Intl.NumberFormat('es-DO').format(precioBoleto)} por boleto`
-                : `US$ ${precioBoletoUsd} por boleto`
-              }
-            </p>
-          </div>
-
-          {/* Payment Method Logos Grid */}
-          <div className="mb-4 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
-            {paymentMethods.map((method) => (
-              <button
-                key={method.id}
-                type="button"
-                onClick={() => {
-                  setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
-                  setFormData(prev => ({ ...prev, banco: method.nombre }))
-                }}
-                className={`relative overflow-hidden rounded-lg border-2 bg-white p-2 transition-all ${
-                  selectedBanco?.id === method.id
-                    ? 'border-primary shadow-md shadow-primary/30'
-                    : 'border-border/30 hover:border-primary/50'
-                }`}
-              >
-                <div className="relative h-12 w-full">
-                  <Image
-                    src={method.image}
-                    alt={method.nombre}
-                    fill
-                    className="object-contain"
+            {/* Personal Data - Compact */}
+            <div ref={buyerDataRef} className="space-y-3 border-t border-border/50 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Nombre *</label>
+                  <Input
+                    value={formData.nombre}
+                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                    placeholder="Juan Perez"
+                    className="h-9 bg-input text-sm"
                   />
                 </div>
-              </button>
-            ))}
-          </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Telefono *</label>
+                  <Input
+                    value={formData.telefono}
+                    onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+                    placeholder="8091234567"
+                    className="h-9 bg-input text-sm"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Email (opcional)</label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="correo@email.com"
+                    className="h-9 bg-input text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Referido (opcional)</label>
+                  <Input
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                    placeholder="CODIGO"
+                    className="h-9 bg-input text-sm"
+                  />
+                </div>
+              </div>
+            </div>
 
-          {/* Payment Info - Inline Display */}
-          {selectedBanco && (() => {
-            const method = paymentMethods.find(m => m.id === selectedBanco.id)
-            if (!method) return null
-            return (
-              <Card className="border-primary/50 bg-card">
-                <CardContent className="p-4">
-                  <h3 className="mb-4 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
-                    {method.nombre}
-                  </h3>
+            {/* Payment Methods - Compact Grid */}
+            <div ref={paymentMethodRef} className="border-t border-border/50 pt-4">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Metodo de Pago
+              </p>
 
-                  <div className="space-y-3 text-sm">
-                    <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                      <span className="text-muted-foreground">Titular</span>
-                      <span className="font-semibold text-foreground">{titular.nombre}</span>
+              {/* Payment Method Logos Grid - Compact */}
+              <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
+                {paymentMethods.map((method) => (
+                  <button
+                    key={method.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
+                      setFormData(prev => ({ ...prev, banco: method.nombre }))
+                    }}
+                    className={`relative overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-all ${
+                      selectedBanco?.id === method.id
+                        ? 'border-primary shadow-md shadow-primary/30'
+                        : 'border-border/30 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="relative h-8 w-full">
+                      <Image
+                        src={method.image}
+                        alt={method.nombre}
+                        fill
+                        className="object-contain"
+                      />
                     </div>
-                    
-                    {method.id !== 'zelle' && method.id !== 'cashapp' && (
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                        <span className="text-muted-foreground">Cedula</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground">{titular.cedula}</span>
-                          <button
-                            onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
-                            className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </button>
-                        </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Payment Info - Compact Inline Display */}
+              {selectedBanco && (() => {
+                const method = paymentMethods.find(m => m.id === selectedBanco.id)
+                if (!method) return null
+                return (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <p className="mb-2 text-center text-sm font-bold text-primary">{method.nombre}</p>
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Titular:</span>
+                        <span className="font-medium">{titular.nombre}</span>
                       </div>
-                    )}
-                    
-                    {method.id === 'cashapp' && (
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                        <span className="text-muted-foreground">User</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">$FortunaRD</span>
-                          <button
-                            onClick={() => copyToClipboard('$FortunaRD', 'User')}
-                            className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {method.id === 'zelle' && (
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                        <span className="text-muted-foreground">Teléfono Zelle</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-primary">+1 (504) 777-1271</span>
-                          <button
-                            onClick={() => copyToClipboard('+15047771271', 'Teléfono')}
-                            className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {method.cuenta && (
-                      <>
-                        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                          <span className="text-muted-foreground">Tipo de Cuenta</span>
-                          <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                          <span className="text-muted-foreground">Numero de Cuenta</span>
-                          <div className="flex items-center gap-2">
+                      {method.cuenta && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Cuenta:</span>
+                          <div className="flex items-center gap-1">
                             <span className="font-bold text-primary">{method.cuenta}</span>
-                            <button
-                              onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')}
-                              className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
-                            >
-                              <Copy className="h-4 w-4" />
+                            <button onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')} className="text-primary">
+                              <Copy className="h-3 w-3" />
                             </button>
                           </div>
                         </div>
-                      </>
-                    )}
-                    
-                    {method.tipoCuenta && !method.cuenta && !method.isPaypal && (
-                      <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                        <span className="text-muted-foreground">Tipo</span>
-                        <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                      )}
+                      {method.id === 'zelle' && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Zelle:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-primary">+1 (504) 777-1271</span>
+                            <button onClick={() => copyToClipboard('+15047771271', 'Telefono')} className="text-primary">
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {method.id === 'cashapp' && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">User:</span>
+                          <div className="flex items-center gap-1">
+                            <span className="font-bold text-primary">$FortunaRD</span>
+                            <button onClick={() => copyToClipboard('$FortunaRD', 'User')} className="text-primary">
+                              <Copy className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-primary/20 pt-1.5">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-bold text-primary">{formatCurrency(total)}</span>
                       </div>
-                    )}
-                    
-                    <div className="flex items-center justify-between rounded-lg bg-primary/10 px-3 py-2">
-                      <span className="text-muted-foreground">Monto a Transferir</span>
-                      <span className="text-lg font-bold text-primary">{formatCurrency(total)}</span>
-                    </div>
-                    
-                    {method.isPaypal && (
-                      <>
-                        <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-3 py-2">
-                          <span className="text-muted-foreground">Email PayPal</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-primary">moisessamuel1@paypal.com</span>
-                            <button
-                              onClick={() => copyToClipboard('moisessamuel1@paypal.com', 'Email')}
-                              className="rounded-md p-1 text-primary transition-colors hover:bg-primary/10"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                      {method.isPaypal && (
                         <a
                           href={`${method.paypalLink}/${moneda === 'USD' ? total : precioBoletoUsd * (parseInt(quantity) || 0)}USD`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-600"
+                          className="mt-2 flex w-full items-center justify-center rounded-md bg-blue-500 py-2 text-xs font-semibold text-white"
                         >
                           Pagar con PayPal
                         </a>
-                      </>
-                    )}
-                    
-                    {method.isCashApp && (
-                      <a
-                        href={method.cashAppLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-green-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-600"
-                      >
-                        Pagar con Cash App
-                      </a>
-                    )}
+                      )}
+                      {method.isCashApp && (
+                        <a
+                          href={method.cashAppLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 flex w-full items-center justify-center rounded-md bg-green-500 py-2 text-xs font-semibold text-white"
+                        >
+                          Pagar con Cash App
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            )
-          })()}
-        </CardContent>
-      </Card>
-
-      {/* Section 4: Upload Receipt */}
-      <Card ref={uploadRef} className="border-border/50 bg-card/50">
-        <CardContent className="p-4">
-          <div className="relative">
-            <div
-              onClick={() => !formData.comprobante && !isUploading && setShowImageMenu(!showImageMenu)}
-              className="flex cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-dashed border-primary/50 p-4 transition-colors hover:border-primary hover:bg-primary/5"
-            >
-              <Upload className="h-6 w-6 text-primary" />
-              <p className="text-center text-sm font-medium text-primary">
-                {formData.comprobante
-                  ? formData.comprobante.name
-                  : 'Toca aquí para subir tu comprobante'}
-              </p>
+                )
+              })()}
             </div>
 
-            {/* Image Source Menu */}
-            {showImageMenu && (
-              <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-64 z-50">
-                <Card className="border-border bg-card shadow-xl">
-                  <CardContent className="p-2">
-                    <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Seleccionar origen
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => handleImageSourceSelect('camera')}
-                      className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-primary/10 transition-colors text-left"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
-                        <Camera className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Cámara</p>
-                        <p className="text-xs text-muted-foreground">Tomar foto</p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleImageSourceSelect('gallery')}
-                      className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-primary/10 transition-colors text-left"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20">
-                        <ImageIcon className="h-5 w-5 text-green-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Galería</p>
-                        <p className="text-xs text-muted-foreground">Seleccionar de fotos</p>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleImageSourceSelect('file')}
-                      className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-primary/10 transition-colors text-left"
-                    >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20">
-                        <FolderOpen className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Archivo</p>
-                        <p className="text-xs text-muted-foreground">Explorar archivos</p>
-                      </div>
-                    </button>
-                  </CardContent>
-                </Card>
+            {/* Upload Receipt - Compact */}
+            <div ref={uploadRef} className="relative border-t border-border/50 pt-4">
+              <div
+                onClick={() => !formData.comprobante && !isUploading && setShowImageMenu(!showImageMenu)}
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/50 p-3 transition-colors hover:border-primary hover:bg-primary/5"
+              >
+                <Upload className="h-5 w-5 text-primary" />
+                <p className="text-center text-sm font-medium text-primary">
+                  {formData.comprobante ? formData.comprobante.name : 'Subir comprobante'}
+                </p>
               </div>
-            )}
 
-            {/* Hidden file inputs */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleFileChange}
-              className="hidden"
-              disabled={isUploading}
-              aria-label="Tomar foto"
-            />
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif,image/*"
-              onChange={handleFileChange}
-              className="hidden"
-              disabled={isUploading}
-              aria-label="Seleccionar de galeria"
-            />
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif,application/pdf,image/*,.png,.jpg,.jpeg,.webp,.heic,.pdf"
-              onChange={handleFileChange}
-              className="hidden"
-              disabled={isUploading}
-              aria-label="Seleccionar archivo"
-            />
-            {formData.comprobanteUrl && (
-              <div className="mt-4 flex items-center justify-center">
-                <div className="relative inline-block">
-                  <Image
-                    src={formData.comprobanteUrl}
-                    alt="Comprobante"
-                    width={200}
-                    height={200}
-                    className="rounded-lg object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))
-                      if (fileInputRef.current) fileInputRef.current.value = ''
-                    }}
-                    className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md transition-transform hover:scale-110"
-                    aria-label="Eliminar comprobante"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
+              {/* Image Source Menu */}
+              {showImageMenu && (
+                <div className="absolute left-1/2 top-full z-50 mt-2 w-56 -translate-x-1/2">
+                  <Card className="border-border bg-card shadow-xl">
+                    <CardContent className="p-2">
+                      <button type="button" onClick={() => handleImageSourceSelect('camera')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-primary/10">
+                        <Camera className="h-4 w-4 text-primary" />
+                        <span className="text-sm">Camara</span>
+                      </button>
+                      <button type="button" onClick={() => handleImageSourceSelect('gallery')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-primary/10">
+                        <ImageIcon className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">Galeria</span>
+                      </button>
+                      <button type="button" onClick={() => handleImageSourceSelect('file')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-primary/10">
+                        <FolderOpen className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm">Archivo</span>
+                      </button>
+                    </CardContent>
+                  </Card>
                 </div>
-              </div>
-            )}
+              )}
+
+              {/* Hidden file inputs */}
+              <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} className="hidden" disabled={isUploading} />
+              <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" disabled={isUploading} />
+              <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" disabled={isUploading} />
+              
+              {formData.comprobanteUrl && (
+                <div className="mt-3 flex items-center justify-center">
+                  <div className="relative inline-block">
+                    <Image src={formData.comprobanteUrl} alt="Comprobante" width={120} height={120} className="rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))}
+                      className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Submit Button - Inside Card */}
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !quantity || parseInt(quantity) < 1}
+              className="mt-4 w-full bg-primary py-5 text-base font-bold text-primary-foreground hover:bg-primary/90"
+            >
+              {isSubmitting ? 'Procesando...' : 'CONFIRMAR COMPRA'}
+              <Check className="ml-2 h-5 w-5" />
+            </Button>
+
+            <p className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              <Shield className="h-3 w-3" />
+              Pago seguro con validacion manual
+            </p>
           </div>
         </CardContent>
       </Card>
-
-      {/* Submit Button */}
-      <Button
-        onClick={handleSubmit}
-        disabled={isSubmitting || !quantity || parseInt(quantity) < 1}
-        className="w-full bg-primary py-6 text-lg font-bold text-primary-foreground hover:bg-primary/90"
-      >
-        {isSubmitting ? 'Procesando...' : 'CONFIRMAR COMPRA'}
-        <Check className="ml-2 h-5 w-5" />
-      </Button>
-
-      <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <Shield className="h-3 w-3" />
-        Pago seguro por transferencia bancaria con validación manual.
-      </p>
     </div>
   )
 }
