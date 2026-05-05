@@ -263,12 +263,12 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
       return
     }
     if (!formData.telefono.trim()) {
-      toast.error('Por favor ingresa tu numero de celular')
+      toast.error('Por favor ingresa tu número de celular')
       buyerDataRef.current?.scrollIntoView({ behavior: 'smooth' })
       return
     }
     if (!selectedBanco) {
-      toast.error('Por favor selecciona un metodo de pago')
+      toast.error('Por favor selecciona un método de pago')
       paymentMethodRef.current?.scrollIntoView({ behavior: 'smooth' })
       return
     }
@@ -323,7 +323,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
   const copyTicketNumbers = () => {
     const text = ticketNumbers.map(n => n.padStart(5, '0')).join(', ')
     navigator.clipboard.writeText(text)
-    toast.success(ticketNumbers.length > 1 ? 'Numeros de boletos copiados!' : 'Numero de boleto copiado!')
+    toast.success(ticketNumbers.length > 1 ? 'Números de boletos copiados!' : 'Número de boleto copiado!')
   }
 
   const handleReset = () => {
@@ -529,7 +529,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                   />
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-primary">Telefono <span className="text-destructive">*</span></label>
+                  <label className="mb-1.5 block text-sm font-semibold text-primary">Teléfono <span className="text-destructive">*</span></label>
                   <Input
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
@@ -554,7 +554,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                   <Input
                     value={referralCode}
                     onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                    placeholder="CODIGO"
+                    placeholder="CÓDIGO"
                     className="h-10 bg-input text-sm"
                   />
                 </div>
@@ -564,7 +564,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
             {/* Payment Methods - Compact Grid */}
             <div ref={paymentMethodRef} className="border-t border-border/50 pt-4">
               <p className="mb-3 text-center text-base font-bold uppercase tracking-wider text-primary" style={{ textShadow: '0 0 8px rgba(218, 165, 32, 0.4)' }}>
-                Metodo de Pago
+                Método de Pago
               </p>
 
               {/* Payment Method Logos Grid - App Icon Style */}
@@ -621,7 +621,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                           <span className="text-muted-foreground">Zelle:</span>
                           <div className="flex items-center gap-1">
                             <span className="font-bold text-primary">+1 (504) 777-1271</span>
-                            <button onClick={() => copyToClipboard('+15047771271', 'Telefono')} className="text-primary">
+                            <button onClick={() => copyToClipboard('+15047771271', 'Teléfono')} className="text-primary">
                               <Copy className="h-3 w-3" />
                             </button>
                           </div>
@@ -687,11 +687,11 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                     <CardContent className="p-2">
                       <button type="button" onClick={() => handleImageSourceSelect('camera')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-primary/10">
                         <Camera className="h-4 w-4 text-primary" />
-                        <span className="text-sm">Camara</span>
+                        <span className="text-sm">Cámara</span>
                       </button>
                       <button type="button" onClick={() => handleImageSourceSelect('gallery')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-primary/10">
                         <ImageIcon className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Galeria</span>
+                        <span className="text-sm">Galería</span>
                       </button>
                       <button type="button" onClick={() => handleImageSourceSelect('file')} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-primary/10">
                         <FolderOpen className="h-4 w-4 text-blue-500" />
@@ -735,7 +735,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
 
             <p className="mt-2 flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Shield className="h-3 w-3" />
-              Pago seguro con validacion manual
+              Pago seguro con validación manual
             </p>
           </div>
         </CardContent>

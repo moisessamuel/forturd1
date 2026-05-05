@@ -359,7 +359,7 @@ export default function VerificarPage() {
                       <p className="mt-2 text-center text-xs text-muted-foreground">
                         {girosDisponibles > 0 
                           ? `${singleResult.cantidad_boletos} boleto${singleResult.cantidad_boletos > 1 ? 's' : ''} = ${singleResult.cantidad_boletos} giro${singleResult.cantidad_boletos > 1 ? 's' : ''} gratis. Usados: ${girosUsados}`
-                          : 'Ya usaste tus giros gratis. Puedes comprar mas giros.'}
+                          : 'Ya usaste tus giros gratis. Puedes comprar más giros.'}
                       </p>
                     </>
                   )

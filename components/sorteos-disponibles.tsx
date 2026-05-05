@@ -178,9 +178,9 @@ export function SorteosDisponibles() {
                   </Link>
                   <div className="mb-3 text-sm text-muted-foreground">
                     {sorteo.slug === 'bmw-x6' ? (
-                      <span>Deportivo, elegante y potente. Disenado para destacar.</span>
+                      <span>Deportivo, elegante y potente. Diseñado para destacar.</span>
                     ) : sorteo.slug === 'bmw-x7' ? (
-                      <span>Espacioso, comodo y confortable. Ideal para toda la familia.</span>
+                      <span>Espacioso, cómodo y confortable. Ideal para toda la familia.</span>
                     ) : (
                       <span>CON LA VENTA DEL 100%</span>
                     )}
@@ -260,7 +260,7 @@ export function SorteosDisponibles() {
                   className="text-xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.7)] md:text-2xl lg:text-3xl"
                   style={{ textShadow: '0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.3)' }}
                 >
-                  Verifica tu boleto aqui y obtiene tu giro gratis
+                  Verifica tu boleto aquí y obtén tu giro gratis
                 </p>
               </div>
               {/* Animated shimmer effect */}

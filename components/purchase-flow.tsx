@@ -457,10 +457,10 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 Si no tienes cuenta de banco y tienes tu dinero en efectivo, puedes dirigirte al banco o subagente mas cercano y depositar solo con tu cedula.
               </p>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Si es deposito bancario via cajero sin importar la hora, especificamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
+                Si es depósito bancario vía cajero sin importar la hora, específicamente <span className="font-semibold text-foreground">Banco Popular</span> te permite hacerlo sin tarjeta.
               </p>
               <p className="mt-3 rounded-lg bg-primary/10 p-3 text-sm font-medium leading-relaxed text-primary">
-                Una vez realizado el pago, debera subir el comprobante seleccionando el banco donde realizo el deposito en los metodos de pago de abajo.
+                Una vez realizado el pago, deberá subir el comprobante seleccionando el banco donde realizó el depósito en los métodos de pago de abajo.
               </p>
             </CardContent>
           </Card>
@@ -559,7 +559,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                             </div>
                             <div className="h-px w-full bg-border/50" />
                             <div className="flex flex-col items-center gap-1">
-                              <span className="text-sm text-muted-foreground">Numero de Cuenta</span>
+                              <span className="text-sm text-muted-foreground">Número de Cuenta</span>
                               <div className="flex items-center gap-2">
                                 <span className="text-lg font-bold text-primary">{method.cuenta}</span>
                                 <button
