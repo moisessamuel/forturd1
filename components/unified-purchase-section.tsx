@@ -567,8 +567,8 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                 Metodo de Pago
               </p>
 
-              {/* Payment Method Logos Grid - Ultra Compact */}
-              <div className="mb-3 grid grid-cols-5 gap-1.5 sm:grid-cols-6">
+              {/* Payment Method Logos Grid */}
+              <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
                 {paymentMethods.map((method) => (
                   <button
                     key={method.id}
@@ -577,20 +577,18 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                       setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
                       setFormData(prev => ({ ...prev, banco: method.nombre }))
                     }}
-                    className={`relative overflow-hidden rounded-md border-2 bg-white p-0.5 transition-all ${
+                    className={`relative aspect-[2/1] overflow-hidden rounded-lg transition-all ${
                       selectedBanco?.id === method.id
-                        ? 'border-primary shadow-md shadow-primary/30'
-                        : 'border-transparent hover:border-primary/50'
+                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40'
+                        : 'hover:ring-1 hover:ring-primary/50'
                     }`}
                   >
-                    <div className="relative h-7 w-full">
-                      <Image
-                        src={method.image}
-                        alt={method.nombre}
-                        fill
-                        className="object-contain p-0.5"
-                      />
-                    </div>
+                    <Image
+                      src={method.image}
+                      alt={method.nombre}
+                      fill
+                      className="object-cover"
+                    />
                   </button>
                 ))}
               </div>
