@@ -16,52 +16,44 @@ async function handleInit() {
   try {
     const supabase = await createClient();
     
-    // Hash the password
-    const password = "gillette007";
-    const hash = await bcrypt.hash(password, 10);
+    // Update password for Williamsgamundi
+    const username = "Williamsgamundi";
+    const newPassword = "gamundistrateg";
+    const hash = await bcrypt.hash(newPassword, 10);
     
-    // Check if admin already exists
-    const { data: existing } = await supabase
+    // Update admin user password
+    const { error: updateError, data: updateData } = await supabase
       .from("admin_users")
-      .select("id")
-      .eq("username", "pocoyo")
-      .single();
+      .update({ password_hash: hash })
+      .eq("username", username)
+      .select();
     
-    if (existing) {
-      // Update existing admin
-      const { error } = await supabase
-        .from("admin_users")
-        .update({ password_hash: hash })
-        .eq("username", "pocoyo");
-      
-      if (error) throw error;
-      
-      return NextResponse.json({ 
-        success: true, 
-        message: "Admin password updated",
-        username: "pocoyo"
-      });
-    } else {
-      // Create new admin
-      const { error } = await supabase
-        .from("admin_users")
-        .insert({
-          username: "pocoyo",
-          password_hash: hash
-        });
-      
-      if (error) throw error;
-      
-      return NextResponse.json({ 
-        success: true, 
-        message: "Admin user created",
-        username: "pocoyo"
-      });
+    if (updateError) {
+      console.error("Update error:", updateError);
+      return NextResponse.json(
+        { error: "Error actualizando contraseña", details: updateError.message },
+        { status: 500 }
+      );
     }
+    
+    if (!updateData || updateData.length === 0) {
+      return NextResponse.json(
+        { error: "Usuario no encontrado" },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: "Contraseña actualizada exitosamente",
+      username: username,
+      passwordUpdated: true,
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
-    console.error("Error initializing admin:", error);
+    console.error("Error updating admin password:", error);
     return NextResponse.json(
-      { error: "Error initializing admin user" },
+      { error: "Error interno del servidor", details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
