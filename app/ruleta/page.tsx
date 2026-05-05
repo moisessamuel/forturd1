@@ -351,7 +351,7 @@ function RuletaPageContent() {
         }
       } else if (data.pending) {
         setIsPendingPayment(true)
-        setVerificationError('')
+        setVerificationError(data.error || 'Tu boleto está pendiente de confirmación.')
       } else {
         setIsPendingPayment(false)
         setVerificationError(data.error || 'No se encontraron compras con este número de teléfono.')
@@ -980,7 +980,7 @@ function RuletaPageContent() {
                   <span className="text-lg font-bold text-yellow-500">PENDIENTE DE PAGO</span>
                 </div>
                 <p className="text-sm text-yellow-400/80">
-                  Tu boleto aún no ha sido confirmado. Una vez aprobado el pago podrás usar tu giro gratis.
+                  {verificationError || 'Tu boleto aún no ha sido confirmado. Una vez aprobado el pago podrás usar tu giro gratis.'}
                 </p>
               </div>
             )}
