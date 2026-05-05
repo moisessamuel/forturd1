@@ -703,26 +703,24 @@ function RuletaPageContent() {
 
             {/* Payment method */}
             <div>
-              <Label className="mb-2 block text-sm font-semibold">METODO DE PAGO</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <Label className="mb-3 block text-center text-base font-bold uppercase tracking-wider text-primary" style={{ textShadow: '0 0 8px rgba(218, 165, 32, 0.4)' }}>METODO DE PAGO</Label>
+              <div className="flex flex-wrap justify-center gap-3">
                 {paymentMethods.map((method) => (
                   <button
                     key={method.id}
                     onClick={() => setSelectedMethod(method)}
-                    className={`flex flex-col items-center rounded-lg border-2 p-3 transition-all ${
+                    className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
                       selectedMethod?.id === method.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
+                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
+                        : 'hover:shadow-lg'
                     }`}
                   >
                     <Image
                       src={method.image}
                       alt={method.nombre}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 rounded object-contain"
+                      fill
+                      className="object-contain p-1.5"
                     />
-                    <span className="mt-1 text-xs">{method.shortName}</span>
                   </button>
                 ))}
               </div>
