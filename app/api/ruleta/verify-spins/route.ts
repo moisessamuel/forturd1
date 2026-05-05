@@ -11,18 +11,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Telefono es requerido' }, { status: 400 })
     }
 
-    // First, check if user has any pending ticket purchases (free spins)
+    // First, check if user has any ticket purchases (for free spins from tickets)
     const { data: purchaseGroups } = await supabase
       .from('purchase_groups')
       .select('id, estado, nombre')
       .eq('telefono', telefono)
       .order('created_at', { ascending: false })
 
-    // Check for pending ticket purchases
+    // Check for pending vs approved ticket purchases
     const pendingTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
     const approvedTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
 
-    // Search for confirmed purchases with this phone number (paid spins)
+    // Search for ruleta spin purchases with this phone number (paid spins for ruleta)
     const { data: jugadas, error } = await supabase
       .from('ruleta_jugadas')
       .select('*')
@@ -34,12 +34,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error al verificar' }, { status: 500 })
     }
 
-    // If no paid spins found but has pending ticket purchases
-    if ((!jugadas || jugadas.length === 0) && pendingTicketPurchases.length > 0 && approvedTicketPurchases.length === 0) {
+    // IMPORTANT: If user has ONLY pending ticket purchases (no approved tickets, no paid spins)
+    // they should see "Pendiente de pago"
+    const hasPendingTicketsOnly = pendingTicketPurchases.length > 0 && approvedTicketPurchases.length === 0
+    const hasNoRuletaSpins = !jugadas || jugadas.length === 0
+    const hasOnlyPendingRuletaSpins = jugadas && jugadas.length > 0 && jugadas.every(j => j.estado === 'pendiente')
+
+    // If user only has pending tickets (no approved tickets) and no ruleta spins
+    if (hasPendingTicketsOnly && hasNoRuletaSpins) {
       return NextResponse.json({ 
         success: false, 
         pending: true,
         error: 'Tu boleto aún no ha sido confirmado. Una vez aprobado podrás usar tu giro gratis.' 
+      })
+    }
+
+    // If user has pending tickets and only pending ruleta spins (no confirmed anything)
+    if (hasPendingTicketsOnly && hasOnlyPendingRuletaSpins) {
+      return NextResponse.json({ 
+        success: false, 
+        pending: true,
+        error: 'Tu pago aún no ha sido confirmado. Una vez aprobado podrás usar tus giros.' 
       })
     }
 
@@ -115,6 +130,26 @@ export async function GET(request: NextRequest) {
         success: false,
         error: 'No tienes giros disponibles. Ya usaste todos tus giros o compra mas para participar.'
       })
+    }
+
+    // Also check if user has pending ticket purchases with free spins
+    // Even if they have paid spins available, warn them about pending ticket free spins
+    if (pendingTicketPurchases.length > 0) {
+      // Get count of pending tickets
+      const { count: pendingTicketsCount } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .in('purchase_group_id', pendingTicketPurchases.map(pg => pg.id))
+
+      if (pendingTicketsCount && pendingTicketsCount > 0) {
+        // User has pending ticket free spins - show pending message
+        return NextResponse.json({
+          success: false,
+          pending: true,
+          pending_free_spins: pendingTicketsCount,
+          error: `Tienes ${pendingTicketsCount} giro${pendingTicketsCount > 1 ? 's' : ''} gratis pendiente${pendingTicketsCount > 1 ? 's' : ''} de confirmación. Una vez aprobado tu boleto podrás usarlos.`
+        })
+      }
     }
 
     // User has available spins
