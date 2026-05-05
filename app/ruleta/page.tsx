@@ -439,13 +439,18 @@ function RuletaPageContent() {
         {/* Title */}
         <div className="mb-8 text-center">
           <h1 
-            className="mb-2 text-3xl font-bold text-primary md:text-4xl"
-            style={{ textShadow: '0 0 20px rgba(218,165,32,0.6)' }}
+            className="mb-2 text-2xl font-black uppercase tracking-wider md:text-3xl"
+            style={{ 
+              textShadow: '0 0 30px rgba(218,165,32,0.8), 0 0 60px rgba(218,165,32,0.4)',
+              letterSpacing: '0.05em',
+              fontWeight: 900,
+              color: '#FFD700'
+            }}
           >
-            RULETA DE LA FORTUNA
+            Ruleta FortuRD
           </h1>
           <p className="text-muted-foreground">
-            Gira la ruleta y gana increibles premios
+            Gira la ruleta y gana increíbles premios
           </p>
         </div>
 
