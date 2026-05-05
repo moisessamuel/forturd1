@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Slider } from '@/components/ui/slider'
 import {
   Table,
   TableBody,
@@ -66,6 +67,8 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
   const [stats, setStats] = useState<SorteoAdminStats | null>(null)
   const [compras, setCompras] = useState<PurchaseGroup[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [progress, setProgress] = useState(0)
+  const [isSavingProgress, setIsSavingProgress] = useState(false)
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('')
@@ -93,6 +96,15 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
       const statsRes = await fetch(`/api/admin/sorteo-stats?slug=${sorteoSlug}`)
       const statsData = await statsRes.json()
       setStats(statsData)
+      
+      // Fetch progress for this sorteo
+      try {
+        const progressRes = await fetch(`/api/sorteos/${sorteoSlug}/progress`)
+        const progressData = await progressRes.json()
+        setProgress(progressData.porcentaje || 0)
+      } catch (err) {
+        console.error('Error fetching progress:', err)
+      }
       
       // Fetch compras for this sorteo using the dedicated admin endpoint
       const comprasRes = await fetch(`/api/admin/sorteo-compras?sorteo_slug=${sorteoSlug}&estado=${estadoFilter}&search=${searchTerm}`)
@@ -234,6 +246,33 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     toast.success('Filtros restablecidos')
   }
 
+  const handleProgressChange = async (value: number[]) => {
+    const newProgress = value[0]
+    setProgress(newProgress)
+    
+    try {
+      setIsSavingProgress(true)
+      const response = await fetch(`/api/sorteos/${sorteoSlug}/progress`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ porcentaje: newProgress }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Error al guardar progreso')
+      }
+      
+      toast.success(`Progreso actualizado a ${newProgress}%`)
+    } catch (error) {
+      console.error('Error saving progress:', error)
+      toast.error('Error al guardar el progreso')
+      // Revert to previous value on error
+      await fetchData()
+    } finally {
+      setIsSavingProgress(false)
+    }
+  }
+
   const formatCurrency = (amount: number, currency: string = 'DOP') => {
     if (currency === 'USD') {
       return `US$ ${new Intl.NumberFormat('en-US').format(amount)}`
@@ -318,6 +357,30 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
           </CardHeader>
           {sectionsOpen.stats && (
             <CardContent>
+              {/* Progress Control */}
+              <div className="mb-6 rounded-lg bg-primary/5 p-4 border border-primary/20">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-semibold text-foreground">
+                    Progreso del Sorteo
+                  </label>
+                  <span className="text-lg font-bold text-primary">
+                    {progress}%
+                  </span>
+                </div>
+                <Slider
+                  value={[progress]}
+                  onValueChange={handleProgressChange}
+                  min={0}
+                  max={100}
+                  step={1}
+                  disabled={isSavingProgress}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Ajusta el porcentaje de progreso del sorteo. Los cambios se guardan automáticamente.
+                </p>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-4">
                 <Card className="bg-green-500/10 border-green-500/30">
                   <CardContent className="p-4">
