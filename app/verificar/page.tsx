@@ -15,7 +15,7 @@ interface TicketResult {
   numero_boleto: string
   nombre: string
   telefono?: string
-  estado: 'pendiente' | 'aprobado' | 'rechazado'
+  estado: 'pendiente' | 'aprobado' | 'rechazado' | 'caducado'
   cantidad_boletos: number
   monto: number
   moneda: string
@@ -24,6 +24,9 @@ interface TicketResult {
   sorteo_slug?: string
   giros_gratis_disponibles?: number
   giros_gratis_usados?: number
+  es_boleto_fisico?: boolean
+  caducado?: boolean
+  mensaje_caducado?: string
 }
 
 export default function VerificarPage() {
@@ -166,6 +169,14 @@ export default function VerificarPage() {
           bgColor: 'bg-red-500/10',
           borderColor: 'border-red-500/50',
           label: 'Rechazado',
+        }
+      case 'caducado':
+        return {
+          icon: XCircle,
+          color: 'text-orange-500',
+          bgColor: 'bg-orange-500/10',
+          borderColor: 'border-orange-500/50',
+          label: 'Caducado',
         }
       default:
         return {
@@ -346,6 +357,34 @@ export default function VerificarPage() {
                   const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
                   const girosUsados = singleResult.giros_gratis_usados ?? 0
                   const isPending = singleResult.estado === 'pendiente'
+                  const isCaducado = singleResult.estado === 'caducado' || singleResult.caducado
+                  const esBoletoFisico = singleResult.es_boleto_fisico
+                  
+                  // Caducado tickets show expired message
+                  if (isCaducado) {
+                    return (
+                      <div className="rounded-lg border border-orange-500/50 bg-orange-500/10 p-4 text-center">
+                        <XCircle className="mx-auto mb-2 h-8 w-8 text-orange-500" />
+                        <p className="font-bold text-orange-500">Boleto Caducado</p>
+                        <p className="mt-2 text-sm text-orange-400">
+                          {singleResult.mensaje_caducado || 'Boleto caducado, comunicarse con soporte +1 (809) 272-5841'}
+                        </p>
+                      </div>
+                    )
+                  }
+                  
+                  // Physical tickets don't get free spins
+                  if (esBoletoFisico) {
+                    return (
+                      <div className="rounded-lg border border-blue-500/50 bg-blue-500/10 p-4 text-center">
+                        <Ticket className="mx-auto mb-2 h-8 w-8 text-blue-500" />
+                        <p className="font-bold text-blue-500">Boleto Fisico</p>
+                        <p className="mt-2 text-sm text-blue-400">
+                          Los boletos fisicos no incluyen giros gratis en la ruleta.
+                        </p>
+                      </div>
+                    )
+                  }
                   
                   if (isPending) {
                     return (
@@ -358,7 +397,7 @@ export default function VerificarPage() {
                           GIRO GRATIS PENDIENTE
                         </Button>
                         <p className="mt-2 text-center text-xs text-yellow-500">
-                          Tu boleto está pendiente de confirmación. Una vez aprobado podrás usar tu giro gratis.
+                          Tu boleto esta pendiente de confirmacion. Una vez aprobado podras usar tu giro gratis.
                         </p>
                       </>
                     )
@@ -378,7 +417,7 @@ export default function VerificarPage() {
                       <p className="mt-2 text-center text-xs text-muted-foreground">
                         {girosDisponibles > 0 
                           ? `${singleResult.cantidad_boletos} boleto${singleResult.cantidad_boletos > 1 ? 's' : ''} = ${singleResult.cantidad_boletos} giro${singleResult.cantidad_boletos > 1 ? 's' : ''} gratis. Usados: ${girosUsados}`
-                          : 'Ya usaste tus giros gratis. Puedes comprar más giros.'}
+                          : 'Ya usaste tus giros gratis. Puedes comprar mas giros.'}
                       </p>
                     </>
                   )
@@ -451,6 +490,30 @@ export default function VerificarPage() {
                             {(() => {
                               const girosDisponibles = ticket.giros_gratis_disponibles ?? ticket.cantidad_boletos
                               const isPending = ticket.estado === 'pendiente'
+                              const isCaducado = ticket.estado === 'caducado' || ticket.caducado
+                              const esBoletoFisico = ticket.es_boleto_fisico
+                              
+                              // Caducado tickets show expired message
+                              if (isCaducado) {
+                                return (
+                                  <div className="rounded border border-orange-500/50 bg-orange-500/10 p-2 text-center">
+                                    <p className="text-xs font-bold text-orange-500">Boleto Caducado</p>
+                                    <p className="mt-1 text-xs text-orange-400">
+                                      {ticket.mensaje_caducado || 'Comunicarse con soporte +1 (809) 272-5841'}
+                                    </p>
+                                  </div>
+                                )
+                              }
+                              
+                              // Physical tickets don't get free spins
+                              if (esBoletoFisico) {
+                                return (
+                                  <div className="rounded border border-blue-500/50 bg-blue-500/10 p-2 text-center">
+                                    <p className="text-xs font-bold text-blue-500">Boleto Fisico</p>
+                                    <p className="mt-1 text-xs text-blue-400">Sin giro gratis</p>
+                                  </div>
+                                )
+                              }
                               
                               if (isPending) {
                                 return (
