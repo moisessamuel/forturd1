@@ -228,6 +228,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     
     try {
       setIsSavingProgress(true)
+      console.log(`[v0] Admin panel: Saving progress for ${sorteoSlug}: ${newProgress}%`)
       
       const response = await fetch(`/api/sorteos/${sorteoSlug}/progress`, {
         method: 'PUT',
@@ -236,6 +237,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
       })
       
       const data = await response.json()
+      console.log(`[v0] Admin panel: Response:`, data)
       
       if (!response.ok) {
         throw new Error(data.error || 'Error al guardar progreso')
@@ -243,7 +245,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
       
       toast.success(`Progreso actualizado a ${newProgress}%`)
     } catch (error) {
-      console.error('[v0] Error saving progress:', error)
+      console.error('[v0] Admin panel: Error saving progress:', error)
       toast.error(error instanceof Error ? error.message : 'Error al guardar el progreso')
       setProgress(0)
       await fetchData()

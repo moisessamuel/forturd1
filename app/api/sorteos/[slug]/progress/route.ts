@@ -37,8 +37,11 @@ export async function GET(
       .eq('slug', slug)
       .single()
 
+    console.log(`[v0] GET /api/sorteos/${slug}/progress - Sorteo data:`, { sorteo, sorteoError })
+
     // If sorteo doesn't exist, return default progress
     if (sorteoError || !sorteo) {
+      console.log(`[v0] Sorteo not found for ${slug}`)
       return NextResponse.json({ 
         porcentaje: 0, 
         vendidos: 0, 
@@ -51,11 +54,13 @@ export async function GET(
     // Try to get manual progress from metadata JSON field
     let manualProgress = null
     if (sorteo.metadata && typeof sorteo.metadata === 'object') {
-      manualProgress = sorteo.metadata.progreso_manual
+      manualProgress = (sorteo.metadata as any).progreso_manual
+      console.log(`[v0] Manual progress from metadata:`, manualProgress)
     }
 
     // If there's a manual progress set, return it
     if (manualProgress !== null && manualProgress !== undefined) {
+      console.log(`[v0] Returning manual progress: ${manualProgress}%`)
       return NextResponse.json({
         porcentaje: manualProgress,
         vendidos: 0,
@@ -129,12 +134,16 @@ export async function PUT(
 
     const supabase = await createClient()
 
+    console.log(`[v0] PUT /api/sorteos/${slug}/progress - Setting to ${porcentaje}%`)
+
     // First, try to get current sorteo and metadata
     let { data: sorteo, error: selectError } = await supabase
       .from('sorteos')
       .select('metadata')
       .eq('slug', slug)
       .single()
+
+    console.log(`[v0] Current sorteo data:`, { sorteo, selectError })
 
     // If sorteo doesn't exist, create it first
     if (selectError || !sorteo) {
@@ -183,12 +192,16 @@ export async function PUT(
       ultima_actualizacion: new Date().toISOString(),
     }
 
+    console.log(`[v0] Updated metadata:`, updatedMetadata)
+
     // Update the metadata field in sorteos table
     const { data: updateData, error: updateError } = await supabase
       .from('sorteos')
       .update({ metadata: updatedMetadata })
       .eq('slug', slug)
       .select()
+
+    console.log(`[v0] Update result:`, { updateData, updateError })
 
     if (updateError) {
       console.error(`[v0] Error updating progress for ${slug}:`, updateError)
