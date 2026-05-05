@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SorteoAdminPanel } from '@/components/sorteo-admin-panel'
 
+import { DatabaseMigration } from '@/components/database-migration'
+
 export default function AdminBMWX7Page() {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -36,5 +38,10 @@ export default function AdminBMWX7Page() {
     return null
   }
 
-  return <SorteoAdminPanel sorteoSlug="bmw-x7" />
+  return (
+    <>
+      <DatabaseMigration />
+      <SorteoAdminPanel sorteoSlug="bmw-x7" />
+    </>
+  )
 }

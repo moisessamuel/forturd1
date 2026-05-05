@@ -33,12 +33,22 @@ export function SorteoPage({ slug }: SorteoPageProps) {
       })
 
     // Fetch progress for this specific sorteo
-    fetch(`/api/sorteos/${slug}/progress`)
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchProgress = async () => {
+      try {
+        const res = await fetch(`/api/sorteos/${slug}/progress`)
+        const data = await res.json()
         setProgress(data.porcentaje || 0)
-      })
-      .catch(console.error)
+      } catch (error) {
+        console.error('Error fetching progress:', error)
+      }
+    }
+
+    fetchProgress()
+
+    // Poll for progress updates every 5 seconds
+    const interval = setInterval(fetchProgress, 5000)
+    
+    return () => clearInterval(interval)
   }, [slug])
 
   const formatCurrency = (amount: number, currency: 'DOP' | 'USD' = 'DOP') => {

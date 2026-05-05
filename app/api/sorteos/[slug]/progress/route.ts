@@ -1,6 +1,27 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+const DEFAULT_SORTEOS: Record<string, any> = {
+  'bmw-x6': {
+    slug: 'bmw-x6',
+    nombre: 'BMW X6 2024',
+    descripcion: 'Deportivo, elegante y potente. Diseñado para destacar.',
+    precio_rd: 490,
+    precio_usd: 9,
+    total_boletos: 99999,
+    estado: 'activo',
+  },
+  'bmw-x7': {
+    slug: 'bmw-x7',
+    nombre: 'BMW X7 2024',
+    descripcion: 'Espacioso, cómodo y confortable. Ideal para toda la familia.',
+    precio_rd: 490,
+    precio_usd: 9,
+    total_boletos: 99999,
+    estado: 'activo',
+  },
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -16,14 +37,21 @@ export async function GET(
       .eq('slug', slug)
       .single()
 
+    // If sorteo doesn't exist, return default progress
     if (sorteoError || !sorteo) {
-      return NextResponse.json({ porcentaje: 0, vendidos: 0, total: 1000 })
+      return NextResponse.json({ 
+        porcentaje: 0, 
+        vendidos: 0, 
+        total: 99999,
+        isManual: false,
+        _note: 'Sorteo not found in database'
+      })
     }
 
     // Try to get manual progress from metadata JSON field
     let manualProgress = null
     if (sorteo.metadata && typeof sorteo.metadata === 'object') {
-      manualProgress = sorteo.metadata.progreso_manual
+      manualProgress = (sorteo.metadata as any).progreso_manual
     }
 
     // If there's a manual progress set, return it
@@ -68,7 +96,7 @@ export async function GET(
       vendidos += legacyCompras.reduce((sum, c) => sum + (c.cantidad || 0), 0)
     }
 
-    const total = sorteo.total_boletos || 1000
+    const total = sorteo.total_boletos || 99999
     const porcentaje = (vendidos / total) * 100
 
     return NextResponse.json({
@@ -79,7 +107,7 @@ export async function GET(
     })
   } catch (error) {
     console.error('Error getting sorteo progress:', error)
-    return NextResponse.json({ porcentaje: 0, vendidos: 0, total: 1000 })
+    return NextResponse.json({ porcentaje: 0, vendidos: 0, total: 99999 })
   }
 }
 
@@ -108,10 +136,38 @@ export async function PUT(
       .eq('slug', slug)
       .single()
 
-    if (selectError) {
-      console.error(`[v0] Error fetching sorteo ${slug}:`, selectError)
+    // If sorteo doesn't exist, create it first
+    if (selectError || !sorteo) {
+      if (DEFAULT_SORTEOS[slug]) {
+        const { data: created, error: createError } = await supabase
+          .from('sorteos')
+          .insert({
+            ...DEFAULT_SORTEOS[slug],
+            metadata: {
+              progreso_manual: porcentaje,
+              boletosVendidos: [],
+              created_at: new Date().toISOString(),
+            },
+          })
+          .select('metadata')
+          .single()
+
+        if (!createError && created) {
+          return NextResponse.json(
+            { 
+              porcentaje, 
+              message: 'Sorteo created and progress updated',
+              isManual: true,
+              slug,
+              updated_at: new Date().toISOString()
+            },
+            { status: 200 }
+          )
+        }
+      }
+
       return NextResponse.json(
-        { error: `Sorteo not found: ${slug}` },
+        { error: `Sorteo not found and could not be created: ${slug}` },
         { status: 404 }
       )
     }
@@ -134,7 +190,7 @@ export async function PUT(
       .select()
 
     if (updateError) {
-      console.error(`[v0] Error updating progress for ${slug}:`, updateError)
+      console.error('Error updating progress:', updateError)
       return NextResponse.json(
         { 
           error: `Error updating progress: ${updateError.message}`,
@@ -156,7 +212,7 @@ export async function PUT(
       { status: 200 }
     )
   } catch (error) {
-    console.error(`[v0] Error in PUT /api/sorteos/[slug]/progress:`, error)
+    console.error('Error in PUT /api/sorteos/[slug]/progress:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
       { error: `Error updating progress: ${errorMessage}` },
