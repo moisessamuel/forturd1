@@ -26,12 +26,12 @@ export async function POST() {
       message: 'Metadata column added to sorteos table',
     })
   } catch (error) {
-    console.error('[v0] Migration error:', error)
+    console.error('Migration error:', error)
     return NextResponse.json(
       { 
         success: false,
         error: error instanceof Error ? error.message : 'Migration failed',
-        message: 'Please add the metadata column manually in Supabase: ALTER TABLE sorteos ADD COLUMN metadata JSONB DEFAULT \'{}\'::jsonb;'
+        status: 'error'
       },
       { status: 500 }
     )

@@ -37,10 +37,9 @@ export function SorteoPage({ slug }: SorteoPageProps) {
       try {
         const res = await fetch(`/api/sorteos/${slug}/progress`)
         const data = await res.json()
-        console.log(`[v0] Progress for ${slug}:`, data)
         setProgress(data.porcentaje || 0)
       } catch (error) {
-        console.error('[v0] Error fetching progress:', error)
+        console.error('Error fetching progress:', error)
       }
     }
 
