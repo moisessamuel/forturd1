@@ -190,11 +190,11 @@ export function SorteosDisponibles() {
                   <div className="mb-3">
                     <div className="mb-1 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Progreso</span>
-                      <span className="font-bold text-primary">{(sorteo.progress || 0).toFixed(1)}%</span>
+                      <span className="font-bold text-green-500">{(sorteo.progress || 0).toFixed(1)}%</span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500"
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-green-500 transition-all duration-500"
                         style={{ width: `${Math.min(sorteo.progress || 0, 100)}%` }}
                       />
                     </div>
