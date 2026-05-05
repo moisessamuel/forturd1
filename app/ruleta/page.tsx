@@ -337,15 +337,50 @@ function RuletaPageContent() {
       if (response.ok && data.success) {
         if (data.giros_disponibles > 0) {
           // User has confirmed spins available
-          setPaidSpinsRemaining(data.giros_disponibles)
-          setJugadaId(data.jugada_id)
+          // Distinguish between free spins (from tickets) and paid spins
+          const freeSpins = data.giros_gratis_disponibles || 0
+          const paidSpins = data.giros_pagados_disponibles || 0
+          
+          // Set free spin data if they have free spins from approved tickets
+          if (freeSpins > 0) {
+            setFreeSpinsRemaining(freeSpins)
+            // Create a free spin data object for the session
+            setFreeSpinData({
+              numero_boleto: 'TICKET', // Generic since it's from verification
+              nombre: data.nombre || '',
+              telefono: verificationPhone,
+              used: false,
+              giros_disponibles: freeSpins,
+            })
+          }
+          
+          // Set paid spins if they have them
+          if (paidSpins > 0) {
+            setPaidSpinsRemaining(paidSpins)
+            setJugadaId(data.jugada_id)
+          }
+          
           setFormData(prev => ({ ...prev, telefono: verificationPhone, nombre: data.nombre || '' }))
           setCanSpin(true)
           setShowVerificationModal(false)
           setVerificationPhone('')
-          toast.success(`Tienes ${data.giros_disponibles} giro${data.giros_disponibles > 1 ? 's' : ''} disponible${data.giros_disponibles > 1 ? 's' : ''}!`, {
-            duration: 4000,
-          })
+          
+          // Show message indicating what spins they have
+          let message = ''
+          if (freeSpins > 0 && paidSpins > 0) {
+            message = `Tienes ${freeSpins} giro${freeSpins > 1 ? 's' : ''} gratis y ${paidSpins} giro${paidSpins > 1 ? 's' : ''} comprado${paidSpins > 1 ? 's' : ''}!`
+          } else if (freeSpins > 0) {
+            message = `Tienes ${freeSpins} giro${freeSpins > 1 ? 's' : ''} gratis disponible${freeSpins > 1 ? 's' : ''}!`
+          } else {
+            message = `Tienes ${paidSpins} giro${paidSpins > 1 ? 's' : ''} comprado${paidSpins > 1 ? 's' : ''} disponible${paidSpins > 1 ? 's' : ''}!`
+          }
+          
+          // Also warn about pending tickets if they have any
+          if (data.boletos_pendientes > 0) {
+            message += ` (${data.boletos_pendientes} boleto${data.boletos_pendientes > 1 ? 's' : ''} pendiente${data.boletos_pendientes > 1 ? 's' : ''} de confirmación)`
+          }
+          
+          toast.success(message, { duration: 5000 })
         } else {
           setVerificationError('No tienes giros disponibles. Compra giros para participar.')
         }
@@ -583,14 +618,23 @@ function RuletaPageContent() {
         {/* Purchase pending message */}
         {purchaseComplete && !canSpin && (
           <Card className="mx-auto max-w-md border-primary/50 bg-primary/10">
-            <CardContent className="flex items-center gap-4 p-6">
-              <CheckCircle className="h-10 w-10 text-green-500" />
-              <div>
-                <p className="font-bold text-foreground">Compra registrada</p>
-                <p className="text-sm text-muted-foreground">
-                  Tu giro sera habilitado cuando se confirme el pago
-                </p>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <CheckCircle className="h-10 w-10 shrink-0 text-green-500" />
+                <div>
+                  <p className="font-bold text-foreground">Compra registrada</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tu giro sera habilitado cuando se confirme el pago
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowVerificationModal(true)}
+                className="mt-4 w-full rounded-lg border border-primary/40 bg-transparent py-3 text-center transition-colors hover:bg-primary/10"
+              >
+                <p className="text-xs text-muted-foreground">Ya tengo mis giros</p>
+                <p className="font-bold text-primary">Participar ahora</p>
+              </button>
             </CardContent>
           </Card>
         )}

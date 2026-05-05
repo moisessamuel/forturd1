@@ -16,34 +16,48 @@ export async function GET(request: NextRequest) {
     // Each ticket = 1 free spin. Must be APPROVED to use.
     // =============================================
     
-    const { data: purchaseGroups } = await supabase
-      .from('purchase_groups')
-      .select('id, estado, nombre, telefono')
-      .eq('telefono', telefono)
-      .order('created_at', { ascending: false })
+    // First, find the player by phone number
+    const { data: player } = await supabase
+      .from('players')
+      .select('id, nombre, phone_number')
+      .eq('phone_number', telefono)
+      .single()
 
-    // Separate pending vs approved ticket purchases
-    const pendingTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
-    const approvedTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
-
-    // Count PENDING tickets (each ticket = 1 pending free spin)
     let pendingTicketsCount = 0
-    if (pendingTicketPurchases.length > 0) {
-      const { count } = await supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .in('purchase_group_id', pendingTicketPurchases.map(pg => pg.id))
-      pendingTicketsCount = count || 0
-    }
-
-    // Count APPROVED tickets (each ticket = 1 free spin available)
     let approvedTicketsCount = 0
-    if (approvedTicketPurchases.length > 0) {
-      const { count } = await supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .in('purchase_group_id', approvedTicketPurchases.map(pg => pg.id))
-      approvedTicketsCount = count || 0
+    let playerName = ''
+
+    if (player) {
+      playerName = player.nombre || ''
+      
+      // Get purchase groups for this player
+      const { data: purchaseGroups } = await supabase
+        .from('purchase_groups')
+        .select('id, estado')
+        .eq('player_id', player.id)
+        .order('created_at', { ascending: false })
+
+      // Separate pending vs approved ticket purchases
+      const pendingTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
+      const approvedTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
+
+      // Count PENDING tickets (each ticket = 1 pending free spin)
+      if (pendingTicketPurchases.length > 0) {
+        const { count } = await supabase
+          .from('tickets')
+          .select('*', { count: 'exact', head: true })
+          .in('purchase_group_id', pendingTicketPurchases.map(pg => pg.id))
+        pendingTicketsCount = count || 0
+      }
+
+      // Count APPROVED tickets (each ticket = 1 free spin available)
+      if (approvedTicketPurchases.length > 0) {
+        const { count } = await supabase
+          .from('tickets')
+          .select('*', { count: 'exact', head: true })
+          .in('purchase_group_id', approvedTicketPurchases.map(pg => pg.id))
+        approvedTicketsCount = count || 0
+      }
     }
 
     // Count how many FREE spins have been USED for this phone number
@@ -169,7 +183,7 @@ export async function GET(request: NextRequest) {
       boletos_pendientes: pendingTicketsCount,
       // Legacy fields for compatibility
       jugada_id: latestActiveJugada?.id,
-      nombre: latestActiveJugada?.nombre || purchaseGroups?.[0]?.nombre || '',
+      nombre: latestActiveJugada?.nombre || playerName || '',
       telefono: telefono,
     })
 
