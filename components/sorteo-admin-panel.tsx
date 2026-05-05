@@ -311,7 +311,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-primary" />
-                Estadisticas - {sorteo?.nombre}
+                Estadísticas - {sorteo?.nombre}
               </CardTitle>
               {sectionsOpen.stats ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </div>
@@ -377,7 +377,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nombre o telefono..."
+                    placeholder="Buscar por nombre o teléfono..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
@@ -402,7 +402,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                     <TableRow>
                       <TableHead>Número de Boleto</TableHead>
                       <TableHead>Comprador</TableHead>
-                      <TableHead>Telefono</TableHead>
+                      <TableHead>Teléfono</TableHead>
                       <TableHead>Boletos</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>

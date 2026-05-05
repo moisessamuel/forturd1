@@ -136,7 +136,7 @@ export function SorteosDisponibles() {
               </h1>
               <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg">
                 Una de estas BMW puede ser tuya. Por cada boleto comprado recibes un giro en la ruleta FortuRD. 
-                Participa y aumenta tus oportunidades de ganar increibles premios.
+                Participa y aumenta tus oportunidades de ganar increíbles premios.
               </p>
             </div>
           </div>
@@ -178,9 +178,9 @@ export function SorteosDisponibles() {
                   </Link>
                   <div className="mb-3 text-sm text-muted-foreground">
                     {sorteo.slug === 'bmw-x6' ? (
-                      <span>Deportivo, elegante y potente. Disenado para destacar.</span>
+                      <span>Deportivo, elegante y potente. Diseñado para destacar.</span>
                     ) : sorteo.slug === 'bmw-x7' ? (
-                      <span>Espacioso, comodo y confortable. Ideal para toda la familia.</span>
+                      <span>Espacioso, cómodo y confortable. Ideal para toda la familia.</span>
                     ) : (
                       <span>CON LA VENTA DEL 100%</span>
                     )}
@@ -234,7 +234,7 @@ export function SorteosDisponibles() {
                 RD$100 / US$2 por giro
               </p>
               <p className="mb-4 text-muted-foreground">
-                Gira la ruleta y gana increibles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho mas!
+                Gira la ruleta y gana increíbles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho más!
               </p>
               <p className="mb-4 text-sm text-primary">
                 Al comprar boletos BMW recibes un giro GRATIS!
@@ -260,7 +260,7 @@ export function SorteosDisponibles() {
                   className="text-xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.7)] md:text-2xl lg:text-3xl"
                   style={{ textShadow: '0 0 20px rgba(218,165,32,0.6), 0 0 40px rgba(218,165,32,0.3)' }}
                 >
-                  Verifica tu boleto aqui y obtiene tu giro gratis
+                  Verifica tu boleto aquí y obtén tu giro gratis
                 </p>
               </div>
               {/* Animated shimmer effect */}

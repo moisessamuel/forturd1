@@ -113,7 +113,7 @@ export default function AdminLoginPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Credenciales invalidas')
+        throw new Error(data.error || 'Credenciales inválidas')
       }
 
       // Store session based on role
@@ -131,15 +131,15 @@ export default function AdminLoginPage() {
         toast.success('Bienvenido ' + data.user.username)
       } else if (data.user.role === 'sorteo_bmw-x6') {
         sessionStorage.setItem('bmwx6_admin_session', JSON.stringify(sessionData))
-        toast.success('Inicio de sesion exitoso')
+        toast.success('Inicio de sesión exitoso')
         router.push('/admin/bmw-x6')
       } else if (data.user.role === 'sorteo_bmw-x7') {
         sessionStorage.setItem('bmwx7_admin_session', JSON.stringify(sessionData))
-        toast.success('Inicio de sesion exitoso')
+        toast.success('Inicio de sesión exitoso')
         router.push('/admin/bmw-x7')
       } else if (data.user.role === 'ruleta_admin' || data.user.role === 'ruleta') {
         sessionStorage.setItem('ruleta_admin_session', JSON.stringify(sessionData))
-        toast.success('Inicio de sesion exitoso')
+        toast.success('Inicio de sesión exitoso')
         router.push('/admin/ruleta')
       } else {
         // Default: show panel selection
@@ -149,7 +149,7 @@ export default function AdminLoginPage() {
         toast.success('Bienvenido ' + data.user.username)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al iniciar sesion')
+      toast.error(error instanceof Error ? error.message : 'Error al iniciar sesión')
     } finally {
       setIsLoading(false)
     }
@@ -183,7 +183,7 @@ export default function AdminLoginPage() {
     setViewState('login')
     setUsername('')
     setPassword('')
-    toast.success('Sesion cerrada')
+    toast.success('Sesión cerrada')
   }
 
   // Panel Selection View
@@ -217,7 +217,7 @@ export default function AdminLoginPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold">BMW X6</h3>
-                  <p className="text-sm text-muted-foreground">Panel de administracion del sorteo BMW X6</p>
+                  <p className="text-sm text-muted-foreground">Panel de administración del sorteo BMW X6</p>
                 </div>
               </CardContent>
             </Card>
@@ -233,7 +233,7 @@ export default function AdminLoginPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold">BMW X7</h3>
-                  <p className="text-sm text-muted-foreground">Panel de administracion del sorteo BMW X7</p>
+                  <p className="text-sm text-muted-foreground">Panel de administración del sorteo BMW X7</p>
                 </div>
               </CardContent>
             </Card>
@@ -249,7 +249,7 @@ export default function AdminLoginPage() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold">Ruleta</h3>
-                  <p className="text-sm text-muted-foreground">Panel de administracion de la ruleta de premios</p>
+                  <p className="text-sm text-muted-foreground">Panel de administración de la ruleta de premios</p>
                 </div>
               </CardContent>
             </Card>
@@ -257,7 +257,7 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 text-center">
             <Button variant="ghost" onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
-              Cerrar sesion
+              Cerrar sesión
             </Button>
           </div>
         </div>
@@ -280,7 +280,7 @@ export default function AdminLoginPage() {
           <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-primary bg-primary/10">
             <Lock className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="mb-2 text-2xl font-bold">Panel de Administracion</h1>
+          <h1 className="mb-2 text-2xl font-bold">Panel de Administración</h1>
           <p className="text-center text-muted-foreground">
             Acceso centralizado — Solo personal autorizado
           </p>
@@ -304,7 +304,7 @@ export default function AdminLoginPage() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium">Contrasena</label>
+                <label className="mb-2 block text-sm font-medium">Contraseña</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -329,16 +329,16 @@ export default function AdminLoginPage() {
                 disabled={isLoading}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               >
-                {isLoading ? 'Verificando...' : 'Iniciar sesion'}
+                {isLoading ? 'Verificando...' : 'Iniciar sesión'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Este acceso esta protegido y monitoreado.
+          Este acceso está protegido y monitoreado.
           <br />
-          Los intentos no autorizados seran registrados.
+          Los intentos no autorizados serán registrados.
         </p>
       </div>
     </main>

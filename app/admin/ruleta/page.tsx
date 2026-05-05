@@ -451,7 +451,7 @@ export default function RuletaAdminPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nombre o telefono..."
+            placeholder="Buscar por nombre o teléfono..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -487,7 +487,7 @@ export default function RuletaAdminPage() {
                 <TableRow>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Jugador</TableHead>
-                  <TableHead>Telefono</TableHead>
+                  <TableHead>Teléfono</TableHead>
                   <TableHead>Boleto Ref.</TableHead>
                   <TableHead>Monto</TableHead>
                   <TableHead>Tipo</TableHead>
@@ -651,7 +651,7 @@ export default function RuletaAdminPage() {
                   <p className="font-medium">{selectedJugada.nombre}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Telefono</p>
+                  <p className="text-sm text-muted-foreground">Teléfono</p>
                   <p className="font-medium">{selectedJugada.telefono}</p>
                 </div>
                 {selectedJugada.email && (
@@ -779,10 +779,10 @@ export default function RuletaAdminPage() {
                 <p>• Todos los giros registrados</p>
                 <p>• Historial de jugadores</p>
                 <p>• Comprobantes de pago</p>
-                <p>• Estadisticas y contadores</p>
+                <p>• Estadísticas y contadores</p>
               </div>
               <p className="mt-2 text-xs font-bold text-red-500">
-                Esta accion NO se puede deshacer
+Esta acción NO se puede deshacer
               </p>
             </div>
           </div>
@@ -822,7 +822,7 @@ export default function RuletaAdminPage() {
           {jugadaToDelete && (
             <div className="rounded-lg bg-muted/50 p-4">
               <p><strong>Jugador:</strong> {jugadaToDelete.nombre}</p>
-              <p><strong>Telefono:</strong> {jugadaToDelete.telefono}</p>
+              <p><strong>Teléfono:</strong> {jugadaToDelete.telefono}</p>
               <p><strong>Estado:</strong> {jugadaToDelete.estado}</p>
               <p><strong>Monto:</strong> {jugadaToDelete.es_gratis || jugadaToDelete.es_giro_gratis ? 'GRATIS' : `${jugadaToDelete.moneda === 'DOP' ? 'RD$' : 'US$'}${jugadaToDelete.monto}`}</p>
             </div>

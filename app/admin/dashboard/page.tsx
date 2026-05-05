@@ -317,10 +317,10 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error saving config')
 
-      toast.success('Configuracion guardada')
+      toast.success('Configuración guardada')
       fetchData()
     } catch {
-      toast.error('Error al guardar configuracion')
+      toast.error('Error al guardar configuración')
     } finally {
       setIsSavingConfig(false)
     }
@@ -1169,7 +1169,7 @@ export default function AdminDashboard() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2 text-primary">
                 <Settings className="h-5 w-5" />
-                {'Configuracion de Boletos'}
+                {'Configuración de Boletos'}
               </span>
               {sectionsOpen.config ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
             </CardTitle>
@@ -1770,7 +1770,7 @@ export default function AdminDashboard() {
                         variant="ghost"
                         onClick={clearSelection}
                       >
-                        Limpiar seleccion
+                        Limpiar selección
                       </Button>
                     </>
                   )}

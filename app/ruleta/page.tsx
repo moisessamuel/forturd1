@@ -194,7 +194,7 @@ function RuletaPageContent() {
                 toast.success(`Bienvenido ${data.nombre}! Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} gratis.`, { duration: 4000 })
               } else {
                 setHasFreeSpinUsed(true)
-                toast.info('Ya usaste todos tus giros gratis. Puedes comprar mas giros.', { duration: 4000 })
+                toast.info('Ya usaste todos tus giros gratis. Puedes comprar más giros.', { duration: 4000 })
               }
             })
             .catch(() => {
@@ -315,7 +315,7 @@ function RuletaPageContent() {
   // Verify phone number and check for confirmed spins
   const handleVerifyPhone = async () => {
     if (!verificationPhone.trim()) {
-      setVerificationError('Por favor ingresa tu numero de telefono')
+      setVerificationError('Por favor ingresa tu número de teléfono')
       return
     }
 
@@ -342,12 +342,12 @@ function RuletaPageContent() {
           setVerificationError('No tienes giros disponibles. Compra giros para participar.')
         }
       } else if (data.pending) {
-        setVerificationError('Tu pago aun no ha sido confirmado. Por favor espera la verificacion.')
+        setVerificationError('Tu pago aún no ha sido confirmado. Por favor espera la verificación.')
       } else {
-        setVerificationError(data.error || 'No se encontraron compras con este numero de telefono.')
+        setVerificationError(data.error || 'No se encontraron compras con este número de teléfono.')
       }
     } catch {
-      setVerificationError('Error de conexion. Intenta de nuevo.')
+      setVerificationError('Error de conexión. Intenta de nuevo.')
     }
 
     setVerifying(false)
@@ -679,7 +679,7 @@ function RuletaPageContent() {
               </div>
               <div>
                 <Label className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" /> Numero de Celular *
+                  <Phone className="h-4 w-4" /> Número de Celular *
                 </Label>
                 <Input
                   value={formData.telefono}
@@ -690,7 +690,7 @@ function RuletaPageContent() {
               </div>
               <div>
                 <Label className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" /> Correo Electronico (opcional)
+                  <Mail className="h-4 w-4" /> Correo Electrónico (opcional)
                 </Label>
                 <Input
                   value={formData.email}
@@ -703,26 +703,24 @@ function RuletaPageContent() {
 
             {/* Payment method */}
             <div>
-              <Label className="mb-2 block text-sm font-semibold">METODO DE PAGO</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <Label className="mb-3 block text-center text-base font-bold uppercase tracking-wider text-primary" style={{ textShadow: '0 0 8px rgba(218, 165, 32, 0.4)' }}>MÉTODO DE PAGO</Label>
+              <div className="flex flex-wrap justify-center gap-3">
                 {paymentMethods.map((method) => (
                   <button
                     key={method.id}
                     onClick={() => setSelectedMethod(method)}
-                    className={`flex flex-col items-center rounded-lg border-2 p-3 transition-all ${
+                    className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
                       selectedMethod?.id === method.id
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-primary/50'
+                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
+                        : 'hover:shadow-lg'
                     }`}
                   >
                     <Image
                       src={method.image}
                       alt={method.nombre}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 rounded object-contain"
+                      fill
+                      className="object-contain p-1.5"
                     />
-                    <span className="mt-1 text-xs">{method.shortName}</span>
                   </button>
                 ))}
               </div>
@@ -782,7 +780,7 @@ function RuletaPageContent() {
                     {selectedMethod.id === 'zelle' && (
                       <div className="flex items-center justify-between rounded bg-background/50 p-2">
                         <div>
-                          <p className="text-xs text-muted-foreground">Numero Zelle</p>
+                          <p className="text-xs text-muted-foreground">Número Zelle</p>
                           <p className="font-mono font-bold">{selectedMethod.cuenta}</p>
                         </div>
                         <Button
@@ -916,13 +914,13 @@ function RuletaPageContent() {
           
           <div className="space-y-6 py-4">
             <p className="text-center text-sm text-muted-foreground">
-              Ingresa el numero de telefono con el que realizaste tu compra para verificar tus giros disponibles.
+              Ingresa el número de teléfono con el que realizaste tu compra para verificar tus giros disponibles.
             </p>
             
             <div className="space-y-2">
               <Label htmlFor="verification-phone" className="flex items-center gap-2 text-sm font-semibold">
                 <Phone className="h-4 w-4" />
-                Numero de Telefono
+                Número de Teléfono
               </Label>
               <Input
                 id="verification-phone"
@@ -962,7 +960,7 @@ function RuletaPageContent() {
             </Button>
             
             <p className="text-center text-xs text-muted-foreground">
-              Si aun no has comprado, usa el boton &quot;COMPRAR Y GIRAR&quot; para adquirir tus giros.
+              Si aún no has comprado, usa el botón &quot;COMPRAR Y GIRAR&quot; para adquirir tus giros.
             </p>
           </div>
         </DialogContent>
