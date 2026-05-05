@@ -45,7 +45,6 @@ import { toast } from 'sonner'
 import type { PurchaseGroup, Sorteo } from '@/lib/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import { SorteosDiagnostic } from '@/components/sorteos-diagnostic'
 
 interface SorteoAdminStats {
   ventas_totales: number
@@ -125,30 +124,6 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
       setIsLoading(false)
     }
   }, [sorteoSlug, estadoFilter, searchTerm])
-
-  useEffect(() => {
-    // Initialize sorteos if they don't exist
-    const initializeSorteos = async () => {
-      try {
-        const response = await fetch('/api/admin/init-sorteos', { method: 'POST' })
-        const data = await response.json()
-        
-        // Wait longer to ensure database is updated
-        setTimeout(() => {
-          fetchData()
-        }, 1500)
-      } catch (error) {
-        console.error('[v0] Error initializing sorteos:', error)
-        // Still try to fetch data even if init fails
-        setTimeout(() => {
-          fetchData()
-        }, 1000)
-      }
-    }
-
-    // Only run once when component mounts
-    initializeSorteos()
-  }, [sorteoSlug, fetchData])
 
   useEffect(() => {
     fetchData()
@@ -591,7 +566,6 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
           )}
         </Card>
       </div>
-      <SorteosDiagnostic />
     </div>
   )
 }
