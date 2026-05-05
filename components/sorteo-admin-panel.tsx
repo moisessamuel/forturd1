@@ -99,11 +99,13 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
       
       // Fetch progress for this sorteo
       try {
+        console.log(`[v0] Fetching progress for ${sorteoSlug}`)
         const progressRes = await fetch(`/api/sorteos/${sorteoSlug}/progress`)
         const progressData = await progressRes.json()
+        console.log(`[v0] Progress data:`, progressData)
         setProgress(progressData.porcentaje || 0)
       } catch (err) {
-        console.error('Error fetching progress:', err)
+        console.error('[v0] Error fetching progress:', err)
       }
       
       // Fetch compras for this sorteo using the dedicated admin endpoint
@@ -252,21 +254,27 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     
     try {
       setIsSavingProgress(true)
+      console.log(`[v0] Saving progress for ${sorteoSlug}: ${newProgress}%`)
+      
       const response = await fetch(`/api/sorteos/${sorteoSlug}/progress`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ porcentaje: newProgress }),
       })
       
+      const data = await response.json()
+      console.log('[v0] Progress response:', data)
+      
       if (!response.ok) {
-        throw new Error('Error al guardar progreso')
+        throw new Error(data.error || 'Error al guardar progreso')
       }
       
       toast.success(`Progreso actualizado a ${newProgress}%`)
     } catch (error) {
-      console.error('Error saving progress:', error)
-      toast.error('Error al guardar el progreso')
+      console.error('[v0] Error saving progress:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al guardar el progreso')
       // Revert to previous value on error
+      setProgress(0)
       await fetchData()
     } finally {
       setIsSavingProgress(false)
