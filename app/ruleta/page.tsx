@@ -82,6 +82,7 @@ function RuletaPageContent() {
   const [freeSpinData, setFreeSpinData] = useState<FreeSpinData | null>(null)
   const [hasFreeSpinUsed, setHasFreeSpinUsed] = useState(false)
   const [freeSpinsRemaining, setFreeSpinsRemaining] = useState(0)
+  const [ticketPending, setTicketPending] = useState(false)
   
   // Quantity selector state
   const [spinQuantity, setSpinQuantity] = useState(1)
@@ -171,6 +172,7 @@ function RuletaPageContent() {
               const totalBoletos = spinData.total_boletos || 1
               const girosUsados = spinData.giros_usados || 0
               const girosDisponibles = totalBoletos - girosUsados
+              const estado = spinData.estado || 'pendiente'
               
               const updatedData = {
                 ...data,
@@ -189,7 +191,12 @@ function RuletaPageContent() {
                 email: '',
               })
               
-              if (girosDisponibles > 0) {
+              // Check if ticket is approved before allowing spin
+              if (estado !== 'aprobado') {
+                setCanSpin(false)
+                setTicketPending(true)
+                toast.warning(`Tu boleto #${data.numero_boleto} está pendiente de confirmación. Una vez aprobado podrás usar tu giro gratis.`, { duration: 6000 })
+              } else if (girosDisponibles > 0) {
                 setCanSpin(true)
                 toast.success(`Bienvenido ${data.nombre}! Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} gratis.`, { duration: 4000 })
               } else {
@@ -473,8 +480,27 @@ function RuletaPageContent() {
           />
         </div>
 
+        {/* Pending Ticket Banner */}
+        {freeSpinData && ticketPending && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-yellow-500/50 bg-gradient-to-r from-yellow-500/20 to-orange-500/20">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-yellow-400">
+                  GIRO GRATIS PENDIENTE
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Boleto #{freeSpinData.numero_boleto} - {freeSpinData.nombre}
+                </p>
+                <p className="mt-2 text-xs text-yellow-500">
+                  Tu boleto está pendiente de confirmación de pago. Una vez aprobado podrás usar tu giro gratis.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Free Spin Banner */}
-        {freeSpinData && freeSpinsRemaining > 0 && canSpin && (
+        {freeSpinData && freeSpinsRemaining > 0 && canSpin && !ticketPending && (
           <div className="mx-auto mb-6 max-w-lg">
             <Card className="border-green-500/50 bg-gradient-to-r from-green-500/20 to-primary/20">
               <CardContent className="p-4 text-center">

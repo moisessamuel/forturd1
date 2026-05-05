@@ -11,7 +11,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Telefono es requerido' }, { status: 400 })
     }
 
-    // Search for confirmed purchases with this phone number
+    // First, check if user has any pending ticket purchases (free spins)
+    const { data: purchaseGroups } = await supabase
+      .from('purchase_groups')
+      .select('id, estado, nombre')
+      .eq('telefono', telefono)
+      .order('created_at', { ascending: false })
+
+    // Check for pending ticket purchases
+    const pendingTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
+    const approvedTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
+
+    // Search for confirmed purchases with this phone number (paid spins)
     const { data: jugadas, error } = await supabase
       .from('ruleta_jugadas')
       .select('*')
@@ -23,7 +34,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error al verificar' }, { status: 500 })
     }
 
+    // If no paid spins found but has pending ticket purchases
+    if ((!jugadas || jugadas.length === 0) && pendingTicketPurchases.length > 0 && approvedTicketPurchases.length === 0) {
+      return NextResponse.json({ 
+        success: false, 
+        pending: true,
+        error: 'Tu boleto aún no ha sido confirmado. Una vez aprobado podrás usar tu giro gratis.' 
+      })
+    }
+
     if (!jugadas || jugadas.length === 0) {
+      // Check if user has approved ticket purchases with free spins available
+      if (approvedTicketPurchases.length > 0) {
+        // User has approved tickets, redirect them to use free spins through verificar
+        return NextResponse.json({ 
+          success: false, 
+          has_free_spins: true,
+          error: 'Tienes giros gratis disponibles de tus boletos. Usa la página de verificar boletos para acceder a ellos.' 
+        })
+      }
+      
       return NextResponse.json({ 
         success: false, 
         error: 'No se encontraron compras con este numero de telefono.' 
