@@ -8,13 +8,13 @@ export async function POST() {
     // Check if BMW X6 exists, if not create it
     const { data: x6, error: x6Error } = await supabase
       .from('sorteos')
-      .select('*')
+      .select('id')
       .eq('slug', 'bmw-x6')
       .single()
 
-    if (x6Error || !x6) {
+    if (!x6) {
       console.log('[v0] Creating BMW X6 sorteo...')
-      const { error: insertError } = await supabase
+      const { error: insertError, data: insertData } = await supabase
         .from('sorteos')
         .insert({
           slug: 'bmw-x6',
@@ -26,22 +26,30 @@ export async function POST() {
           estado: 'activo',
           metadata: { progreso_manual: 0 },
         })
+        .select()
 
       if (insertError) {
         console.error('[v0] Error creating BMW X6:', insertError)
+        return NextResponse.json(
+          { error: `Error creating BMW X6: ${insertError.message}` },
+          { status: 400 }
+        )
       }
+      console.log('[v0] BMW X6 created successfully')
+    } else {
+      console.log('[v0] BMW X6 already exists')
     }
 
     // Check if BMW X7 exists, if not create it
     const { data: x7, error: x7Error } = await supabase
       .from('sorteos')
-      .select('*')
+      .select('id')
       .eq('slug', 'bmw-x7')
       .single()
 
-    if (x7Error || !x7) {
+    if (!x7) {
       console.log('[v0] Creating BMW X7 sorteo...')
-      const { error: insertError } = await supabase
+      const { error: insertError, data: insertData } = await supabase
         .from('sorteos')
         .insert({
           slug: 'bmw-x7',
@@ -53,15 +61,33 @@ export async function POST() {
           estado: 'activo',
           metadata: { progreso_manual: 0 },
         })
+        .select()
 
       if (insertError) {
         console.error('[v0] Error creating BMW X7:', insertError)
+        return NextResponse.json(
+          { error: `Error creating BMW X7: ${insertError.message}` },
+          { status: 400 }
+        )
       }
+      console.log('[v0] BMW X7 created successfully')
+    } else {
+      console.log('[v0] BMW X7 already exists')
     }
 
-    return NextResponse.json({ message: 'Sorteos initialized successfully' }, { status: 200 })
+    return NextResponse.json(
+      { 
+        message: 'Sorteos initialized successfully',
+        x6_exists: !!x6,
+        x7_exists: !!x7,
+      },
+      { status: 200 }
+    )
   } catch (error) {
     console.error('[v0] Error initializing sorteos:', error)
-    return NextResponse.json({ error: 'Error initializing sorteos' }, { status: 500 })
+    return NextResponse.json(
+      { error: `Error initializing sorteos: ${error instanceof Error ? error.message : 'Unknown error'}` },
+      { status: 500 }
+    )
   }
 }
