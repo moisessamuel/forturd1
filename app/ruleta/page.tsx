@@ -337,15 +337,50 @@ function RuletaPageContent() {
       if (response.ok && data.success) {
         if (data.giros_disponibles > 0) {
           // User has confirmed spins available
-          setPaidSpinsRemaining(data.giros_disponibles)
-          setJugadaId(data.jugada_id)
+          // Distinguish between free spins (from tickets) and paid spins
+          const freeSpins = data.giros_gratis_disponibles || 0
+          const paidSpins = data.giros_pagados_disponibles || 0
+          
+          // Set free spin data if they have free spins from approved tickets
+          if (freeSpins > 0) {
+            setFreeSpinsRemaining(freeSpins)
+            // Create a free spin data object for the session
+            setFreeSpinData({
+              numero_boleto: 'TICKET', // Generic since it's from verification
+              nombre: data.nombre || '',
+              telefono: verificationPhone,
+              used: false,
+              giros_disponibles: freeSpins,
+            })
+          }
+          
+          // Set paid spins if they have them
+          if (paidSpins > 0) {
+            setPaidSpinsRemaining(paidSpins)
+            setJugadaId(data.jugada_id)
+          }
+          
           setFormData(prev => ({ ...prev, telefono: verificationPhone, nombre: data.nombre || '' }))
           setCanSpin(true)
           setShowVerificationModal(false)
           setVerificationPhone('')
-          toast.success(`Tienes ${data.giros_disponibles} giro${data.giros_disponibles > 1 ? 's' : ''} disponible${data.giros_disponibles > 1 ? 's' : ''}!`, {
-            duration: 4000,
-          })
+          
+          // Show message indicating what spins they have
+          let message = ''
+          if (freeSpins > 0 && paidSpins > 0) {
+            message = `Tienes ${freeSpins} giro${freeSpins > 1 ? 's' : ''} gratis y ${paidSpins} giro${paidSpins > 1 ? 's' : ''} comprado${paidSpins > 1 ? 's' : ''}!`
+          } else if (freeSpins > 0) {
+            message = `Tienes ${freeSpins} giro${freeSpins > 1 ? 's' : ''} gratis disponible${freeSpins > 1 ? 's' : ''}!`
+          } else {
+            message = `Tienes ${paidSpins} giro${paidSpins > 1 ? 's' : ''} comprado${paidSpins > 1 ? 's' : ''} disponible${paidSpins > 1 ? 's' : ''}!`
+          }
+          
+          // Also warn about pending tickets if they have any
+          if (data.boletos_pendientes > 0) {
+            message += ` (${data.boletos_pendientes} boleto${data.boletos_pendientes > 1 ? 's' : ''} pendiente${data.boletos_pendientes > 1 ? 's' : ''} de confirmación)`
+          }
+          
+          toast.success(message, { duration: 5000 })
         } else {
           setVerificationError('No tienes giros disponibles. Compra giros para participar.')
         }

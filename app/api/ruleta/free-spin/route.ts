@@ -15,6 +15,68 @@ export async function POST(request: Request) {
       )
     }
 
+    // =============================================
+    // SECURITY: Validate that user has APPROVED tickets before allowing free spin
+    // This prevents bypassing the frontend restriction
+    // =============================================
+    if (telefono) {
+      // Find the player
+      const { data: player } = await supabase
+        .from('players')
+        .select('id')
+        .eq('phone_number', telefono)
+        .single()
+
+      if (player) {
+        // Get purchase groups for this player
+        const { data: purchaseGroups } = await supabase
+          .from('purchase_groups')
+          .select('id, estado')
+          .eq('player_id', player.id)
+
+        const approvedPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
+        
+        if (approvedPurchases.length === 0) {
+          // No approved tickets - check if they have pending ones
+          const pendingPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
+          
+          if (pendingPurchases.length > 0) {
+            return NextResponse.json(
+              { error: 'Tus boletos aún no han sido confirmados. Una vez confirmados podrás usar tus giros gratis.' },
+              { status: 403 }
+            )
+          }
+        }
+
+        // Count approved tickets
+        let approvedTicketsCount = 0
+        if (approvedPurchases.length > 0) {
+          const { count } = await supabase
+            .from('tickets')
+            .select('*', { count: 'exact', head: true })
+            .in('purchase_group_id', approvedPurchases.map(pg => pg.id))
+          approvedTicketsCount = count || 0
+        }
+
+        // Check how many free spins have been used
+        const { data: usageData } = await supabase
+          .from('ruleta_giros_gratis')
+          .select('giros_usados')
+          .eq('telefono', telefono)
+          .single()
+
+        const freeSpinsUsed = usageData?.giros_usados || 0
+        const freeSpinsAvailable = approvedTicketsCount - freeSpinsUsed
+
+        if (freeSpinsAvailable <= 0) {
+          return NextResponse.json(
+            { error: 'No tienes giros gratis disponibles. Ya usaste todos tus giros.' },
+            { status: 403 }
+          )
+        }
+      }
+    }
+
     // Insert free spin record into jugadas_ruleta
     const { data, error } = await supabase
       .from('jugadas_ruleta')
