@@ -228,13 +228,13 @@ export function SorteosDisponibles() {
             </div>
             <div className="flex-1 text-center md:text-left">
               <h3 className="mb-2 text-2xl font-bold text-primary" style={{ textShadow: '0 0 10px rgba(218,165,32,0.5)' }}>
-                RULETA DE LA FORTUNA
+                Ruleta FortuRD
               </h3>
               <p className="mb-2 text-lg font-bold text-foreground">
                 RD$100 / US$2 por giro
               </p>
               <p className="mb-4 text-muted-foreground">
-                Gira la ruleta y gana increíbles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho más!
+                Gira la ruleta y gana increíbles premios como pueden ser: Motocicleta, iPhone 17, PlayStation 5, Smart TV, dinero en efectivo, boletos para el sorteo y mucho más!
               </p>
               <p className="mb-4 text-sm text-primary">
                 Al comprar boletos BMW recibes un giro GRATIS!
