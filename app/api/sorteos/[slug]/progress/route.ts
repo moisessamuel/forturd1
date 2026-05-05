@@ -12,12 +12,22 @@ export async function GET(
     // Get sorteo info
     const { data: sorteo, error: sorteoError } = await supabase
       .from('sorteos')
-      .select('total_boletos, boletos_vendidos')
+      .select('total_boletos, boletos_vendidos, progreso_manual')
       .eq('slug', slug)
       .single()
 
     if (sorteoError || !sorteo) {
       return NextResponse.json({ porcentaje: 0, vendidos: 0, total: 1000 })
+    }
+
+    // If there's a manual progress set, return it
+    if (sorteo.progreso_manual !== null && sorteo.progreso_manual !== undefined) {
+      return NextResponse.json({
+        porcentaje: sorteo.progreso_manual,
+        vendidos: 0,
+        total: 100,
+        isManual: true,
+      })
     }
 
     // Count approved tickets for this sorteo from purchase_groups
@@ -59,9 +69,55 @@ export async function GET(
       porcentaje: Math.min(porcentaje, 100),
       vendidos,
       total,
+      isManual: false,
     })
   } catch (error) {
     console.error('Error getting sorteo progress:', error)
     return NextResponse.json({ porcentaje: 0, vendidos: 0, total: 1000 })
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const { slug } = await params
+    const body = await request.json()
+    const { porcentaje } = body
+
+    if (typeof porcentaje !== 'number' || porcentaje < 0 || porcentaje > 100) {
+      return NextResponse.json(
+        { error: 'Invalid progress value. Must be between 0 and 100.' },
+        { status: 400 }
+      )
+    }
+
+    const supabase = await createClient()
+
+    // Update the manual progress for this sorteo
+    const { error } = await supabase
+      .from('sorteos')
+      .update({ progreso_manual: porcentaje })
+      .eq('slug', slug)
+
+    if (error) {
+      console.error('Error updating progress:', error)
+      return NextResponse.json(
+        { error: 'Error updating progress' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json(
+      { porcentaje, message: 'Progress updated successfully', isManual: true },
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error('Error in PUT /api/sorteos/[slug]/progress:', error)
+    return NextResponse.json(
+      { error: 'Error updating progress' },
+      { status: 500 }
+    )
   }
 }
