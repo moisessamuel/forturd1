@@ -43,11 +43,7 @@ export async function GET(request: Request) {
           .from('sorteos')
           .insert({
             ...REQUIRED_SORTEOS[slug],
-            metadata: {
-              progreso_manual: 0,
-              boletosVendidos: [],
-              created_at: new Date().toISOString(),
-            },
+            progreso_manual: 0,
           })
           .select('*')
           .single()
@@ -58,7 +54,7 @@ export async function GET(request: Request) {
           return NextResponse.json({
             ...REQUIRED_SORTEOS[slug],
             id: slug,
-            metadata: { progreso_manual: 0 },
+            progreso_manual: 0,
           })
         }
 
