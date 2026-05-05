@@ -103,7 +103,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
         const progressData = await progressRes.json()
         setProgress(progressData.porcentaje || 0)
       } catch (err) {
-        console.error('Error fetching progress:', err)
+        console.error('[v0] Error fetching progress:', err)
       }
       
       // Fetch compras for this sorteo using the dedicated admin endpoint
@@ -126,32 +126,30 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
   }, [sorteoSlug, estadoFilter, searchTerm])
 
   useEffect(() => {
-    // Check authentication using sessionStorage based on sorteo
-    // Only run on client-side
-    if (typeof window === 'undefined') return
-    
-    // Check for admin session (pocoyo or admin users can access all panels)
-    const adminSession = sessionStorage.getItem('admin_session')
-    if (adminSession) {
-      fetchData()
-      return
+    // Initialize sorteos if they don't exist
+    const initializeSorteos = async () => {
+      try {
+        console.log('[v0] Initializing sorteos...')
+        const response = await fetch('/api/admin/init-sorteos', { method: 'POST' })
+        const data = await response.json()
+        console.log('[v0] Sorteos initialization result:', data)
+        // Give it a moment to initialize, then fetch data
+        setTimeout(() => {
+          fetchData()
+        }, 500)
+      } catch (error) {
+        console.error('[v0] Error initializing sorteos:', error)
+        fetchData()
+      }
     }
-    
-    // Check for specific sorteo admin session
-    let isAuth = false
-    if (sorteoSlug === 'bmw-x6') {
-      isAuth = !!sessionStorage.getItem('bmwx6_admin_session')
-    } else if (sorteoSlug === 'bmw-x7') {
-      isAuth = !!sessionStorage.getItem('bmwx7_admin_session')
-    }
-    
-    if (!isAuth) {
-      router.push('/admin')
-      return
-    }
-    
+
+    // Only run once when component mounts
+    initializeSorteos()
+  }, [sorteoSlug])
+
+  useEffect(() => {
     fetchData()
-  }, [fetchData, router, sorteoSlug])
+  }, [fetchData])
 
   const handleLogout = () => {
     // Clear session based on sorteo
@@ -252,21 +250,24 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     
     try {
       setIsSavingProgress(true)
+      
       const response = await fetch(`/api/sorteos/${sorteoSlug}/progress`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ porcentaje: newProgress }),
       })
       
+      const data = await response.json()
+      
       if (!response.ok) {
-        throw new Error('Error al guardar progreso')
+        throw new Error(data.error || 'Error al guardar progreso')
       }
       
       toast.success(`Progreso actualizado a ${newProgress}%`)
     } catch (error) {
-      console.error('Error saving progress:', error)
-      toast.error('Error al guardar el progreso')
-      // Revert to previous value on error
+      console.error('[v0] Error saving progress:', error)
+      toast.error(error instanceof Error ? error.message : 'Error al guardar el progreso')
+      setProgress(0)
       await fetchData()
     } finally {
       setIsSavingProgress(false)

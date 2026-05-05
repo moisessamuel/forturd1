@@ -12,7 +12,7 @@ export async function GET(
     // Get sorteo info
     const { data: sorteo, error: sorteoError } = await supabase
       .from('sorteos')
-      .select('total_boletos, boletos_vendidos, progreso_manual')
+      .select('total_boletos, boletos_vendidos, metadata')
       .eq('slug', slug)
       .single()
 
@@ -20,10 +20,16 @@ export async function GET(
       return NextResponse.json({ porcentaje: 0, vendidos: 0, total: 1000 })
     }
 
+    // Try to get manual progress from metadata JSON field
+    let manualProgress = null
+    if (sorteo.metadata && typeof sorteo.metadata === 'object') {
+      manualProgress = sorteo.metadata.progreso_manual
+    }
+
     // If there's a manual progress set, return it
-    if (sorteo.progreso_manual !== null && sorteo.progreso_manual !== undefined) {
+    if (manualProgress !== null && manualProgress !== undefined) {
       return NextResponse.json({
-        porcentaje: sorteo.progreso_manual,
+        porcentaje: manualProgress,
         vendidos: 0,
         total: 100,
         isManual: true,
@@ -95,28 +101,65 @@ export async function PUT(
 
     const supabase = await createClient()
 
-    // Update the manual progress for this sorteo
-    const { error } = await supabase
+    // First, try to get current sorteo and metadata
+    let { data: sorteo, error: selectError } = await supabase
       .from('sorteos')
-      .update({ progreso_manual: porcentaje })
+      .select('metadata')
       .eq('slug', slug)
+      .single()
 
-    if (error) {
-      console.error('Error updating progress:', error)
+    if (selectError) {
+      console.error(`[v0] Error fetching sorteo ${slug}:`, selectError)
       return NextResponse.json(
-        { error: 'Error updating progress' },
+        { error: `Sorteo not found: ${slug}` },
+        { status: 404 }
+      )
+    }
+
+    // Prepare updated metadata
+    const currentMetadata = (sorteo?.metadata && typeof sorteo.metadata === 'object') 
+      ? sorteo.metadata 
+      : {}
+    const updatedMetadata = {
+      ...currentMetadata,
+      progreso_manual: porcentaje,
+      ultima_actualizacion: new Date().toISOString(),
+    }
+
+    // Update the metadata field in sorteos table
+    const { data: updateData, error: updateError } = await supabase
+      .from('sorteos')
+      .update({ metadata: updatedMetadata })
+      .eq('slug', slug)
+      .select()
+
+    if (updateError) {
+      console.error(`[v0] Error updating progress for ${slug}:`, updateError)
+      return NextResponse.json(
+        { 
+          error: `Error updating progress: ${updateError.message}`,
+          code: updateError.code,
+          details: updateError.details
+        },
         { status: 500 }
       )
     }
 
     return NextResponse.json(
-      { porcentaje, message: 'Progress updated successfully', isManual: true },
+      { 
+        porcentaje, 
+        message: 'Progress updated successfully', 
+        isManual: true,
+        slug,
+        updated_at: new Date().toISOString()
+      },
       { status: 200 }
     )
   } catch (error) {
-    console.error('Error in PUT /api/sorteos/[slug]/progress:', error)
+    console.error(`[v0] Error in PUT /api/sorteos/[slug]/progress:`, error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: 'Error updating progress' },
+      { error: `Error updating progress: ${errorMessage}` },
       { status: 500 }
     )
   }
