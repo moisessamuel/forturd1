@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus } from 'lucide-react'
+import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus, Clock } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -115,6 +115,7 @@ function RuletaPageContent() {
   const [verificationPhone, setVerificationPhone] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [verificationError, setVerificationError] = useState('')
+  const [isPendingPayment, setIsPendingPayment] = useState(false)
   
   // Calculate total price
   const totalPriceDOP = spinQuantity * PRECIO_GIRO_DOP
@@ -349,8 +350,10 @@ function RuletaPageContent() {
           setVerificationError('No tienes giros disponibles. Compra giros para participar.')
         }
       } else if (data.pending) {
-        setVerificationError('Tu pago aún no ha sido confirmado. Por favor espera la verificación.')
+        setIsPendingPayment(true)
+        setVerificationError('')
       } else {
+        setIsPendingPayment(false)
         setVerificationError(data.error || 'No se encontraron compras con este número de teléfono.')
       }
     } catch {
@@ -934,6 +937,7 @@ function RuletaPageContent() {
         if (!open) {
           setVerificationPhone('')
           setVerificationError('')
+          setIsPendingPayment(false)
         }
       }}>
         <DialogContent className="max-w-md border-primary/50 bg-background">
@@ -969,7 +973,19 @@ function RuletaPageContent() {
               />
             </div>
 
-            {verificationError && (
+            {isPendingPayment && (
+              <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-center">
+                <div className="mb-2 flex items-center justify-center gap-2">
+                  <Clock className="h-5 w-5 text-yellow-500" />
+                  <span className="text-lg font-bold text-yellow-500">PENDIENTE DE PAGO</span>
+                </div>
+                <p className="text-sm text-yellow-400/80">
+                  Tu boleto aún no ha sido confirmado. Una vez aprobado el pago podrás usar tu giro gratis.
+                </p>
+              </div>
+            )}
+
+            {verificationError && !isPendingPayment && (
               <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-center text-sm text-red-400">
                 {verificationError}
               </div>
