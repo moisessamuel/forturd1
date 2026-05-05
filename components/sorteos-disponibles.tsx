@@ -136,7 +136,7 @@ export function SorteosDisponibles() {
               </h1>
               <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg">
                 Una de estas BMW puede ser tuya. Por cada boleto comprado recibes un giro en la ruleta FortuRD. 
-                Participa y aumenta tus oportunidades de ganar increibles premios.
+                Participa y aumenta tus oportunidades de ganar increíbles premios.
               </p>
             </div>
           </div>
@@ -234,7 +234,7 @@ export function SorteosDisponibles() {
                 RD$100 / US$2 por giro
               </p>
               <p className="mb-4 text-muted-foreground">
-                Gira la ruleta y gana increibles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho mas!
+                Gira la ruleta y gana increíbles premios: iPhone 17, PlayStation 5, Smart TV, boletos BMW y mucho más!
               </p>
               <p className="mb-4 text-sm text-primary">
                 Al comprar boletos BMW recibes un giro GRATIS!
