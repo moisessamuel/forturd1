@@ -618,14 +618,23 @@ function RuletaPageContent() {
         {/* Purchase pending message */}
         {purchaseComplete && !canSpin && (
           <Card className="mx-auto max-w-md border-primary/50 bg-primary/10">
-            <CardContent className="flex items-center gap-4 p-6">
-              <CheckCircle className="h-10 w-10 text-green-500" />
-              <div>
-                <p className="font-bold text-foreground">Compra registrada</p>
-                <p className="text-sm text-muted-foreground">
-                  Tu giro sera habilitado cuando se confirme el pago
-                </p>
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <CheckCircle className="h-10 w-10 shrink-0 text-green-500" />
+                <div>
+                  <p className="font-bold text-foreground">Compra registrada</p>
+                  <p className="text-sm text-muted-foreground">
+                    Tu giro sera habilitado cuando se confirme el pago
+                  </p>
+                </div>
               </div>
+              <button
+                onClick={() => setShowVerificationModal(true)}
+                className="mt-4 w-full rounded-lg border border-primary/40 bg-transparent py-3 text-center transition-colors hover:bg-primary/10"
+              >
+                <p className="text-xs text-muted-foreground">Ya tengo mis giros</p>
+                <p className="font-bold text-primary">Participar ahora</p>
+              </button>
             </CardContent>
           </Card>
         )}
