@@ -2,6 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { SupabaseClient } from '@supabase/supabase-js'
 
+// Constants for expired sorteo handling
+const EXPIRED_SORTEO_SLUG = 'DEFAULT'
+const EXPIRED_MESSAGE = 'Boleto caducado, comunicarse con soporte +1 (809) 272-5841'
+
+// Helper to check if a purchase is a "boleto fisico" (physical ticket)
+// Physical tickets are exempt from the expired sorteo block
+function isBoletoFisico(referidoCodigo: string | null, playerNombre: string | null): boolean {
+  if (referidoCodigo?.toUpperCase() === 'BOLETOFISICO') return true
+  if (playerNombre) {
+    const nombreLower = playerNombre.toLowerCase()
+    if (nombreLower.includes('boleto fisico') || nombreLower.includes('boletofisico')) return true
+  }
+  return false
+}
+
+// Helper to check if ticket belongs to expired sorteo (DEFAULT)
+function isExpiredSorteo(sorteoSlug: string | null | undefined): boolean {
+  if (!sorteoSlug) return false
+  return sorteoSlug.toUpperCase() === EXPIRED_SORTEO_SLUG.toUpperCase()
+}
+
 // Helper function to get free spins available for a ticket
 async function getFreeSpinCount(supabase: SupabaseClient, purchaseGroupId: string, ticketNumber: string) {
   try {
@@ -101,23 +122,31 @@ export async function GET(request: NextRequest) {
             const pg = ticket.purchase_group
             const totalTickets = pg?.total_tickets || 1
             const individualMonto = (pg?.monto || 0) / totalTickets
-            const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+            let ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
             
             // Skip if already added
             if (results.some(r => r.numero_boleto === ticket.numero_boleto)) continue
+            
+            // Check if this is an expired sorteo ticket (DEFAULT)
+            const sorteoSlug = pg?.sorteo_slug || ''
+            const esBoletoFisico = isBoletoFisico(pg?.referido_codigo, player.nombre)
+            const esExpired = isExpiredSorteo(sorteoSlug) && !esBoletoFisico
             
             results.push({
               numero_boleto: ticket.numero_boleto,
               nombre: player.nombre,
               telefono: player.phone_number,
-              estado: ticketStatus,
+              estado: esExpired ? 'caducado' : ticketStatus,
               cantidad_boletos: 1, // Individual ticket
               monto: individualMonto,
               moneda: pg?.moneda || 'DOP',
               fecha: ticket.created_at,
               banco: pg?.banco || '',
-              sorteo_slug: pg?.sorteo_slug || '',
+              sorteo_slug: sorteoSlug,
               source: 'new',
+              es_boleto_fisico: esBoletoFisico,
+              caducado: esExpired,
+              mensaje_caducado: esExpired ? EXPIRED_MESSAGE : undefined,
             })
           }
         }
@@ -138,20 +167,28 @@ export async function GET(request: NextRequest) {
               
               const totalTickets = pg.total_tickets || 1
               const individualMonto = pg.monto / totalTickets
-              const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+              let ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+              
+              // Check if this is an expired sorteo ticket (DEFAULT)
+              const sorteoSlug = pg.sorteo_slug || ''
+              const esBoletoFisico = isBoletoFisico(pg.referido_codigo, player.nombre)
+              const esExpired = isExpiredSorteo(sorteoSlug) && !esBoletoFisico
               
               results.push({
                 numero_boleto: ticket.numero_boleto,
                 nombre: player.nombre,
                 telefono: player.phone_number,
-                estado: ticketStatus,
+                estado: esExpired ? 'caducado' : ticketStatus,
                 cantidad_boletos: 1, // Individual ticket
                 monto: individualMonto,
                 moneda: pg.moneda,
                 fecha: ticket.created_at,
                 banco: pg.banco || '',
-                sorteo_slug: pg.sorteo_slug || '',
+                sorteo_slug: sorteoSlug,
                 source: 'new',
+                es_boleto_fisico: esBoletoFisico,
+                caducado: esExpired,
+                mensaje_caducado: esExpired ? EXPIRED_MESSAGE : undefined,
               })
             }
           }
@@ -179,18 +216,26 @@ export async function GET(request: NextRequest) {
                          (searchLast10.length >= 7 && searchLast10 === compraLast10)
           
           if (isMatch && !results.some(r => r.numero_boleto === compra.numero_boleto)) {
+            // Check if this is an expired sorteo ticket (DEFAULT)
+            const sorteoSlug = compra.sorteo_slug || ''
+            const esBoletoFisico = isBoletoFisico(compra.referido_codigo, compra.nombre_comprador)
+            const esExpired = isExpiredSorteo(sorteoSlug) && !esBoletoFisico
+            
             results.push({
               numero_boleto: compra.numero_boleto,
               nombre: compra.nombre_comprador,
               telefono: compra.telefono,
-              estado: compra.estado,
+              estado: esExpired ? 'caducado' : compra.estado,
               cantidad_boletos: compra.cantidad_boletos,
               monto: compra.monto,
               moneda: compra.moneda,
               fecha: compra.created_at || compra.fecha,
               banco: compra.banco || '',
-              sorteo_slug: compra.sorteo_slug || '',
+              sorteo_slug: sorteoSlug,
               source: 'legacy',
+              es_boleto_fisico: esBoletoFisico,
+              caducado: esExpired,
+              mensaje_caducado: esExpired ? EXPIRED_MESSAGE : undefined,
             })
           }
         }
@@ -235,25 +280,36 @@ export async function GET(request: NextRequest) {
       const individualMonto = totalMonto / totalTickets
       
       // Determine ticket-specific status from ticket.status field
-      const ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+      let ticketStatus = ticket.status === 'verified' ? 'aprobado' : ticket.status === 'rejected' ? 'rechazado' : 'pendiente'
+      
+      // Check if this is an expired sorteo ticket (DEFAULT)
+      const sorteoSlug = ticket.purchase_group?.sorteo_slug || ''
+      const esBoletoFisico = isBoletoFisico(ticket.purchase_group?.referido_codigo, playerInfo?.nombre)
+      const esExpired = isExpiredSorteo(sorteoSlug) && !esBoletoFisico
       
       // Get free spin count for this purchase group
-      const spinCount = await getFreeSpinCount(supabase, ticket.purchase_group?.id, ticket.numero_boleto)
+      // Physical tickets and expired tickets don't get free spins
+      const spinCount = (esExpired || esBoletoFisico) 
+        ? { total_boletos: 0, giros_usados: 0, giros_disponibles: 0 }
+        : await getFreeSpinCount(supabase, ticket.purchase_group?.id, ticket.numero_boleto)
       
       return NextResponse.json({
         numero_boleto: ticket.numero_boleto,
         nombre: playerInfo?.nombre || 'N/A',
         telefono: playerInfo?.phone_number || '',
-        estado: ticketStatus,
+        estado: esExpired ? 'caducado' : ticketStatus,
         cantidad_boletos: spinCount.total_boletos,
         monto: individualMonto,
         moneda: ticket.purchase_group?.moneda || 'DOP',
         fecha: ticket.created_at,
         banco: ticket.purchase_group?.banco || '',
-        sorteo_slug: ticket.purchase_group?.sorteo_slug || '',
+        sorteo_slug: sorteoSlug,
         source: 'new',
         giros_gratis_disponibles: spinCount.giros_disponibles,
         giros_gratis_usados: spinCount.giros_usados,
+        es_boleto_fisico: esBoletoFisico,
+        caducado: esExpired,
+        mensaje_caducado: esExpired ? EXPIRED_MESSAGE : undefined,
       })
     }
 
@@ -265,18 +321,26 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (compra) {
+      // Check if this is an expired sorteo ticket (DEFAULT)
+      const sorteoSlug = compra.sorteo_slug || ''
+      const esBoletoFisico = isBoletoFisico(compra.referido_codigo, compra.nombre_comprador)
+      const esExpired = isExpiredSorteo(sorteoSlug) && !esBoletoFisico
+      
       return NextResponse.json({
         numero_boleto: compra.numero_boleto,
         nombre: compra.nombre_comprador,
         telefono: compra.telefono || '',
-        estado: compra.estado,
+        estado: esExpired ? 'caducado' : compra.estado,
         cantidad_boletos: compra.cantidad_boletos,
         monto: compra.monto,
         moneda: compra.moneda,
         fecha: compra.created_at,
         banco: compra.banco || '',
-        sorteo_slug: compra.sorteo_slug || '',
+        sorteo_slug: sorteoSlug,
         source: 'legacy',
+        es_boleto_fisico: esBoletoFisico,
+        caducado: esExpired,
+        mensaje_caducado: esExpired ? EXPIRED_MESSAGE : undefined,
       })
     }
 
