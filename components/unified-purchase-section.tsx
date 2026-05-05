@@ -567,8 +567,8 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                 Metodo de Pago
               </p>
 
-              {/* Payment Method Logos Grid */}
-              <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
+              {/* Payment Method Logos Grid - App Icon Style */}
+              <div className="mb-3 flex flex-wrap justify-center gap-3">
                 {paymentMethods.map((method) => (
                   <button
                     key={method.id}
@@ -577,17 +577,17 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                       setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
                       setFormData(prev => ({ ...prev, banco: method.nombre }))
                     }}
-                    className={`relative aspect-[2/1] overflow-hidden rounded-lg transition-all ${
+                    className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
                       selectedBanco?.id === method.id
-                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40'
-                        : 'hover:ring-1 hover:ring-primary/50'
+                        ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
+                        : 'hover:shadow-lg'
                     }`}
                   >
                     <Image
                       src={method.image}
                       alt={method.nombre}
                       fill
-                      className="object-cover"
+                      className="object-contain p-1.5"
                     />
                   </button>
                 ))}
