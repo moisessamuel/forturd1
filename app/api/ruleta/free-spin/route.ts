@@ -42,6 +42,37 @@ export async function POST(request: Request) {
       )
     }
 
+    // Also update the free spin tracking table (ruleta_giros_gratis)
+    // This tracks how many free spins from tickets have been used
+    if (telefono) {
+      const { data: existingRecord } = await supabase
+        .from('ruleta_giros_gratis')
+        .select('giros_usados')
+        .eq('telefono', telefono)
+        .single()
+
+      if (existingRecord) {
+        // Increment existing record
+        await supabase
+          .from('ruleta_giros_gratis')
+          .update({ 
+            giros_usados: existingRecord.giros_usados + 1,
+            ultimo_giro_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('telefono', telefono)
+      } else {
+        // Create new record
+        await supabase
+          .from('ruleta_giros_gratis')
+          .insert({
+            telefono,
+            giros_usados: 1,
+            ultimo_giro_at: new Date().toISOString()
+          })
+      }
+    }
+
     return NextResponse.json({
       success: true,
       jugada_id: data.id,

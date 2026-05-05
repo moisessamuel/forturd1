@@ -11,18 +11,55 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Telefono es requerido' }, { status: 400 })
     }
 
-    // First, check if user has any ticket purchases (for free spins from tickets)
+    // =============================================
+    // STEP 1: Check for FREE SPINS from ticket purchases (sorteo boletos)
+    // Each ticket = 1 free spin. Must be APPROVED to use.
+    // =============================================
+    
     const { data: purchaseGroups } = await supabase
       .from('purchase_groups')
-      .select('id, estado, nombre')
+      .select('id, estado, nombre, telefono')
       .eq('telefono', telefono)
       .order('created_at', { ascending: false })
 
-    // Check for pending vs approved ticket purchases
+    // Separate pending vs approved ticket purchases
     const pendingTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
     const approvedTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
 
-    // Search for ruleta spin purchases with this phone number (paid spins for ruleta)
+    // Count PENDING tickets (each ticket = 1 pending free spin)
+    let pendingTicketsCount = 0
+    if (pendingTicketPurchases.length > 0) {
+      const { count } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .in('purchase_group_id', pendingTicketPurchases.map(pg => pg.id))
+      pendingTicketsCount = count || 0
+    }
+
+    // Count APPROVED tickets (each ticket = 1 free spin available)
+    let approvedTicketsCount = 0
+    if (approvedTicketPurchases.length > 0) {
+      const { count } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .in('purchase_group_id', approvedTicketPurchases.map(pg => pg.id))
+      approvedTicketsCount = count || 0
+    }
+
+    // Count how many FREE spins have been USED for this phone number
+    const { data: freeSpinUsageData } = await supabase
+      .from('ruleta_giros_gratis')
+      .select('giros_usados')
+      .eq('telefono', telefono)
+      .single()
+    
+    const freeSpinsUsed = freeSpinUsageData?.giros_usados || 0
+    const freeSpinsAvailable = Math.max(0, approvedTicketsCount - freeSpinsUsed)
+
+    // =============================================
+    // STEP 2: Check for PAID spins (ruleta_jugadas - direct spin purchases)
+    // =============================================
+    
     const { data: jugadas, error } = await supabase
       .from('ruleta_jugadas')
       .select('*')
@@ -34,62 +71,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Error al verificar' }, { status: 500 })
     }
 
-    // IMPORTANT: If user has ONLY pending ticket purchases (no approved tickets, no paid spins)
-    // they should see "Pendiente de pago"
-    const hasPendingTicketsOnly = pendingTicketPurchases.length > 0 && approvedTicketPurchases.length === 0
-    const hasNoRuletaSpins = !jugadas || jugadas.length === 0
-    const hasOnlyPendingRuletaSpins = jugadas && jugadas.length > 0 && jugadas.every(j => j.estado === 'pendiente')
+    // Separate pending vs confirmed paid spin purchases
+    const pendingJugadas = jugadas?.filter(j => j.estado === 'pendiente') || []
+    const activeJugadas = jugadas?.filter(j => j.estado === 'confirmado' || j.estado === 'jugado') || []
 
-    // If user only has pending tickets (no approved tickets) and no ruleta spins
-    if (hasPendingTicketsOnly && hasNoRuletaSpins) {
-      return NextResponse.json({ 
-        success: false, 
-        pending: true,
-        error: 'Tu boleto aún no ha sido confirmado. Una vez aprobado podrás usar tu giro gratis.' 
-      })
-    }
-
-    // If user has pending tickets and only pending ruleta spins (no confirmed anything)
-    if (hasPendingTicketsOnly && hasOnlyPendingRuletaSpins) {
-      return NextResponse.json({ 
-        success: false, 
-        pending: true,
-        error: 'Tu pago aún no ha sido confirmado. Una vez aprobado podrás usar tus giros.' 
-      })
-    }
-
-    if (!jugadas || jugadas.length === 0) {
-      // Check if user has approved ticket purchases with free spins available
-      if (approvedTicketPurchases.length > 0) {
-        // User has approved tickets, redirect them to use free spins through verificar
-        return NextResponse.json({ 
-          success: false, 
-          has_free_spins: true,
-          error: 'Tienes giros gratis disponibles de tus boletos. Usa la página de verificar boletos para acceder a ellos.' 
-        })
-      }
-      
-      return NextResponse.json({ 
-        success: false, 
-        error: 'No se encontraron compras con este numero de telefono.' 
-      }, { status: 404 })
-    }
-
-    // Check for pending purchases (not yet confirmed)
-    const pendingJugadas = jugadas.filter(j => j.estado === 'pendiente')
-    // Include both 'confirmado' and 'jugado' states (jugado means they've used some spins but may have more)
-    const activeJugadas = jugadas.filter(j => j.estado === 'confirmado' || j.estado === 'jugado')
-
-    // Count total spins purchased vs spins used
-    let totalGirosComprados = 0
-    let totalGirosUsados = 0
+    // Calculate paid spins available
+    let totalPaidSpins = 0
+    let totalPaidSpinsUsed = 0
     let latestActiveJugada = null
 
     for (const jugada of activeJugadas) {
-      // Calculate cantidad_giros from monto if not properly set
       let cantidadGiros = jugada.cantidad_giros
       if (!cantidadGiros || cantidadGiros <= 1) {
-        // Calculate based on monto (100 DOP or 2 USD per spin)
         const monto = Number(jugada.monto) || 0
         if (jugada.moneda === 'DOP') {
           cantidadGiros = Math.max(1, Math.floor(monto / 100))
@@ -100,67 +93,84 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      totalGirosComprados += cantidadGiros
+      totalPaidSpins += cantidadGiros
+      totalPaidSpinsUsed += (jugada.giros_usados || 0)
       
-      // Use the giros_usados field from the database
-      const girosUsados = jugada.giros_usados || 0
-      totalGirosUsados += girosUsados
-      
-      // Track the first jugada with available spins
-      const disponiblesEnEstaJugada = cantidadGiros - girosUsados
-      if (disponiblesEnEstaJugada > 0 && !latestActiveJugada) {
+      if (!latestActiveJugada && (cantidadGiros - (jugada.giros_usados || 0)) > 0) {
         latestActiveJugada = jugada
       }
     }
 
-    const girosDisponibles = totalGirosComprados - totalGirosUsados
+    const paidSpinsAvailable = totalPaidSpins - totalPaidSpinsUsed
 
-    // If there are only pending purchases and no confirmed/active ones
-    if (activeJugadas.length === 0 && pendingJugadas.length > 0) {
+    // =============================================
+    // DECISION LOGIC
+    // =============================================
+
+    // If user ONLY has PENDING items (no approved tickets, no confirmed paid spins)
+    const hasOnlyPendingStuff = 
+      pendingTicketsCount > 0 && 
+      approvedTicketsCount === 0 && 
+      activeJugadas.length === 0
+
+    if (hasOnlyPendingStuff) {
       return NextResponse.json({
         success: false,
         pending: true,
-        error: 'Tu pago aun no ha sido confirmado. Por favor espera la verificacion.'
+        pending_tickets: pendingTicketsCount,
+        error: `Tienes ${pendingTicketsCount} boleto${pendingTicketsCount > 1 ? 's' : ''} pendiente${pendingTicketsCount > 1 ? 's' : ''} de confirmación. Una vez aprobado${pendingTicketsCount > 1 ? 's' : ''} podrás usar tu${pendingTicketsCount > 1 ? 's' : ''} giro${pendingTicketsCount > 1 ? 's' : ''} gratis.`
       })
     }
 
-    // If no spins available
-    if (girosDisponibles <= 0) {
+    // If user has only pending paid spins and nothing else
+    if (pendingJugadas.length > 0 && activeJugadas.length === 0 && approvedTicketsCount === 0) {
       return NextResponse.json({
         success: false,
-        error: 'No tienes giros disponibles. Ya usaste todos tus giros o compra mas para participar.'
+        pending: true,
+        error: 'Tu pago aún no ha sido confirmado. Por favor espera la verificación.'
       })
     }
 
-    // Also check if user has pending ticket purchases with free spins
-    // Even if they have paid spins available, warn them about pending ticket free spins
-    if (pendingTicketPurchases.length > 0) {
-      // Get count of pending tickets
-      const { count: pendingTicketsCount } = await supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .in('purchase_group_id', pendingTicketPurchases.map(pg => pg.id))
+    // Calculate total available spins (free + paid)
+    const totalSpinsAvailable = freeSpinsAvailable + paidSpinsAvailable
 
-      if (pendingTicketsCount && pendingTicketsCount > 0) {
-        // User has pending ticket free spins - show pending message
+    // If no spins available at all
+    if (totalSpinsAvailable <= 0) {
+      // Check if they have pending items to inform them
+      if (pendingTicketsCount > 0) {
         return NextResponse.json({
           success: false,
           pending: true,
-          pending_free_spins: pendingTicketsCount,
-          error: `Tienes ${pendingTicketsCount} giro${pendingTicketsCount > 1 ? 's' : ''} gratis pendiente${pendingTicketsCount > 1 ? 's' : ''} de confirmación. Una vez aprobado tu boleto podrás usarlos.`
+          pending_tickets: pendingTicketsCount,
+          error: `Ya usaste tus giros disponibles. Tienes ${pendingTicketsCount} boleto${pendingTicketsCount > 1 ? 's' : ''} pendiente${pendingTicketsCount > 1 ? 's' : ''} de confirmación.`
         })
       }
+      
+      return NextResponse.json({
+        success: false,
+        error: 'No tienes giros disponibles. Ya usaste todos tus giros o compra más para participar.'
+      })
     }
 
-    // User has available spins
+    // User has available spins!
     return NextResponse.json({
       success: true,
-      giros_disponibles: girosDisponibles,
-      giros_totales: totalGirosComprados,
-      giros_usados: totalGirosUsados,
+      // Free spins from tickets
+      giros_gratis_disponibles: freeSpinsAvailable,
+      giros_gratis_totales: approvedTicketsCount,
+      giros_gratis_usados: freeSpinsUsed,
+      // Paid spins
+      giros_pagados_disponibles: paidSpinsAvailable,
+      giros_pagados_totales: totalPaidSpins,
+      giros_pagados_usados: totalPaidSpinsUsed,
+      // Combined
+      giros_disponibles: totalSpinsAvailable,
+      // Pending info
+      boletos_pendientes: pendingTicketsCount,
+      // Legacy fields for compatibility
       jugada_id: latestActiveJugada?.id,
-      nombre: latestActiveJugada?.nombre,
-      telefono: latestActiveJugada?.telefono,
+      nombre: latestActiveJugada?.nombre || purchaseGroups?.[0]?.nombre || '',
+      telefono: telefono,
     })
 
   } catch (error) {
