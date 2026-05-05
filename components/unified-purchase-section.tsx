@@ -520,42 +520,42 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
             <div ref={buyerDataRef} className="space-y-3 border-t border-border/50 pt-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Nombre *</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-primary">Nombre <span className="text-destructive">*</span></label>
                   <Input
                     value={formData.nombre}
                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                     placeholder="Juan Perez"
-                    className="h-9 bg-input text-sm"
+                    className="h-10 bg-input text-sm"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Telefono *</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-primary">Telefono <span className="text-destructive">*</span></label>
                   <Input
                     value={formData.telefono}
                     onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                     placeholder="8091234567"
-                    className="h-9 bg-input text-sm"
+                    className="h-10 bg-input text-sm"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Email (opcional)</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-primary">Email <span className="text-xs font-normal text-muted-foreground">(opcional)</span></label>
                   <Input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="correo@email.com"
-                    className="h-9 bg-input text-sm"
+                    className="h-10 bg-input text-sm"
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-medium text-muted-foreground">Referido (opcional)</label>
+                  <label className="mb-1.5 block text-sm font-semibold text-primary">Referido <span className="text-xs font-normal text-muted-foreground">(opcional)</span></label>
                   <Input
                     value={referralCode}
                     onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                     placeholder="CODIGO"
-                    className="h-9 bg-input text-sm"
+                    className="h-10 bg-input text-sm"
                   />
                 </div>
               </div>
@@ -563,12 +563,12 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
 
             {/* Payment Methods - Compact Grid */}
             <div ref={paymentMethodRef} className="border-t border-border/50 pt-4">
-              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-3 text-center text-base font-bold uppercase tracking-wider text-primary" style={{ textShadow: '0 0 8px rgba(218, 165, 32, 0.4)' }}>
                 Metodo de Pago
               </p>
 
-              {/* Payment Method Logos Grid - Compact */}
-              <div className="mb-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
+              {/* Payment Method Logos Grid - Ultra Compact */}
+              <div className="mb-3 grid grid-cols-5 gap-1.5 sm:grid-cols-6">
                 {paymentMethods.map((method) => (
                   <button
                     key={method.id}
@@ -577,18 +577,18 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                       setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
                       setFormData(prev => ({ ...prev, banco: method.nombre }))
                     }}
-                    className={`relative overflow-hidden rounded-lg border-2 bg-white p-1.5 transition-all ${
+                    className={`relative overflow-hidden rounded-md border-2 bg-white p-0.5 transition-all ${
                       selectedBanco?.id === method.id
                         ? 'border-primary shadow-md shadow-primary/30'
-                        : 'border-border/30 hover:border-primary/50'
+                        : 'border-transparent hover:border-primary/50'
                     }`}
                   >
-                    <div className="relative h-8 w-full">
+                    <div className="relative h-7 w-full">
                       <Image
                         src={method.image}
                         alt={method.nombre}
                         fill
-                        className="object-contain"
+                        className="object-contain p-0.5"
                       />
                     </div>
                   </button>
