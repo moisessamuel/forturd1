@@ -345,6 +345,25 @@ export default function VerificarPage() {
                 {(() => {
                   const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
                   const girosUsados = singleResult.giros_gratis_usados ?? 0
+                  const isPending = singleResult.estado === 'pendiente'
+                  
+                  if (isPending) {
+                    return (
+                      <>
+                        <Button
+                          disabled
+                          className="w-full bg-yellow-600/50 text-yellow-200 font-bold cursor-not-allowed"
+                        >
+                          <Clock className="mr-2 h-5 w-5" />
+                          GIRO GRATIS PENDIENTE
+                        </Button>
+                        <p className="mt-2 text-center text-xs text-yellow-500">
+                          Tu boleto está pendiente de confirmación. Una vez aprobado podrás usar tu giro gratis.
+                        </p>
+                      </>
+                    )
+                  }
+                  
                   return (
                     <>
                       <Button
@@ -431,6 +450,21 @@ export default function VerificarPage() {
                           <div className="col-span-2 mt-2">
                             {(() => {
                               const girosDisponibles = ticket.giros_gratis_disponibles ?? ticket.cantidad_boletos
+                              const isPending = ticket.estado === 'pendiente'
+                              
+                              if (isPending) {
+                                return (
+                                  <Button
+                                    size="sm"
+                                    disabled
+                                    className="w-full bg-yellow-600/50 text-yellow-200 font-bold cursor-not-allowed"
+                                  >
+                                    <Clock className="mr-2 h-4 w-4" />
+                                    GIRO GRATIS PENDIENTE
+                                  </Button>
+                                )
+                              }
+                              
                               return (
                                 <Button
                                   size="sm"

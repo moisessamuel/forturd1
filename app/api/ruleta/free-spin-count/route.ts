@@ -21,9 +21,19 @@ export async function GET(request: NextRequest) {
     if (!ticket) {
       return NextResponse.json({ 
         total_boletos: 1, 
-        giros_usados: 0 
+        giros_usados: 0,
+        estado: 'pendiente'
       })
     }
+
+    // Get purchase group estado
+    const { data: purchaseGroup } = await supabase
+      .from('purchase_groups')
+      .select('estado')
+      .eq('id', ticket.purchase_group_id)
+      .single()
+
+    const estado = purchaseGroup?.estado || 'pendiente'
 
     // Count total tickets in the same purchase group
     const { count: totalBoletos } = await supabase
@@ -49,6 +59,7 @@ export async function GET(request: NextRequest) {
       total_boletos: totalBoletos || 1,
       giros_usados: girosUsados || 0,
       ticket_numbers: ticketNumbers,
+      estado,
     })
   } catch (error) {
     console.error('Error fetching free spin count:', error)
