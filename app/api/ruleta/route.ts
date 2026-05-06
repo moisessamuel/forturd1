@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendAdminRuletaPurchaseNotification } from '@/lib/email'
 
 export async function GET() {
   try {
@@ -93,6 +94,33 @@ export async function POST(request: Request) {
     if (jugadaError) {
       console.error('Error creating spin:', jugadaError)
       return NextResponse.json({ error: 'Error creating spin' }, { status: 500 })
+    }
+
+    // Send admin notification email for PAID spins only (not free spins)
+    if (isPaidSpin) {
+      const purchaseDate = new Date().toLocaleDateString('es-DO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+
+      try {
+        await sendAdminRuletaPurchaseNotification({
+          playerName: nombre,
+          playerPhone: telefono,
+          playerEmail: email || undefined,
+          cantidadGiros: cantidad_giros,
+          totalAmount: monto,
+          moneda: moneda || 'DOP',
+          metodoPago: metodo_pago || 'Transferencia',
+          purchaseDate,
+        })
+      } catch (emailError) {
+        console.error('Error sending admin ruleta notification email:', emailError)
+        // Don't fail the request if email fails
+      }
     }
 
     return NextResponse.json({ 
