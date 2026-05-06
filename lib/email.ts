@@ -441,3 +441,140 @@ export async function sendAdminPurchaseNotification(data: AdminNotificationData)
 
   return transporter.sendMail(mailOptions)
 }
+
+// Email notification to admin when a new RULETA purchase is made (paid spins only)
+interface RuletaPurchaseNotificationData {
+  playerName: string
+  playerPhone: string
+  playerEmail?: string
+  cantidadGiros: number
+  totalAmount: number
+  moneda: string
+  metodoPago: string
+  purchaseDate: string
+}
+
+export async function sendAdminRuletaPurchaseNotification(data: RuletaPurchaseNotificationData) {
+  const { playerName, playerPhone, playerEmail, cantidadGiros, totalAmount, moneda, metodoPago, purchaseDate } = data
+
+  const formattedAmount = moneda === 'USD' 
+    ? `US$ ${totalAmount.toLocaleString('en-US')}` 
+    : `RD$ ${totalAmount.toLocaleString('es-DO')}`
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #111; border-radius: 16px; overflow: hidden; border: 1px solid #222;">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); padding: 30px; text-align: center; border-bottom: 2px solid #DAA520;">
+              <h1 style="margin: 0; color: #DAA520; font-size: 28px; font-weight: bold;">FortuRD - Ruleta</h1>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Nueva compra de giros</p>
+            </td>
+          </tr>
+          
+          <!-- Alert Badge -->
+          <tr>
+            <td style="padding: 25px 30px 15px; text-align: center;">
+              <div style="display: inline-block; background-color: rgba(168, 85, 247, 0.2); border: 1px solid #a855f7; border-radius: 50px; padding: 10px 20px;">
+                <span style="color: #a855f7; font-size: 14px; font-weight: bold;">NUEVA COMPRA DE GIROS</span>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Customer Info -->
+          <tr>
+            <td style="padding: 0 30px 25px;">
+              <div style="background-color: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #333;">
+                <h3 style="margin: 0 0 15px; color: #DAA520; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 10px;">Datos del Cliente</h3>
+                
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Nombre:</td>
+                    <td style="padding: 8px 0; color: #fff; font-size: 13px; text-align: right; font-weight: bold;">${playerName}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Telefono:</td>
+                    <td style="padding: 8px 0; color: #fff; font-size: 13px; text-align: right;">${playerPhone}</td>
+                  </tr>
+                  ${playerEmail ? `
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Correo:</td>
+                    <td style="padding: 8px 0; color: #fff; font-size: 13px; text-align: right;">${playerEmail}</td>
+                  </tr>
+                  ` : ''}
+                </table>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Purchase Details -->
+          <tr>
+            <td style="padding: 0 30px 25px;">
+              <div style="background-color: #1a1a1a; border-radius: 12px; padding: 20px; border: 1px solid #333;">
+                <h3 style="margin: 0 0 15px; color: #DAA520; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 10px;">Detalles de la Compra</h3>
+                
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Fecha:</td>
+                    <td style="padding: 8px 0; color: #fff; font-size: 13px; text-align: right;">${purchaseDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Cantidad de giros:</td>
+                    <td style="padding: 8px 0; color: #a855f7; font-size: 13px; text-align: right; font-weight: bold;">${cantidadGiros} giro${cantidadGiros > 1 ? 's' : ''}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Metodo de pago:</td>
+                    <td style="padding: 8px 0; color: #fff; font-size: 13px; text-align: right;">${metodoPago}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; color: #888; font-size: 13px;">Monto total:</td>
+                    <td style="padding: 8px 0; color: #22c55e; font-size: 15px; font-weight: bold; text-align: right;">${formattedAmount}</td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Action Required -->
+          <tr>
+            <td style="padding: 0 30px 25px;">
+              <div style="background-color: rgba(234, 179, 8, 0.1); border-radius: 12px; padding: 15px; border: 1px solid rgba(234, 179, 8, 0.3);">
+                <p style="margin: 0; color: #eab308; font-size: 13px; text-align: center;">
+                  <strong>Accion requerida:</strong> Verifica el comprobante de pago y confirma los giros en el panel de administracion.
+                </p>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0a0a0a; padding: 20px; text-align: center; border-top: 1px solid #222;">
+              <p style="margin: 0; color: #666; font-size: 11px;">Notificacion automatica del sistema FortuRD - Ruleta</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
+
+  const mailOptions = {
+    from: `"FortuRD Sistema" <${process.env.EMAIL_USER}>`,
+    to: ADMIN_EMAIL,
+    subject: `Nueva compra Ruleta: ${playerName} - ${cantidadGiros} giro(s) - ${formattedAmount}`,
+    html: htmlContent,
+  }
+
+  return transporter.sendMail(mailOptions)
+}
