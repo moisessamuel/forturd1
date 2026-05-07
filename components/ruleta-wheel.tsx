@@ -418,12 +418,15 @@ export function RuletaWheel({
       prizeType = 'tech'
       const techPrizes = ['Patineta Electrica', 'PS5', 'Smart TV']
       prizeName = techPrizes[Math.floor(Math.random() * techPrizes.length)]
-    } else if (nextSpinCount % 753 === 0) {
+    } else if (nextSpinCount % 211 === 0) {
       prizeType = 'dinero'
       prizeName = 'RD$5,000'
     } else if (nextSpinCount % 201 === 0) {
       prizeType = 'boleto'
       prizeName = '1 Boleto BMW X6 + 1 Boleto BMW X7'
+    } else if (nextSpinCount % 20 === 0) {
+      prizeType = 'boleto_vehiculo'
+      prizeName = '1 Boleto de Vehiculo a Eleccion'
     }
     
     // Find target segment

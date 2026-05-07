@@ -81,8 +81,9 @@ interface Stats {
 
 // Prize milestones configuration - based on user requirements
 const PRIZE_MILESTONES = [
+  { spins: 20, prize: '1 Boleto de Vehiculo a Eleccion', icon: Ticket, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
   { spins: 201, prize: '1 Boleto BMW X6 + 1 Boleto BMW X7', icon: Ticket, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-  { spins: 753, prize: '5,000 Pesos', icon: Banknote, color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  { spins: 211, prize: '5,000 Pesos', icon: Banknote, color: 'text-green-500', bgColor: 'bg-green-500/10' },
   { spins: 3504, prize: 'Patineta Electrica / PS5 / Smart TV', icon: Gamepad2, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
   { spins: 7605, prize: 'iPhone', icon: Smartphone, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
   { spins: 12506, prize: 'Motor', icon: Bike, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
