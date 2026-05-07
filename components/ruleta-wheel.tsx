@@ -402,7 +402,20 @@ export function RuletaWheel({
 
   // Determine prize based on controlled probability
   const determinePrize = useCallback(async (): Promise<{ premio: Premio; targetSegment: number }> => {
-    const nextSpinCount = globalSpinCount + 1
+    // Always fetch the REAL spin count from the server to avoid client drift
+    let serverSpinCount = globalSpinCount
+    try {
+      const res = await fetch('/api/ruleta/spin-count')
+      const data = await res.json()
+      if (data.count !== undefined) {
+        serverSpinCount = data.count
+        setGlobalSpinCount(data.count)
+      }
+    } catch {
+      // Fall back to local count
+    }
+
+    const nextSpinCount = serverSpinCount + 1
     
     let prizeType: string | null = null
     let prizeName: string = 'Sigue Intentando'
@@ -428,33 +441,33 @@ export function RuletaWheel({
       prizeType = 'boleto_vehiculo'
       prizeName = '1 Boleto de Vehiculo a Eleccion'
     }
-    
-    // Find target segment
+
+    // Strictly separate prize vs no-prize segment pools
+    const giftBoxIndices = WHEEL_SEGMENTS
+      .map((_, i) => i)
+      .filter(i => WHEEL_SEGMENTS[i].isGiftBox)
+
+    const noWinIndices = WHEEL_SEGMENTS
+      .map((_, i) => i)
+      .filter(i => !WHEEL_SEGMENTS[i].isGiftBox)
+
+    // CRITICAL: if no prize, ONLY pick from no-win segments
+    //           if prize, ONLY pick from gift-box segments
     let targetSegment: number
-    
     if (prizeType) {
-      // Prize - land on a random gift box segment (odd indices)
-      const giftBoxIndices = WHEEL_SEGMENTS
-        .map((_, i) => i)
-        .filter(i => WHEEL_SEGMENTS[i].isGiftBox)
       targetSegment = giftBoxIndices[Math.floor(Math.random() * giftBoxIndices.length)]
     } else {
-      // No prize - land on a "SIGUE INTENTANDO" segment (even indices)
-      const noWinIndices = WHEEL_SEGMENTS
-        .map((_, i) => i)
-        .filter(i => !WHEEL_SEGMENTS[i].isGiftBox)
       targetSegment = noWinIndices[Math.floor(Math.random() * noWinIndices.length)]
     }
 
     // Create premio object
     let premio: Premio
-    
     if (prizeType) {
       premio = premios.find(p => p.tipo === 'premio') || {
         id: 'prize-' + prizeType,
         nombre: prizeName,
         tipo: 'premio' as const,
-        probabilidad: 1
+        probabilidad: 1,
       }
       premio = { ...premio, nombre: prizeName }
     } else {
@@ -462,7 +475,7 @@ export function RuletaWheel({
         id: 'no-prize',
         nombre: 'Sigue Intentando',
         tipo: 'sin_premio' as const,
-        probabilidad: 100
+        probabilidad: 100,
       }
     }
 
@@ -480,13 +493,30 @@ export function RuletaWheel({
     const { premio, targetSegment } = await determinePrize()
     const isWin = premio.tipo === 'premio'
 
-    // Calculate rotation
+    // The wheel is drawn starting at -90° (top). Segment[i] starts at:
+    //   segmentStart = rotation - 90 + i * SEGMENT_ANGLE   (in canvas degrees)
+    // The pointer is at the top (0° in canvas = "up").
+    // For the CENTER of targetSegment to align with the pointer at the end,
+    // we need the final rotation R such that:
+    //   R - 90 + targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE/2 ≡ 0  (mod 360)
+    //   R ≡ 90 - targetSegment * SEGMENT_ANGLE - SEGMENT_ANGLE/2      (mod 360)
+    //
+    // Add a small random offset within the segment (±40% of half-segment) so it
+    // doesn't always land dead-center, making it feel natural, but NEVER
+    // crossing into an adjacent segment.
+    const safeJitter = (SEGMENT_ANGLE / 2) * 0.4 * (Math.random() * 2 - 1)
+    const targetAngleForPointer = (90 - targetSegment * SEGMENT_ANGLE - SEGMENT_ANGLE / 2 + safeJitter + 360) % 360
+
     const fullSpins = 5 + Math.floor(Math.random() * 3)
-    const segmentMiddle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
-    const targetRotation = (fullSpins * 360) + (360 - segmentMiddle)
-    
+    // Current rotation mod 360
+    const currentMod = ((rotation % 360) + 360) % 360
+    // How many degrees we need to add to reach targetAngleForPointer
+    let delta = (targetAngleForPointer - currentMod + 360) % 360
+    if (delta === 0) delta = 360 // always spin at least one full extra spin worth
+
+    const totalRotation = fullSpins * 360 + delta
+
     const startRotation = rotation
-    const totalRotation = targetRotation
     const duration = 6000
     const startTime = performance.now()
 
@@ -498,7 +528,9 @@ export function RuletaWheel({
       const easedProgress = easeOutCubic(progress)
       
       const currentRotation = startRotation + totalRotation * easedProgress
-      setRotation(currentRotation % 360)
+      // Store the full accumulated rotation (not % 360) so the final position
+      // is always exactly right; the canvas drawing uses it via mod internally
+      setRotation(currentRotation)
 
       const speed = (totalRotation / duration) * (1 - progress) * 1000
       if (speed > 50 && Math.random() > 0.7) {
