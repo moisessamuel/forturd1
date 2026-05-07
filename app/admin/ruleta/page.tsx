@@ -408,7 +408,7 @@ export default function RuletaAdminPage() {
           <p className="mb-4 text-sm text-muted-foreground">
             Por defecto sale &quot;Sigue Intentando&quot;. Los premios garantizados se otorgan al alcanzar los siguientes hitos:
           </p>
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-6">
             {PRIZE_MILESTONES.map((milestone) => {
               const Icon = milestone.icon
               const isCompleted = stats && stats.giros_jugados >= milestone.spins
