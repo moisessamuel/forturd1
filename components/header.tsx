@@ -80,7 +80,7 @@ export function Header() {
               </Link>
               <div className="mx-4 border-t border-border/30" />
               <a
-                href="https://wa.me/18092725841"
+                href="https://wa.me/18298059020"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMenuOpen(false)}

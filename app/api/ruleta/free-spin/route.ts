@@ -55,7 +55,7 @@ export async function POST(request: Request) {
         
         if (allFromExpiredSorteo) {
           return NextResponse.json(
-            { error: 'Boleto caducado, comunicarse con soporte +1 (809) 272-5841' },
+            { error: 'Boleto caducado, comunicarse con soporte +1 (829) 805-9020' },
             { status: 403 }
           )
         }

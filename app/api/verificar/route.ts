@@ -4,7 +4,7 @@ import { SupabaseClient } from '@supabase/supabase-js'
 
 // Constants for expired sorteo handling
 const EXPIRED_SORTEO_SLUG = 'DEFAULT'
-const EXPIRED_MESSAGE = 'Boleto caducado, comunicarse con soporte +1 (809) 272-5841'
+const EXPIRED_MESSAGE = 'Boleto caducado, comunicarse con soporte +1 (829) 805-9020'
 
 // Helper to check if a purchase is a "boleto fisico" (physical ticket)
 // Physical tickets are exempt from the expired sorteo block

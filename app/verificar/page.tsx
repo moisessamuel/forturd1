@@ -367,7 +367,7 @@ export default function VerificarPage() {
                         <XCircle className="mx-auto mb-2 h-8 w-8 text-orange-500" />
                         <p className="font-bold text-orange-500">Boleto Caducado</p>
                         <p className="mt-2 text-sm text-orange-400">
-                          {singleResult.mensaje_caducado || 'Boleto caducado, comunicarse con soporte +1 (809) 272-5841'}
+                          {singleResult.mensaje_caducado || 'Boleto caducado, comunicarse con soporte +1 (829) 805-9020'}
                         </p>
                       </div>
                     )
