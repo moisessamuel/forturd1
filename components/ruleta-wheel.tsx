@@ -383,34 +383,6 @@ export function RuletaWheel({
     ctx.lineWidth = 3
     ctx.stroke()
 
-    // ─── DEBUG: RED LINE from pointer to center of detected segment ──────
-    // This confirms VISUALLY which index the system is reading.
-    // REMOVE THIS AFTER CONFIRMING ALIGNMENT IS CORRECT.
-    // ──────────────────────────────────────────────────────────────────────
-    const debugVisibleIndex = getVisibleIndexFromRotation(currentRotation)
-    const debugSegmentCenterAngle = currentRotation - 90 + debugVisibleIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
-    const debugAngleRad = (debugSegmentCenterAngle * Math.PI) / 180
-    
-    ctx.save()
-    ctx.beginPath()
-    ctx.moveTo(centerX, 25) // From pointer position
-    ctx.lineTo(
-      centerX + Math.cos(debugAngleRad - Math.PI / 2) * (radius * 0.7),
-      centerY + Math.sin(debugAngleRad - Math.PI / 2) * (radius * 0.7)
-    )
-    ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
-    ctx.lineWidth = 3
-    ctx.stroke()
-    
-    // Draw detected index number
-    ctx.fillStyle = 'red'
-    ctx.font = 'bold 14px Arial'
-    ctx.textAlign = 'center'
-    ctx.fillText(`IDX: ${debugVisibleIndex}`, centerX, 18)
-    ctx.fillText(`TYPE: ${VISUAL_SEGMENT_MAP[debugVisibleIndex]}`, centerX, size - 10)
-    ctx.restore()
-    // ─── END DEBUG ────────────────────────────────────────────────────────
-
   }, [rotation, idleRotation, isAnimating, logoLoaded, pulsePhase])
 
   // Initialize Audio Context
