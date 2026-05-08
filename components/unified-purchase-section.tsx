@@ -707,20 +707,25 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
               <input ref={galleryInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" disabled={isUploading} />
               <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" disabled={isUploading} />
               
-              {formData.comprobanteUrl && (
-                <div className="mt-3 flex items-center justify-center">
-                  <div className="relative inline-block">
-                    <Image src={formData.comprobanteUrl} alt="Comprobante" width={120} height={120} className="rounded-lg object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))}
-                      className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
+{formData.comprobanteUrl && (
+  <div className="mt-3 flex items-center justify-center">
+  <div className="relative inline-block">
+  {/* Use native img to avoid Next.js Image domain restrictions */}
+  <img 
+    src={formData.comprobanteUrl} 
+    alt="Comprobante" 
+    className="h-[120px] w-[120px] rounded-lg object-cover" 
+  />
+  <button
+  type="button"
+onClick={() => setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))}
+  className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+  >
+  <X className="h-3 w-3" />
+  </button>
+  </div>
+  </div>
+  )}
             </div>
 
             {/* Submit Button - Inside Card */}

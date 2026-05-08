@@ -493,13 +493,29 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                                   <DialogHeader>
                                     <DialogTitle>Comprobante de Pago</DialogTitle>
                                   </DialogHeader>
-                                  <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                                    <Image
-                                      src={compra.comprobante_url}
-                                      alt="Comprobante"
-                                      fill
-                                      className="object-contain"
+                                  <div className="relative w-full overflow-hidden rounded-lg">
+                                    {/* Use native img with /api/file proxy for private Vercel Blob URLs */}
+                                    <img
+                                      src={`/api/file?pathname=${encodeURIComponent(compra.comprobante_url)}`}
+                                      alt="Comprobante de pago"
+                                      className="w-full rounded-lg object-contain"
+                                      style={{ maxHeight: '70vh' }}
+                                      onError={(e) => {
+                                        // Fallback: try direct URL
+                                        const target = e.currentTarget
+                                        if (!target.src.includes('fallback')) {
+                                          target.src = compra.comprobante_url + '?fallback=1'
+                                        }
+                                      }}
                                     />
+                                    <a
+                                      href={`/api/file?pathname=${encodeURIComponent(compra.comprobante_url)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mt-2 block text-center text-sm text-blue-400 hover:underline"
+                                    >
+                                      Abrir en pantalla completa
+                                    </a>
                                   </div>
                                 </DialogContent>
                               </Dialog>

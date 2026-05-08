@@ -812,30 +812,29 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 disabled={isUploading}
                 aria-label="Seleccionar archivo"
               />
-              {formData.comprobanteUrl && (
-                <div className="mt-4 flex items-center justify-center">
-                  <div className="relative inline-block">
-                    <Image
-                      src={formData.comprobanteUrl}
-                      alt="Comprobante"
-                      width={200}
-                      height={200}
-                      className="rounded-lg object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))
-                        if (fileInputRef.current) fileInputRef.current.value = ''
-                      }}
-                      className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md transition-transform hover:scale-110"
-                      aria-label="Eliminar comprobante"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
+{formData.comprobanteUrl && (
+  <div className="mt-4 flex items-center justify-center">
+  <div className="relative inline-block">
+  {/* Use native img to avoid Next.js Image domain restrictions */}
+  <img
+    src={formData.comprobanteUrl}
+    alt="Comprobante"
+    className="h-[200px] w-[200px] rounded-lg object-cover"
+  />
+  <button
+  type="button"
+  onClick={() => {
+setFormData((prev) => ({ ...prev, comprobante: null, comprobanteUrl: '' }))
+  if (fileInputRef.current) fileInputRef.current.value = ''
+  }}
+  className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md transition-transform hover:scale-110"
+  aria-label="Eliminar comprobante"
+  >
+  <X className="h-4 w-4" />
+  </button>
+  </div>
+  </div>
+  )}
             </div>
 
             <div className="flex gap-4">
