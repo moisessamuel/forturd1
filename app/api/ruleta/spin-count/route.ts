@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendRuletaWinnerNotification } from '@/lib/email'
 
 // GET: Fetch global spin count
 // SOURCE OF TRUTH: spins_individuales table (each record = 1 spin executed)
@@ -62,6 +63,33 @@ export async function POST(request: Request) {
     if (error) {
       console.error('Error inserting spin:', error)
       return NextResponse.json({ success: false, error: error.message })
+    }
+
+    // ─── SEND WINNER NOTIFICATION EMAIL ─────────────────────────────────────
+    // If this spin was a prize win, notify the admin via email
+    // ─────────────────────────────────────────────────────────────────────────
+    if (spinData.es_premio && spinData.resultado !== 'Sigue Intentando') {
+      try {
+        // Get current spin count for reference
+        const { count: spinNumber } = await supabase
+          .from('spins_individuales')
+          .select('*', { count: 'exact', head: true })
+
+        await sendRuletaWinnerNotification({
+          telefono: spinData.telefono,
+          nombre: spinData.nombre,
+          premio: spinData.resultado,
+          fecha: new Date().toLocaleString('es-DO', { 
+            timeZone: 'America/Santo_Domingo',
+            dateStyle: 'full',
+            timeStyle: 'short'
+          }),
+          spinNumber: spinNumber || undefined
+        })
+      } catch (emailError) {
+        // Log error but don't fail the request - spin was already recorded
+        console.error('Error sending winner notification email:', emailError)
+      }
     }
 
     return NextResponse.json({ success: true })
