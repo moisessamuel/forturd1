@@ -94,38 +94,49 @@ export async function GET(request: NextRequest) {
     // 'jugado' means ALL spins were used, so exclude them completely
     const activeJugadas = jugadas?.filter(j => j.estado === 'confirmado') || []
 
-    // Calculate paid spins available from ACTIVE (not fully used) jugadas only
-    let totalPaidSpins = 0
-    let totalPaidSpinsUsed = 0
+    // DEBUG: Log all jugadas for this phone number
+    console.log(`[v0] verify-spins for ${telefono}:`)
+    console.log(`[v0] Total jugadas found: ${jugadas?.length || 0}`)
+    jugadas?.forEach((j, i) => {
+      console.log(`[v0] Jugada ${i + 1}: id=${j.id}, estado=${j.estado}, cantidad_giros=${j.cantidad_giros}, giros_usados=${j.giros_usados}, monto=${j.monto}`)
+    })
+    console.log(`[v0] Active jugadas (confirmado only): ${activeJugadas.length}`)
+
+    // =============================================
+    // FIX: Only use the MOST RECENT jugada with available spins
+    // Do NOT sum across multiple jugadas - this causes ghost spins
+    // When a user buys new spins, they get a NEW jugada
+    // Old jugadas should be 'jugado' (fully used) and ignored
+    // =============================================
+    let paidSpinsAvailable = 0
     let latestActiveJugada = null
 
+    // activeJugadas is already sorted by created_at DESC (most recent first)
     for (const jugada of activeJugadas) {
-      let cantidadGiros = jugada.cantidad_giros
-      if (!cantidadGiros || cantidadGiros <= 1) {
-        const monto = Number(jugada.monto) || 0
-        if (jugada.moneda === 'DOP') {
-          cantidadGiros = Math.max(1, Math.floor(monto / 100))
-        } else if (jugada.moneda === 'USD') {
-          cantidadGiros = Math.max(1, Math.floor(monto / 2))
-        } else {
-          cantidadGiros = 1
-        }
-      }
+      const cantidadGiros = jugada.cantidad_giros || 1
+      const girosUsados = jugada.giros_usados || 0
+      const girosRestantes = cantidadGiros - girosUsados
       
-      const girosRestantes = cantidadGiros - (jugada.giros_usados || 0)
+      console.log(`[v0] Checking jugada ${jugada.id}: cantidad=${cantidadGiros}, usados=${girosUsados}, restantes=${girosRestantes}`)
       
-      // Only count this jugada if it actually has remaining spins
-      if (girosRestantes > 0) {
-        totalPaidSpins += cantidadGiros
-        totalPaidSpinsUsed += (jugada.giros_usados || 0)
-        
-        if (!latestActiveJugada) {
-          latestActiveJugada = jugada
-        }
+      if (girosRestantes > 0 && !latestActiveJugada) {
+        // Use ONLY the most recent jugada with available spins
+        latestActiveJugada = jugada
+        paidSpinsAvailable = girosRestantes
+        console.log(`[v0] Using this jugada as active: ${girosRestantes} spins available`)
+        break // Stop here - only use one jugada
+      } else if (girosRestantes <= 0) {
+        // This jugada has no remaining spins but is still 'confirmado'
+        // Auto-fix: mark it as 'jugado' to prevent future issues
+        console.log(`[v0] AUTO-FIX: Marking jugada ${jugada.id} as 'jugado' (had 0 remaining spins)`)
+        await supabase
+          .from('ruleta_jugadas')
+          .update({ estado: 'jugado' })
+          .eq('id', jugada.id)
       }
     }
 
-    const paidSpinsAvailable = totalPaidSpins - totalPaidSpinsUsed
+    console.log(`[v0] Final: paidSpinsAvailable=${paidSpinsAvailable}, latestJugada=${latestActiveJugada?.id || 'none'}`)
 
     // =============================================
     // DECISION LOGIC
@@ -185,8 +196,8 @@ export async function GET(request: NextRequest) {
       giros_gratis_usados: freeSpinsUsed,
       // Paid spins
       giros_pagados_disponibles: paidSpinsAvailable,
-      giros_pagados_totales: totalPaidSpins,
-      giros_pagados_usados: totalPaidSpinsUsed,
+      giros_pagados_totales: latestActiveJugada?.cantidad_giros || 0,
+      giros_pagados_usados: latestActiveJugada?.giros_usados || 0,
       // Combined
       giros_disponibles: totalSpinsAvailable,
       // Pending info
