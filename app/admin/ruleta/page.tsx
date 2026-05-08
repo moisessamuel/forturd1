@@ -839,13 +839,28 @@ export default function RuletaAdminPage() {
               {selectedJugada.comprobante_url && (
                 <div>
                   <p className="mb-2 text-sm text-muted-foreground">Comprobante</p>
-                  <Image
-                    src={selectedJugada.comprobante_url}
-                    alt="Comprobante"
-                    width={400}
-                    height={300}
-                    className="w-full rounded-lg"
+                  {/* Use native img with /api/file proxy to serve private Vercel Blob URLs */}
+                  <img
+                    src={`/api/file?pathname=${encodeURIComponent(selectedJugada.comprobante_url)}`}
+                    alt="Comprobante de pago"
+                    className="w-full rounded-lg object-contain"
+                    style={{ maxHeight: '400px' }}
+                    onError={(e) => {
+                      // Fallback: try direct URL in case it's a public blob
+                      const target = e.currentTarget
+                      if (!target.src.includes('fallback')) {
+                        target.src = selectedJugada.comprobante_url + '?fallback=1'
+                      }
+                    }}
                   />
+                  <a
+                    href={`/api/file?pathname=${encodeURIComponent(selectedJugada.comprobante_url)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 block text-center text-xs text-blue-400 underline"
+                  >
+                    Abrir en pantalla completa
+                  </a>
                 </div>
               )}
 
