@@ -469,7 +469,7 @@ export function RuletaWheel({
     }
   }, [initAudio])
 
-  // ─── DETERMINE RESULT: EXACT MATHEMATICAL PRIZE DELIVERY ─────────────────
+  // ─── DETERMINE RESULT: EXACT MATHEMATICAL PRIZE DELIVERY ──────────────���──
   // Uses MODULO logic for 100% predictable prize delivery.
   // Prize is awarded EXACTLY when: spinNumber % cycleLength === 0
   // Example: Boleto at spins 20, 40, 60, 80... (every 20th spin exactly)
@@ -591,9 +591,21 @@ export function RuletaWheel({
     // VERIFICATION: Confirm the math works
     let verifyIndex = getVisibleIndexFromRotation(targetRotation)
     
+    console.log('[v0] SPIN DEBUG:', {
+      isWin,
+      expectedResult,
+      selectedIndex,
+      exactBaseRotation,
+      targetRotation,
+      verifyIndex,
+      verifySegmentType: VISUAL_SEGMENT_MAP[verifyIndex],
+      match: verifyIndex === selectedIndex && VISUAL_SEGMENT_MAP[verifyIndex] === expectedResult
+    })
+    
     // If somehow the index doesn't match (shouldn't happen with exact math),
     // force to the correct segment
     if (verifyIndex !== selectedIndex || VISUAL_SEGMENT_MAP[verifyIndex] !== expectedResult) {
+      console.log('[v0] MISMATCH DETECTED! Forcing correction...')
       // Find closest valid index from the correct pool
       const validIndexes = expectedResult === 'gift'
         ? [4, 9, 14, 19]
@@ -603,10 +615,16 @@ export function RuletaWheel({
       const fallbackIndex = validIndexes[0]
       targetRotation = extraSpins + getExactRotationForIndex(fallbackIndex)
       verifyIndex = fallbackIndex
+      console.log('[v0] Corrected to fallback index:', fallbackIndex, 'rotation:', targetRotation)
     }
 
-    const startRotation = rotation
+    // IMPORTANT: Start from the ACTUAL visual position (idle rotation when not spinning)
+    // This prevents the "jump" that can cause misalignment
+    const startRotation = isAnimating ? rotation : idleRotation
     const totalRotation = targetRotation
+    
+    // Sync the rotation state to match where we're starting from
+    setRotation(startRotation)
 
     const duration = 7000 // ms
     const startTime = performance.now()
@@ -641,34 +659,51 @@ export function RuletaWheel({
         let actualVisibleIndex = getVisibleIndexFromRotation(rawFinalRotation)
         const actualSegmentType = VISUAL_SEGMENT_MAP[actualVisibleIndex]
         
-        // Calculate the exact snap rotation
-        let snapRotation: number
+        console.log('[v0] FINAL SNAP DEBUG:', {
+          rawFinalRotation,
+          actualVisibleIndex,
+          actualSegmentType,
+          expectedResult,
+          isCorrect: actualSegmentType === expectedResult
+        })
         
-        if (actualSegmentType === expectedResult) {
-          // Correct type - just snap to exact center of this segment
-          const exactRot = getExactRotationForIndex(actualVisibleIndex)
-          const fullSpins = Math.floor(rawFinalRotation / 360) * 360
-          snapRotation = fullSpins + exactRot
-        } else {
-          // MISMATCH - force to nearest valid segment (this should never happen
-          // if the pre-calculation is correct, but it's a safety net)
+        // ─── FORCED CORRECT SNAP ────────────────────────────────────────────
+        // ALWAYS force the wheel to land on a segment of the correct type.
+        // Don't trust the calculated rotation - use the pre-selected index.
+        // ────────────────────────────────────────────────────────────────────
+        const fullSpins = Math.floor(rawFinalRotation / 360) * 360
+        
+        // The selectedIndex was already chosen from the correct pool
+        // (gift indexes for wins, lose indexes for losses)
+        // So we ALWAYS use it for the final snap
+        const forcedIndex = selectedIndex
+        const exactRotForSelected = getExactRotationForIndex(forcedIndex)
+        let snapRotation = fullSpins + exactRotForSelected
+        
+        // Verify the segment type matches
+        const finalSegmentType = VISUAL_SEGMENT_MAP[forcedIndex]
+        
+        console.log('[v0] FORCED SNAP:', {
+          forcedIndex,
+          exactRotForSelected,
+          snapRotation,
+          finalSegmentType,
+          expectedResult,
+          isMatch: finalSegmentType === expectedResult
+        })
+        
+        // Final safety check - if still wrong type, use explicit pool
+        if (finalSegmentType !== expectedResult) {
+          console.log('[v0] CRITICAL: Final segment type mismatch! Forcing correction...')
           const validIndexes = expectedResult === 'gift'
             ? [4, 9, 14, 19]
             : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
-          
-          // Find closest valid
-          let closest = validIndexes[0]
-          let minDist = Math.abs(validIndexes[0] - actualVisibleIndex)
-          for (const idx of validIndexes) {
-            const d = Math.abs(idx - actualVisibleIndex)
-            if (d < minDist) { minDist = d; closest = idx }
-          }
-          
-          const exactRot = getExactRotationForIndex(closest)
-          const fullSpins = Math.floor(rawFinalRotation / 360) * 360
-          snapRotation = fullSpins + exactRot
-          actualVisibleIndex = closest
+          const correctedIndex = validIndexes[0]
+          snapRotation = fullSpins + getExactRotationForIndex(correctedIndex)
+          console.log('[v0] Forced to index:', correctedIndex)
         }
+        
+        actualVisibleIndex = forcedIndex
         
         // Apply the exact snap
         setRotation(snapRotation)
@@ -703,7 +738,7 @@ export function RuletaWheel({
     }
 
     animationRef.current = requestAnimationFrame(animate)
-  }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, rotation, playTickSound, playWinSound, onSpinComplete, initAudio])
+  }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, rotation, idleRotation, playTickSound, playWinSound, onSpinComplete, initAudio, playerTelefono, playerNombre, spinType, jugadaId, spinMonto, spinMoneda])
 
   // Cleanup
   useEffect(() => {
