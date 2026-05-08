@@ -509,13 +509,19 @@ function RuletaPageContent() {
 
         {/* Roulette Wheel */}
         <div className="mb-8 flex justify-center">
-          <RuletaWheel
-            premios={premios}
-            onSpinComplete={handleSpinComplete}
-            canSpin={canSpin}
-            isSpinning={isSpinning}
-            onStartSpin={handleStartSpin}
-          />
+<RuletaWheel
+  premios={premios}
+  onSpinComplete={handleSpinComplete}
+  canSpin={canSpin}
+  isSpinning={isSpinning}
+  onStartSpin={handleStartSpin}
+  playerTelefono={formData.telefono || freeSpinData?.telefono || verificationPhone || 'unknown'}
+  playerNombre={formData.nombre || freeSpinData?.nombre}
+  jugadaId={jugadaId || undefined}
+  spinType={freeSpinData ? 'gratis' : 'pagado'}
+  spinMonto={moneda === 'DOP' ? PRECIO_GIRO_DOP : PRECIO_GIRO_USD}
+  spinMoneda={moneda}
+/>
         </div>
 
         {/* Pending Ticket Banner */}

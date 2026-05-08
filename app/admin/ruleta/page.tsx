@@ -144,7 +144,7 @@ export default function RuletaAdminPage() {
   }, [estadoFilter, searchTerm])
 
   // ─── SUPABASE REALTIME SUBSCRIPTION ──────────────────────────────────────
-  // Subscribes to INSERT/UPDATE on both ruleta tables.
+  // Subscribes to INSERT/UPDATE on all three ruleta tables.
   // Any spin from any user triggers an immediate fetchData() call.
   // ──────────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -155,7 +155,7 @@ export default function RuletaAdminPage() {
 
     const supabase = createClient()
 
-    // Create a single channel that listens to both tables
+    // Create a single channel that listens to all three tables
     const channel = supabase
       .channel('admin-ruleta-realtime')
       .on(
@@ -168,6 +168,13 @@ export default function RuletaAdminPage() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'jugadas_ruleta' },
+        () => {
+          fetchData()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'spins_individuales' },
         () => {
           fetchData()
         }
