@@ -493,47 +493,54 @@ export function RuletaWheel({
     const { premio, targetSegment } = await determinePrize()
     const isWin = premio.tipo === 'premio'
 
-    // ─── EXACT ALIGNMENT MATH ────────────────────────────────────────────
-    // The canvas draws segment[i] with its center at canvas-angle:
-    //   centerAngle = rotation - 90 + i * SEGMENT_ANGLE + SEGMENT_ANGLE/2
-    // The pointer sits at the 12-o'clock position, which is canvas-angle = 0.
-    // We need centerAngle ≡ 0 (mod 360) at the end of the spin, so:
-    //   rotation_final ≡ 90 - i * SEGMENT_ANGLE - SEGMENT_ANGLE/2  (mod 360)
+    // ─── EXACT SEGMENT ALIGNMENT ──────────────────────────────────────────
+    // The canvas draws segment[i] using:
+    //   segmentStart = startAngle + i * angle - π/2
+    //   segmentCenter (in degrees from top) = rotation - 90 + i*18 + 9
     //
-    // A tiny safe jitter (≤35% of half-segment) keeps it natural but
-    // NEVER crosses into an adjacent segment.
+    // The pointer points DOWN from the top, landing on the segment whose
+    // center is at the 12-o'clock position (canvas angle = top = 0 relative
+    // to the -π/2 offset).
+    //
+    // For the pointer to land exactly at the CENTER of segment [targetSegment]:
+    //   rotation_final - 90 + targetSegment*18 + 9 ≡ 0  (mod 360)
+    //   rotation_final ≡ 81 - targetSegment * 18          (mod 360)
+    //
+    // NO JITTER. The wheel stops dead-center on the target segment.
+    // This is the only way to guarantee visual = logical result.
     // ─────────────────────────────────────────────────────────────────────
-    const exactTarget = 90 - targetSegment * SEGMENT_ANGLE - SEGMENT_ANGLE / 2
-    const maxJitter = SEGMENT_ANGLE * 0.35           // stays well within segment
-    const safeJitter = maxJitter * (Math.random() * 2 - 1)
-    const targetAngleForPointer = ((exactTarget + safeJitter) % 360 + 360) % 360
+    const targetAngleNormalized = ((81 - targetSegment * SEGMENT_ANGLE) % 360 + 360) % 360
 
-    const fullSpins = 6 + Math.floor(Math.random() * 3)  // 6–8 full rotations
-    // Normalise current rotation to [0, 360)
+    // How many full spins to add (5–8), always spinning forward
+    const fullSpins = 5 + Math.floor(Math.random() * 4) // 5, 6, 7, or 8
+
+    // Current position normalised to [0, 360)
     const currentMod = ((rotation % 360) + 360) % 360
-    // Degrees to add so we reach exactly targetAngleForPointer
-    let delta = (targetAngleForPointer - currentMod + 360) % 360
-    // Guarantee at least one extra full spin worth of travel
-    if (delta < 10) delta += 360
+
+    // Forward delta to reach the target
+    let delta = (targetAngleNormalized - currentMod + 360) % 360
+    // If delta is 0 we still need to travel at least one full spin
+    if (delta === 0) delta = 360
 
     const totalRotation = fullSpins * 360 + delta
     const startRotation = rotation
-    const duration = 7000  // 7 seconds for a smoother, more dramatic deceleration
+
+    const duration = 7000 // ms — long enough for smooth deceleration
     const startTime = performance.now()
 
-    // easeOutQuint: very fast start, very precise slow stop
+    // easeOutQuint gives a fast start and very gradual, precise stop
     const easeOut = (t: number): number => 1 - Math.pow(1 - t, 5)
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
       const easedProgress = easeOut(progress)
-      
+
+      // Accumulate rotation without modding — canvas handles large angles fine
       const currentRotation = startRotation + totalRotation * easedProgress
-      // Store the full accumulated rotation (not % 360) so the final position
-      // is always exactly right; the canvas drawing uses it via mod internally
       setRotation(currentRotation)
 
+      // Tick sound proportional to current speed
       const speed = (totalRotation / duration) * (1 - progress) * 1000
       if (speed > 50 && Math.random() > 0.7) {
         playTickSound()
@@ -542,20 +549,23 @@ export function RuletaWheel({
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
+        // Snap exactly to the computed final rotation to eliminate float drift
+        setRotation(startRotation + totalRotation)
         setIsAnimating(false)
+
         if (isWin) {
           playWinSound()
           setShowParticles(true)
           setTimeout(() => setShowParticles(false), 3000)
         }
-        
+
         setGlobalSpinCount(prev => prev + 1)
-        
+
         fetch('/api/ruleta/spin-count', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         }).catch(console.error)
-        
+
         onSpinComplete(premio)
       }
     }
