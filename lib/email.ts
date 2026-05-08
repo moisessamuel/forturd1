@@ -276,6 +276,128 @@ export async function sendTicketPendingEmail(data: TicketEmailData) {
 // Email notification to admin when a new purchase is made
 const ADMIN_EMAIL = 'forturd01@gmail.com'
 
+// ─── RULETA WINNER NOTIFICATION ─────────────────────────────────────────────
+// Sends email to admin when someone wins a prize on the roulette
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface RuletaWinnerData {
+  telefono: string
+  nombre?: string | null
+  premio: string
+  fecha: string
+  spinNumber?: number
+}
+
+export async function sendRuletaWinnerNotification(data: RuletaWinnerData) {
+  const { telefono, nombre, premio, fecha, spinNumber } = data
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0a; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #111; border-radius: 16px; overflow: hidden; border: 1px solid #222;">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%); padding: 30px; text-align: center; border-bottom: 2px solid #22c55e;">
+              <h1 style="margin: 0; color: #22c55e; font-size: 28px; font-weight: bold;">GANADOR RULETA FORTURD</h1>
+              <p style="margin: 10px 0 0; color: #888; font-size: 14px;">Alguien ha ganado un premio</p>
+            </td>
+          </tr>
+          
+          <!-- Winner Badge -->
+          <tr>
+            <td style="padding: 30px 30px 20px; text-align: center;">
+              <div style="display: inline-block; background-color: rgba(34, 197, 94, 0.2); border: 2px solid #22c55e; border-radius: 50px; padding: 15px 30px;">
+                <span style="color: #22c55e; font-size: 20px; font-weight: bold;">PREMIO GANADO</span>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Prize Info -->
+          <tr>
+            <td style="padding: 0 30px 30px; text-align: center;">
+              <div style="background: linear-gradient(135deg, rgba(218, 165, 32, 0.2) 0%, rgba(218, 165, 32, 0.05) 100%); border-radius: 16px; padding: 30px; border: 2px solid #DAA520;">
+                <p style="margin: 0 0 10px; color: #888; font-size: 14px;">Premio Ganado:</p>
+                <h2 style="margin: 0; color: #DAA520; font-size: 28px; font-weight: bold; text-shadow: 0 0 20px rgba(218, 165, 32, 0.5);">${premio}</h2>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Winner Details -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <div style="background-color: #1a1a1a; border-radius: 12px; padding: 24px; border: 1px solid #333;">
+                <h3 style="margin: 0 0 20px; color: #DAA520; font-size: 18px; border-bottom: 1px solid #333; padding-bottom: 10px;">Datos del Ganador</h3>
+                
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px;">Telefono:</td>
+                    <td style="padding: 10px 0; color: #fff; font-size: 16px; font-weight: bold; text-align: right;">${telefono}</td>
+                  </tr>
+                  ${nombre ? `
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px;">Nombre:</td>
+                    <td style="padding: 10px 0; color: #fff; font-size: 14px; text-align: right;">${nombre}</td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px;">Fecha y Hora:</td>
+                    <td style="padding: 10px 0; color: #fff; font-size: 14px; text-align: right;">${fecha}</td>
+                  </tr>
+                  ${spinNumber ? `
+                  <tr>
+                    <td style="padding: 10px 0; color: #888; font-size: 14px;">Numero de Giro:</td>
+                    <td style="padding: 10px 0; color: #22c55e; font-size: 14px; font-weight: bold; text-align: right;">#${spinNumber.toLocaleString()}</td>
+                  </tr>
+                  ` : ''}
+                </table>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Action Required -->
+          <tr>
+            <td style="padding: 0 30px 30px;">
+              <div style="background-color: rgba(59, 130, 246, 0.1); border-radius: 12px; padding: 20px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <p style="margin: 0; color: #3b82f6; font-size: 14px; text-align: center;">
+                  <strong>Accion requerida:</strong> Contacta al ganador para coordinar la entrega del premio.
+                </p>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0a0a0a; padding: 25px; text-align: center; border-top: 1px solid #222;">
+              <p style="margin: 0 0 10px; color: #666; font-size: 12px;">Notificacion automatica del sistema de Ruleta FortuRD</p>
+              <p style="margin: 0; color: #DAA520; font-size: 14px; font-weight: bold;">FortuRD - Tu suerte empieza aqui</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`
+
+  const mailOptions = {
+    from: `"FortuRD Ruleta" <${process.env.EMAIL_USER}>`,
+    to: ADMIN_EMAIL,
+    subject: `GANADOR RULETA: ${premio} - ${telefono}`,
+    html: htmlContent,
+  }
+
+  return transporter.sendMail(mailOptions)
+}
+
 interface AdminNotificationData {
   playerName: string
   playerPhone: string
