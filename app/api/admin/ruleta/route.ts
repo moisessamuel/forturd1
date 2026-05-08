@@ -145,23 +145,39 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: true, message: 'Record deleted or not found' })
     }
 
-    // If resetType is 'counters', only reset the global spin counter
+    // If resetType is 'counters', reset spin counters but keep history
+    // SOURCE OF TRUTH: spins_individuales table — must be cleared to reset to 0
     if (resetType === 'counters') {
-      const { error } = await supabase
-        .from('global_spin_counter')
-        .update({ count: 0, updated_at: new Date().toISOString() })
+      // Delete all individual spin records (this resets the count to 0)
+      const { error: errorSpins } = await supabase
+        .from('spins_individuales')
+        .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000')
 
-      if (error) {
-        console.error('Error resetting counters:', error)
-        return NextResponse.json({ error: 'Error resetting counters' }, { status: 500 })
+      // Also reset the global_spin_counter table
+      const { error: errorCounter } = await supabase
+        .from('global_spin_counter')
+        .update({ count: 0 })
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      if (errorSpins) console.error('Error clearing spins_individuales:', errorSpins)
+      if (errorCounter) console.error('Error resetting global_spin_counter:', errorCounter)
+
+      if (errorSpins) {
+        return NextResponse.json({ error: 'Error al resetear contadores' }, { status: 500 })
       }
 
-      return NextResponse.json({ success: true, message: 'Counters reset' })
+      return NextResponse.json({ success: true, message: 'Contadores reiniciados a 0' })
     }
 
-    // If resetType is 'all', delete everything
+    // If resetType is 'all', delete absolutely everything
     if (resetType === 'all') {
+      // Delete all individual spin records
+      const { error: error0 } = await supabase
+        .from('spins_individuales')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
       // Delete all from ruleta_jugadas
       const { error: error1 } = await supabase
         .from('ruleta_jugadas')
@@ -177,14 +193,15 @@ export async function DELETE(request: Request) {
       // Reset global spin counter
       const { error: error3 } = await supabase
         .from('global_spin_counter')
-        .update({ count: 0, updated_at: new Date().toISOString() })
+        .update({ count: 0 })
         .neq('id', '00000000-0000-0000-0000-000000000000')
 
+      if (error0) console.error('Error deleting spins_individuales:', error0)
       if (error1) console.error('Error deleting ruleta_jugadas:', error1)
       if (error2) console.error('Error deleting jugadas_ruleta:', error2)
       if (error3) console.error('Error resetting counter:', error3)
 
-      return NextResponse.json({ success: true, message: 'All data reset' })
+      return NextResponse.json({ success: true, message: 'Todos los datos eliminados' })
     }
 
     // Default: delete all jugadas but keep counter
