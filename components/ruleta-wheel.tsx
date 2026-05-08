@@ -493,39 +493,41 @@ export function RuletaWheel({
     const { premio, targetSegment } = await determinePrize()
     const isWin = premio.tipo === 'premio'
 
-    // The wheel is drawn starting at -90° (top). Segment[i] starts at:
-    //   segmentStart = rotation - 90 + i * SEGMENT_ANGLE   (in canvas degrees)
-    // The pointer is at the top (0° in canvas = "up").
-    // For the CENTER of targetSegment to align with the pointer at the end,
-    // we need the final rotation R such that:
-    //   R - 90 + targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE/2 ≡ 0  (mod 360)
-    //   R ≡ 90 - targetSegment * SEGMENT_ANGLE - SEGMENT_ANGLE/2      (mod 360)
+    // ─── EXACT ALIGNMENT MATH ────────────────────────────────────────────
+    // The canvas draws segment[i] with its center at canvas-angle:
+    //   centerAngle = rotation - 90 + i * SEGMENT_ANGLE + SEGMENT_ANGLE/2
+    // The pointer sits at the 12-o'clock position, which is canvas-angle = 0.
+    // We need centerAngle ≡ 0 (mod 360) at the end of the spin, so:
+    //   rotation_final ≡ 90 - i * SEGMENT_ANGLE - SEGMENT_ANGLE/2  (mod 360)
     //
-    // Add a small random offset within the segment (±40% of half-segment) so it
-    // doesn't always land dead-center, making it feel natural, but NEVER
-    // crossing into an adjacent segment.
-    const safeJitter = (SEGMENT_ANGLE / 2) * 0.4 * (Math.random() * 2 - 1)
-    const targetAngleForPointer = (90 - targetSegment * SEGMENT_ANGLE - SEGMENT_ANGLE / 2 + safeJitter + 360) % 360
+    // A tiny safe jitter (≤35% of half-segment) keeps it natural but
+    // NEVER crosses into an adjacent segment.
+    // ─────────────────────────────────────────────────────────────────────
+    const exactTarget = 90 - targetSegment * SEGMENT_ANGLE - SEGMENT_ANGLE / 2
+    const maxJitter = SEGMENT_ANGLE * 0.35           // stays well within segment
+    const safeJitter = maxJitter * (Math.random() * 2 - 1)
+    const targetAngleForPointer = ((exactTarget + safeJitter) % 360 + 360) % 360
 
-    const fullSpins = 5 + Math.floor(Math.random() * 3)
-    // Current rotation mod 360
+    const fullSpins = 6 + Math.floor(Math.random() * 3)  // 6–8 full rotations
+    // Normalise current rotation to [0, 360)
     const currentMod = ((rotation % 360) + 360) % 360
-    // How many degrees we need to add to reach targetAngleForPointer
+    // Degrees to add so we reach exactly targetAngleForPointer
     let delta = (targetAngleForPointer - currentMod + 360) % 360
-    if (delta === 0) delta = 360 // always spin at least one full extra spin worth
+    // Guarantee at least one extra full spin worth of travel
+    if (delta < 10) delta += 360
 
     const totalRotation = fullSpins * 360 + delta
-
     const startRotation = rotation
-    const duration = 6000
+    const duration = 7000  // 7 seconds for a smoother, more dramatic deceleration
     const startTime = performance.now()
 
-    const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3)
+    // easeOutQuint: very fast start, very precise slow stop
+    const easeOut = (t: number): number => 1 - Math.pow(1 - t, 5)
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
-      const easedProgress = easeOutCubic(progress)
+      const easedProgress = easeOut(progress)
       
       const currentRotation = startRotation + totalRotation * easedProgress
       // Store the full accumulated rotation (not % 360) so the final position
