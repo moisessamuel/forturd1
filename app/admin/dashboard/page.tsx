@@ -1405,13 +1405,27 @@ export default function AdminDashboard() {
                                     <DialogHeader>
                                       <DialogTitle>Comprobante de Pago</DialogTitle>
                                     </DialogHeader>
-                                    <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                                      <Image
-                                        src={ticket.comprobante_url}
-                                        alt="Comprobante"
-                                        fill
-                                        className="object-contain"
+                                    <div className="relative w-full overflow-hidden rounded-lg">
+                                      <img
+                                        src={`/api/file?pathname=${encodeURIComponent(ticket.comprobante_url)}`}
+                                        alt="Comprobante de pago"
+                                        className="w-full rounded-lg object-contain"
+                                        style={{ maxHeight: '70vh' }}
+                                        onError={(e) => {
+                                          const target = e.currentTarget
+                                          if (!target.src.includes('fallback')) {
+                                            target.src = ticket.comprobante_url + '?fallback=1'
+                                          }
+                                        }}
                                       />
+                                      <a
+                                        href={`/api/file?pathname=${encodeURIComponent(ticket.comprobante_url)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 block text-center text-sm text-blue-400 hover:underline"
+                                      >
+                                        Abrir en pantalla completa
+                                      </a>
                                     </div>
                                   </DialogContent>
                                 </Dialog>
@@ -1506,13 +1520,27 @@ export default function AdminDashboard() {
                                   <DialogHeader>
                                     <DialogTitle>Comprobante de Pago</DialogTitle>
                                   </DialogHeader>
-                                  <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                                    <Image
-                                      src={pg.comprobante_url}
-                                      alt="Comprobante"
-                                      fill
-                                      className="object-contain"
+                                  <div className="relative w-full overflow-hidden rounded-lg">
+                                    <img
+                                      src={`/api/file?pathname=${encodeURIComponent(pg.comprobante_url)}`}
+                                      alt="Comprobante de pago"
+                                      className="w-full rounded-lg object-contain"
+                                      style={{ maxHeight: '70vh' }}
+                                      onError={(e) => {
+                                        const target = e.currentTarget
+                                        if (!target.src.includes('fallback')) {
+                                          target.src = pg.comprobante_url + '?fallback=1'
+                                        }
+                                      }}
                                     />
+                                    <a
+                                      href={`/api/file?pathname=${encodeURIComponent(pg.comprobante_url)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mt-2 block text-center text-sm text-blue-400 hover:underline"
+                                    >
+                                      Abrir en pantalla completa
+                                    </a>
                                   </div>
                                 </DialogContent>
                               </Dialog>
@@ -1863,13 +1891,27 @@ export default function AdminDashboard() {
                                     <DialogHeader>
                                       <DialogTitle>Comprobante de Pago</DialogTitle>
                                     </DialogHeader>
-                                    <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                                      <Image
-                                        src={ticket.comprobante_url}
-                                        alt="Comprobante"
-                                        fill
-                                        className="object-contain"
+                                    <div className="relative w-full overflow-hidden rounded-lg">
+                                      <img
+                                        src={`/api/file?pathname=${encodeURIComponent(ticket.comprobante_url)}`}
+                                        alt="Comprobante de pago"
+                                        className="w-full rounded-lg object-contain"
+                                        style={{ maxHeight: '70vh' }}
+                                        onError={(e) => {
+                                          const target = e.currentTarget
+                                          if (!target.src.includes('fallback')) {
+                                            target.src = ticket.comprobante_url + '?fallback=1'
+                                          }
+                                        }}
                                       />
+                                      <a
+                                        href={`/api/file?pathname=${encodeURIComponent(ticket.comprobante_url)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-2 block text-center text-sm text-blue-400 hover:underline"
+                                      >
+                                        Abrir en pantalla completa
+                                      </a>
                                     </div>
                                   </DialogContent>
                                 </Dialog>
@@ -1979,13 +2021,27 @@ export default function AdminDashboard() {
                                   <DialogHeader>
                                     <DialogTitle>Comprobante de Pago</DialogTitle>
                                   </DialogHeader>
-                                  <div className="relative aspect-video w-full overflow-hidden rounded-lg">
-                                    <Image
-                                      src={pg.comprobante_url}
-                                      alt="Comprobante"
-                                      fill
-                                      className="object-contain"
+                                  <div className="relative w-full overflow-hidden rounded-lg">
+                                    <img
+                                      src={`/api/file?pathname=${encodeURIComponent(pg.comprobante_url)}`}
+                                      alt="Comprobante de pago"
+                                      className="w-full rounded-lg object-contain"
+                                      style={{ maxHeight: '70vh' }}
+                                      onError={(e) => {
+                                        const target = e.currentTarget
+                                        if (!target.src.includes('fallback')) {
+                                          target.src = pg.comprobante_url + '?fallback=1'
+                                        }
+                                      }}
                                     />
+                                    <a
+                                      href={`/api/file?pathname=${encodeURIComponent(pg.comprobante_url)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mt-2 block text-center text-sm text-blue-400 hover:underline"
+                                    >
+                                      Abrir en pantalla completa
+                                    </a>
                                   </div>
                                 </DialogContent>
                               </Dialog>
