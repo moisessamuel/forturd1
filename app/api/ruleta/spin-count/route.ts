@@ -65,6 +65,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: error.message })
     }
 
+    // ─── UPDATE GIROS_USADOS IN RULETA_JUGADAS ─────────────────────────────
+    // This is CRITICAL - without this, verify-spins returns incorrect counts
+    // ───────────────────────────────────────────────────────────────────────
+    if (spinData.jugada_id) {
+      // Get current state of the jugada
+      const { data: jugada } = await supabase
+        .from('ruleta_jugadas')
+        .select('giros_usados, cantidad_giros')
+        .eq('id', spinData.jugada_id)
+        .single()
+
+      if (jugada) {
+        const currentUsados = jugada.giros_usados || 0
+        const totalGiros = jugada.cantidad_giros || 1
+        const newGirosUsados = currentUsados + 1
+        const newEstado = newGirosUsados >= totalGiros ? 'jugado' : 'confirmado'
+
+        // Update the jugada with incremented giros_usados
+        await supabase
+          .from('ruleta_jugadas')
+          .update({
+            giros_usados: newGirosUsados,
+            estado: newEstado,
+            jugado_at: new Date().toISOString(),
+          })
+          .eq('id', spinData.jugada_id)
+      }
+    }
+
     // ─── SEND WINNER NOTIFICATION EMAIL ─────────────────────────────────────
     // If this spin was a prize win, notify the admin via email
     // ─────────────────────────────────────────────────────────────────────────
