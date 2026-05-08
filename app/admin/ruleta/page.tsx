@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -108,6 +109,9 @@ export default function RuletaAdminPage() {
   const [isResetting, setIsResetting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [resetType, setResetType] = useState<'counters' | 'all'>('counters')
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const realtimeChannelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -133,16 +137,58 @@ export default function RuletaAdminPage() {
       
       setJugadas(jugadasData.jugadas || jugadasData || [])
       setStats(statsData)
+      setLastUpdate(new Date())
     } catch (error) {
       console.error('Error fetching data:', error)
     }
   }, [estadoFilter, searchTerm])
 
+  // ─── SUPABASE REALTIME SUBSCRIPTION ──────────────────────────────────────
+  // Subscribes to INSERT/UPDATE on both ruleta tables.
+  // Any spin from any user triggers an immediate fetchData() call.
+  // ──────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchData()
-      const interval = setInterval(fetchData, 30000)
-      return () => clearInterval(interval)
+    if (!isAuthenticated) return
+
+    // Initial data load
+    fetchData()
+
+    const supabase = createClient()
+
+    // Create a single channel that listens to both tables
+    const channel = supabase
+      .channel('admin-ruleta-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ruleta_jugadas' },
+        () => {
+          fetchData()
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'jugadas_ruleta' },
+        () => {
+          fetchData()
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsRealtimeConnected(true)
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setIsRealtimeConnected(false)
+        }
+      })
+
+    realtimeChannelRef.current = channel
+
+    // Fallback polling every 15s in case realtime has a hiccup
+    const fallbackInterval = setInterval(fetchData, 15000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      clearInterval(fallbackInterval)
+      setIsRealtimeConnected(false)
     }
   }, [isAuthenticated, fetchData])
 
@@ -307,6 +353,20 @@ export default function RuletaAdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Realtime status indicator */}
+          <div className="flex items-center gap-1.5 rounded-full border border-border/50 bg-card/50 px-3 py-1.5">
+            <span 
+              className={`h-2 w-2 rounded-full ${isRealtimeConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} 
+            />
+            <span className="text-xs text-muted-foreground">
+              {isRealtimeConnected ? 'En vivo' : 'Desconectado'}
+            </span>
+            {lastUpdate && (
+              <span className="hidden text-[10px] text-muted-foreground/60 md:block">
+                · {lastUpdate.toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
+          </div>
           <Button 
             variant="outline" 
             className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
