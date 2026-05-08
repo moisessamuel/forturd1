@@ -12,7 +12,9 @@ import type { Sorteo } from '@/lib/types'
 
 const BMWX7Images = [
   '/images/bmw-x7-front.jpg',
-  '/images/bmw-x7-duo.jpg',
+  '/images/bmw-x7-night.jpg',
+  '/images/bmw-x7-day-angle.jpg',
+  '/images/bmw-x7-day-angle-2.jpg',
 ]
 
 export default function BMWX7Page() {
