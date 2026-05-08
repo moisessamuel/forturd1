@@ -79,14 +79,16 @@ interface Stats {
   giros_gratis: number
 }
 
-// Prize milestones configuration - based on user requirements
+// Prize milestones configuration - OFFICIAL FORTURD PRIZES (cyclic/repeating)
+// Each prize repeats every X spins (e.g., boleto every 20 spins: 20, 40, 60, ...)
 const PRIZE_MILESTONES = [
-  { spins: 20, prize: '1 Boleto de Vehiculo a Eleccion', icon: Ticket, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
-  { spins: 201, prize: '1 Boleto BMW X6 + 1 Boleto BMW X7', icon: Ticket, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
-  { spins: 211, prize: '5,000 Pesos', icon: Banknote, color: 'text-green-500', bgColor: 'bg-green-500/10' },
-  { spins: 3504, prize: 'Patineta Electrica / PS5 / Smart TV', icon: Gamepad2, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
-  { spins: 7605, prize: 'iPhone', icon: Smartphone, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
-  { spins: 12506, prize: 'Motor', icon: Bike, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  { spins: 20, prize: '1 Boleto del Sorteo a Eleccion', icon: Ticket, color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  { spins: 71, prize: '1 Boleto BMW X6 + 1 Boleto BMW X7', icon: Ticket, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  { spins: 211, prize: 'RD$5,000', icon: Banknote, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
+  { spins: 3504, prize: 'Patineta Electrica / PS5 / Smart TV', icon: Gamepad2, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' },
+  { spins: 8605, prize: 'iPhone', icon: Smartphone, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
+  { spins: 12506, prize: 'RD$100,000', icon: Banknote, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
+  { spins: 16207, prize: 'Motor', icon: Bike, color: 'text-red-500', bgColor: 'bg-red-500/10' },
 ]
 
 export default function RuletaAdminPage() {
@@ -239,14 +241,33 @@ export default function RuletaAdminPage() {
     toast.success('Datos actualizados')
   }
 
-  const getNextPrizeMilestone = (currentSpins: number) => {
-    for (const milestone of PRIZE_MILESTONES) {
-      if (currentSpins < milestone.spins) {
-        return { ...milestone, remaining: milestone.spins - currentSpins }
+  // Calculate progress for ALL prizes simultaneously (cyclic/parallel)
+  const getAllPrizesProgress = (currentSpins: number) => {
+    return PRIZE_MILESTONES.map((milestone) => {
+      // How many complete cycles of this prize have been delivered
+      const completedCycles = Math.floor(currentSpins / milestone.spins)
+      // Progress toward the NEXT cycle of this prize
+      const progressInCurrentCycle = currentSpins % milestone.spins
+      const remaining = milestone.spins - progressInCurrentCycle
+      const progressPercent = (progressInCurrentCycle / milestone.spins) * 100
+      
+      return {
+        ...milestone,
+        completedCycles,
+        progressInCurrentCycle,
+        remaining,
+        progressPercent,
+        nextMilestone: (completedCycles + 1) * milestone.spins,
       }
-    }
-    // After completing all milestones, show cycling info
-    return null
+    })
+  }
+
+  // Get the NEAREST upcoming prize (smallest remaining spins)
+  const getNextPrizeMilestone = (currentSpins: number) => {
+    const allProgress = getAllPrizesProgress(currentSpins)
+    // Sort by remaining spins to find the closest one
+    const sorted = [...allProgress].sort((a, b) => a.remaining - b.remaining)
+    return sorted[0] || null
   }
 
   const getCompletedMilestones = (currentSpins: number) => {
@@ -386,8 +407,13 @@ export default function RuletaAdminPage() {
               <p className="text-2xl font-bold">{nextPrize.prize}</p>
               <p className="text-muted-foreground">
                 Faltan <span className="font-bold text-primary">{nextPrize.remaining}</span> giros 
-                (al llegar a {nextPrize.spins} giros totales)
+                (al llegar a {nextPrize.nextMilestone?.toLocaleString() || nextPrize.spins} giros totales)
               </p>
+              {nextPrize.completedCycles > 0 && (
+                <p className="text-sm text-green-500">
+                  Este premio ya se ha entregado {nextPrize.completedCycles} vez(es)
+                </p>
+              )}
             </div>
             <div className="text-center">
               <p className="text-sm text-muted-foreground">Giros jugados</p>
@@ -407,39 +433,51 @@ export default function RuletaAdminPage() {
         </CardHeader>
         <CardContent>
           <p className="mb-4 text-sm text-muted-foreground">
-            Por defecto sale &quot;Sigue Intentando&quot;. Los premios garantizados se otorgan al alcanzar los siguientes hitos:
+            Por defecto sale &quot;Sigue Intentando&quot;. Los premios son CICLICOS — cada premio se repite al completar su ciclo. 
+            Todos los contadores avanzan en PARALELO con cada giro.
           </p>
-          <div className="grid gap-4 md:grid-cols-6">
-            {PRIZE_MILESTONES.map((milestone) => {
-              const Icon = milestone.icon
-              const isCompleted = stats && stats.giros_jugados >= milestone.spins
-              const progress = stats ? Math.min((stats.giros_jugados / milestone.spins) * 100, 100) : 0
+          <div className="grid gap-4 md:grid-cols-7">
+            {stats && getAllPrizesProgress(stats.giros_jugados).map((prizeProgress) => {
+              const Icon = prizeProgress.icon
+              const hasCompletedAtLeastOnce = prizeProgress.completedCycles > 0
               return (
                 <div
-                  key={milestone.spins}
+                  key={prizeProgress.spins}
                   className={`rounded-lg border p-4 text-center transition-all ${
-                    isCompleted 
-                      ? 'border-green-500 bg-green-500/10' 
+                    hasCompletedAtLeastOnce 
+                      ? 'border-green-500/50 bg-green-500/5' 
                       : 'border-border'
                   }`}
                 >
-                  <Icon className={`mx-auto h-8 w-8 ${milestone.color}`} />
-                  <p className="mt-2 text-xl font-bold">{milestone.spins.toLocaleString()}</p>
+                  <Icon className={`mx-auto h-6 w-6 ${prizeProgress.color}`} />
+                  <p className="mt-2 text-xl font-bold">{prizeProgress.spins.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">giros</p>
-                  <p className="mt-2 text-sm font-medium">{milestone.prize}</p>
-                  {isCompleted ? (
-                    <Badge className="mt-2 bg-green-500">Alcanzado</Badge>
-                  ) : (
-                    <div className="mt-2">
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                        <div 
-                          className="h-full bg-primary transition-all" 
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{progress.toFixed(0)}%</p>
+                  <p className="mt-2 text-xs font-medium leading-tight">{prizeProgress.prize}</p>
+                  
+                  {/* Progress toward next cycle */}
+                  <div className="mt-3">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                      <div 
+                        className={`h-full transition-all ${prizeProgress.color.replace('text-', 'bg-')}`}
+                        style={{ width: `${prizeProgress.progressPercent}%` }}
+                      />
                     </div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">
+                      {prizeProgress.progressInCurrentCycle}/{prizeProgress.spins}
+                    </p>
+                  </div>
+                  
+                  {/* Completed cycles indicator */}
+                  {hasCompletedAtLeastOnce && (
+                    <Badge className="mt-2 bg-green-500/80 text-[10px]">
+                      {prizeProgress.completedCycles}x entregado
+                    </Badge>
                   )}
+                  
+                  {/* Remaining spins */}
+                  <p className="mt-1 text-[10px] text-primary">
+                    Faltan {prizeProgress.remaining} giros
+                  </p>
                 </div>
               )
             })}
