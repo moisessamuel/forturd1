@@ -30,18 +30,21 @@ export async function GET(request: NextRequest) {
     if (player) {
       playerName = player.nombre || ''
       
-      // Get purchase groups for this player
+      // Get purchase groups for this player - SOLO SORTEOS BMW (bmw-x6 y bmw-x7)
+      // IMPORTANTE: Solo boletos de sorteos BMW generan giros gratis
+      // Las compras directas de giros NO generan giros adicionales
       const { data: purchaseGroups } = await supabase
         .from('purchase_groups')
         .select('id, estado')
         .eq('player_id', player.id)
+        .in('sorteo_slug', ['bmw-x6', 'bmw-x7']) // SOLO sorteos BMW
         .order('created_at', { ascending: false })
 
-      // Separate pending vs approved ticket purchases
+      // Separate pending vs approved ticket purchases (SOLO BMW)
       const pendingTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'pendiente') || []
       const approvedTicketPurchases = purchaseGroups?.filter(pg => pg.estado === 'aprobado') || []
 
-      // Count PENDING tickets (each ticket = 1 pending free spin)
+      // Count PENDING BMW tickets (each ticket = 1 pending free spin)
       if (pendingTicketPurchases.length > 0) {
         const { count } = await supabase
           .from('tickets')
@@ -50,7 +53,7 @@ export async function GET(request: NextRequest) {
         pendingTicketsCount = count || 0
       }
 
-      // Count APPROVED tickets (each ticket = 1 free spin available)
+      // Count APPROVED BMW tickets (each ticket = 1 free spin available)
       if (approvedTicketPurchases.length > 0) {
         const { count } = await supabase
           .from('tickets')
