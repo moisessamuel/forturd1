@@ -339,7 +339,7 @@ export function RuletaWheel({
           setTimeout(() => setShowParticles(false), 3000)
         }
 
-        // Registrar el giro
+        // Registrar el resultado del giro (solo tracking, el consumo ya se hizo en handleStartSpin)
         fetch('/api/ruleta/spin-count', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

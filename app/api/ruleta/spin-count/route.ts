@@ -2,13 +2,19 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendRuletaWinnerNotification } from '@/lib/email'
 
+/**
+ * SPIN-COUNT: Registra los resultados de giros para tracking global.
+ * 
+ * NOTA: Este endpoint NO consume giros. El consumo se hace en /api/ruleta/consume-spin
+ * ANTES de que la animación comience. Este endpoint solo registra el resultado
+ * para estadísticas y notificaciones de premios.
+ */
+
 // GET: Fetch global spin count
-// SOURCE OF TRUTH: spins_individuales table (each record = 1 spin executed)
 export async function GET() {
   try {
     const supabase = await createClient()
     
-    // Count ONLY from spins_individuales - this is the EXACT count of spins executed
     const { count: totalSpins } = await supabase
       .from('spins_individuales')
       .select('*', { count: 'exact', head: true })
@@ -20,13 +26,11 @@ export async function GET() {
   }
 }
 
-// POST: Record individual spin execution
-// Each POST = 1 spin executed. The COUNT of records in spins_individuales = total spins.
+// POST: Record individual spin result (for tracking only)
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     
-    // Parse optional body for spin details
     let spinData = {
       telefono: 'unknown',
       nombre: null as string | null,
@@ -45,8 +49,7 @@ export async function POST(request: Request) {
       // No body provided, use defaults
     }
 
-    // Insert individual spin record - THIS IS THE ONLY SOURCE OF TRUTH
-    // The count of records = exact number of spins executed
+    // Insert individual spin record for tracking
     const { error } = await supabase
       .from('spins_individuales')
       .insert({
@@ -65,12 +68,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: error.message })
     }
 
-    // ─── SEND WINNER NOTIFICATION EMAIL ─────────────────────────────────────
-    // If this spin was a prize win, notify the admin via email
-    // ─────────────────────────────────────────────────────────────────────────
+    // Send winner notification email if this was a prize win
     if (spinData.es_premio && spinData.resultado !== 'Sigue Intentando') {
       try {
-        // Get current spin count for reference
         const { count: spinNumber } = await supabase
           .from('spins_individuales')
           .select('*', { count: 'exact', head: true })
@@ -87,7 +87,6 @@ export async function POST(request: Request) {
           spinNumber: spinNumber || undefined
         })
       } catch (emailError) {
-        // Log error but don't fail the request - spin was already recorded
         console.error('Error sending winner notification email:', emailError)
       }
     }
