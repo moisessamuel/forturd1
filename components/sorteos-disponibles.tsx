@@ -36,23 +36,15 @@ export function SorteosDisponibles() {
   useEffect(() => {
     const fetchSorteos = async () => {
       try {
-        // Fetch all active sorteos
+        // Single fetch — progreso_manual is already included in select('*')
         const response = await fetch('/api/sorteos?active=true')
         const data = await response.json()
-        
-        // Fetch progress for each sorteo
-        const sorteosWithProgress = await Promise.all(
-          (data || []).map(async (sorteo: Sorteo) => {
-            try {
-              const progressRes = await fetch(`/api/sorteos/${sorteo.slug}/progress`)
-              const progressData = await progressRes.json()
-              return { ...sorteo, progress: progressData.porcentaje || 0 }
-            } catch {
-              return { ...sorteo, progress: 0 }
-            }
-          })
-        )
-        
+
+        const sorteosWithProgress = (data || []).map((sorteo: Sorteo & { progreso_manual?: number }) => ({
+          ...sorteo,
+          progress: sorteo.progreso_manual || 0,
+        }))
+
         setSorteos(sorteosWithProgress)
       } catch (error) {
         console.error('Error fetching sorteos:', error)

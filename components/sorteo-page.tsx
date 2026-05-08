@@ -20,34 +20,31 @@ export function SorteoPage({ slug }: SorteoPageProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch sorteo data
-    fetch(`/api/sorteos?slug=${slug}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setSorteo(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Error fetching sorteo:', err)
-        setLoading(false)
-      })
-
-    // Fetch progress for this specific sorteo
-    const fetchProgress = async () => {
+    const fetchSorteo = async () => {
       try {
-        const res = await fetch(`/api/sorteos/${slug}/progress`)
+        const res = await fetch(`/api/sorteos?slug=${slug}`)
         const data = await res.json()
-        setProgress(data.porcentaje || 0)
-      } catch (error) {
-        console.error('Error fetching progress:', error)
+        setSorteo(data)
+        // progreso_manual is already included in the sorteo response (select '*')
+        setProgress(data.progreso_manual || 0)
+      } catch (err) {
+        console.error('Error fetching sorteo:', err)
+      } finally {
+        setLoading(false)
       }
     }
 
-    fetchProgress()
+    fetchSorteo()
 
-    // Poll for progress updates every 5 seconds
-    const interval = setInterval(fetchProgress, 5000)
-    
+    // Poll for progress updates every 10 seconds (reduced frequency)
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/sorteos?slug=${slug}`)
+        const data = await res.json()
+        setProgress(data.progreso_manual || 0)
+      } catch {}
+    }, 10000)
+
     return () => clearInterval(interval)
   }, [slug])
 

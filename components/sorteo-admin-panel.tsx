@@ -86,37 +86,32 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
   const fetchData = useCallback(async () => {
     try {
       setIsLoading(true)
-      
-      // Fetch sorteo info
-      const sorteoRes = await fetch(`/api/sorteos?slug=${sorteoSlug}`)
-      const sorteoData = await sorteoRes.json()
+
+      // Fire all 3 independent requests in parallel
+      const [sorteoRes, statsRes, comprasRes] = await Promise.all([
+        fetch(`/api/sorteos?slug=${sorteoSlug}`),
+        fetch(`/api/admin/sorteo-stats?slug=${sorteoSlug}`),
+        fetch(`/api/admin/sorteo-compras?sorteo_slug=${sorteoSlug}&estado=${estadoFilter}&search=${searchTerm}`),
+      ])
+
+      const [sorteoData, statsData, comprasData] = await Promise.all([
+        sorteoRes.json(),
+        statsRes.json(),
+        comprasRes.json(),
+      ])
+
       setSorteo(sorteoData)
-      
-      // Fetch stats for this sorteo
-      const statsRes = await fetch(`/api/admin/sorteo-stats?slug=${sorteoSlug}`)
-      const statsData = await statsRes.json()
       setStats(statsData)
-      
-      // Fetch progress for this sorteo
-      try {
-        const progressRes = await fetch(`/api/sorteos/${sorteoSlug}/progress`)
-        const progressData = await progressRes.json()
-        setProgress(progressData.porcentaje || 0)
-      } catch (err) {
-        console.error('[v0] Error fetching progress:', err)
-      }
-      
-      // Fetch compras for this sorteo using the dedicated admin endpoint
-      const comprasRes = await fetch(`/api/admin/sorteo-compras?sorteo_slug=${sorteoSlug}&estado=${estadoFilter}&search=${searchTerm}`)
-      const comprasData = await comprasRes.json()
-      
+      // progreso_manual already included in sorteo select('*') — no extra fetch needed
+      setProgress(sorteoData.progreso_manual || 0)
+
       if (Array.isArray(comprasData)) {
         setCompras(comprasData)
       } else {
         console.error('Invalid compras data:', comprasData)
         setCompras([])
       }
-      
+
     } catch (error) {
       console.error('Error fetching data:', error)
       toast.error('Error al cargar datos')
