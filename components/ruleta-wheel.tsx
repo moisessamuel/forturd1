@@ -19,44 +19,100 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
-// 20 segments: 14 black "SIGUE INTENTANDO" and 6 gold "gift box"
-// Gift boxes are distributed evenly throughout the wheel
+// ─── DEFINITIVE VISUAL SEGMENT TABLE ──────────────────────────────────────
+// This table represents the EXACT visual order as rendered by the canvas.
+// The canvas draws segment[i] starting at angle: startAngle + i * angle - π/2
+// So segment[0] starts at the TOP (12 o'clock) when rotation = 0.
+//
+// 'lose' = "SIGUE INTENTANDO" (black segment)
+// 'gift' = gift box (gold segment)
+// ──────────────────────────────────────────────────────────────────────────
+const VISUAL_SEGMENT_MAP: ('lose' | 'gift')[] = [
+  'lose', // index 0
+  'lose', // index 1
+  'lose', // index 2
+  'lose', // index 3
+  'gift', // index 4  ← gift (1 of 4)
+  'lose', // index 5
+  'lose', // index 6
+  'lose', // index 7
+  'lose', // index 8
+  'gift', // index 9  ← gift (2 of 4)
+  'lose', // index 10
+  'lose', // index 11
+  'lose', // index 12
+  'lose', // index 13
+  'gift', // index 14 ← gift (3 of 4)
+  'lose', // index 15
+  'lose', // index 16
+  'lose', // index 17
+  'lose', // index 18
+  'gift', // index 19 ← gift (4 of 4)
+]
+
+// Full segment data for rendering
 const WHEEL_SEGMENTS: Array<{
   label: string
   color: string
   textColor: string
   tipo: string
   isGiftBox: boolean
-}> = []
-
-// Gift box positions: evenly distributed among 20 segments (roughly every 3-4 segments)
-const giftBoxPositions = [2, 5, 8, 11, 14, 17] // 6 gift boxes
-
-// Generate 20 segments
-for (let i = 0; i < 20; i++) {
-  if (giftBoxPositions.includes(i)) {
-    // Gold segment with gift box
-    WHEEL_SEGMENTS.push({
+}> = VISUAL_SEGMENT_MAP.map((type) => {
+  if (type === 'gift') {
+    return {
       label: '',
       color: '#DAA520',
       textColor: '#000000',
       tipo: 'premio',
       isGiftBox: true,
-    })
+    }
   } else {
-    // Black segment with "SIGUE INTENTANDO"
-    WHEEL_SEGMENTS.push({
+    return {
       label: 'SIGUE\nINTENTANDO',
       color: '#1a1a1a',
       textColor: '#DAA520',
       tipo: 'sin_premio',
       isGiftBox: false,
-    })
+    }
   }
+})
+
+const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length // 20
+const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS   // 18°
+
+// ─── DEFINITIVE INVERSE FUNCTIONS ─────────────────────────────────────────
+// These two functions MUST be exact mathematical inverses of each other.
+// 
+// Canvas draws segment[i] with its START edge at angle:
+//   canvasAngle = rotation - 90 + i * 18  (in degrees, 0 = right, CCW positive)
+//
+// The pointer is at the TOP = -90° in canvas coords = 270° in standard coords.
+// A segment is "under the pointer" when the pointer falls within its arc.
+//
+// For the CENTER of segment[i] to be at the pointer:
+//   rotation - 90 + i * 18 + 9 = 0  (mod 360, where 0 = top)
+//   rotation = 81 - i * 18          (mod 360)
+//
+// INVERSE: given rotation, which segment's center is at the pointer?
+//   i = (81 - rotation) / 18        (mod 20)
+// ──────────────────────────────────────────────────────────────────────────
+
+function getExactRotationForIndex(targetIndex: number): number {
+  // Returns the rotation (0-360) that centers segment[targetIndex] under pointer
+  const rot = (81 - targetIndex * SEGMENT_ANGLE) % 360
+  return rot < 0 ? rot + 360 : rot
 }
 
-const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length
-const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS
+function getVisibleIndexFromRotation(rotationDegrees: number): number {
+  // Returns which segment index is centered under the pointer at this rotation
+  const normalized = ((rotationDegrees % 360) + 360) % 360
+  // Exact inverse of getExactRotationForIndex
+  const rawIndex = (81 - normalized) / SEGMENT_ANGLE
+  // Use Math.round to snap to nearest segment (handles edge cases)
+  const rounded = Math.round(rawIndex)
+  // Normalize to [0, 19]
+  return ((rounded % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
+}
 
 export function RuletaWheel({ 
   premios, 
@@ -400,18 +456,37 @@ export function RuletaWheel({
     }
   }, [initAudio])
 
-  // Determine prize based on controlled probability
-  const determinePrize = useCallback(async (): Promise<{ premio: Premio; targetSegment: number }> => {
-    const nextSpinCount = globalSpinCount + 1
-    
+  // Determine result: win or lose, and select the exact segment index
+  const determineResult = useCallback(async (): Promise<{ premio: Premio; selectedIndex: number }> => {
+    // Always fetch the REAL spin count from the server to avoid client drift
+    let serverSpinCount = globalSpinCount
+    try {
+      const res = await fetch('/api/ruleta/spin-count')
+      const data = await res.json()
+      if (data.count !== undefined) {
+        serverSpinCount = data.count
+        setGlobalSpinCount(data.count)
+      }
+    } catch {
+      // Fall back to local count
+    }
+
+    const nextSpinCount = serverSpinCount + 1
+
     let prizeType: string | null = null
     let prizeName: string = 'Sigue Intentando'
-    
-    // Check milestones (rarest to most common)
-    if (nextSpinCount % 12506 === 0) {
+
+    // ─── PREMIOS OFICIALES FORTURD ─────────────────────────────────────────
+    // Check milestones from rarest to most common (order matters!)
+    // Each milestone is REPETITIVE and AUTOMATIC (cycles)
+    // ───────────────────────────────────────────────────────────────────────
+    if (nextSpinCount % 16207 === 0) {
       prizeType = 'motor'
       prizeName = 'Motor'
-    } else if (nextSpinCount % 7605 === 0) {
+    } else if (nextSpinCount % 12506 === 0) {
+      prizeType = 'dinero_100k'
+      prizeName = 'RD$100,000'
+    } else if (nextSpinCount % 8605 === 0) {
       prizeType = 'iphone'
       prizeName = 'iPhone'
     } else if (nextSpinCount % 3504 === 0) {
@@ -419,42 +494,36 @@ export function RuletaWheel({
       const techPrizes = ['Patineta Electrica', 'PS5', 'Smart TV']
       prizeName = techPrizes[Math.floor(Math.random() * techPrizes.length)]
     } else if (nextSpinCount % 211 === 0) {
-      prizeType = 'dinero'
+      prizeType = 'dinero_5k'
       prizeName = 'RD$5,000'
-    } else if (nextSpinCount % 201 === 0) {
-      prizeType = 'boleto'
+    } else if (nextSpinCount % 71 === 0) {
+      prizeType = 'boleto_bmw'
       prizeName = '1 Boleto BMW X6 + 1 Boleto BMW X7'
     } else if (nextSpinCount % 20 === 0) {
-      prizeType = 'boleto_vehiculo'
-      prizeName = '1 Boleto de Vehiculo a Eleccion'
-    }
-    
-    // Find target segment
-    let targetSegment: number
-    
-    if (prizeType) {
-      // Prize - land on a random gift box segment (odd indices)
-      const giftBoxIndices = WHEEL_SEGMENTS
-        .map((_, i) => i)
-        .filter(i => WHEEL_SEGMENTS[i].isGiftBox)
-      targetSegment = giftBoxIndices[Math.floor(Math.random() * giftBoxIndices.length)]
-    } else {
-      // No prize - land on a "SIGUE INTENTANDO" segment (even indices)
-      const noWinIndices = WHEEL_SEGMENTS
-        .map((_, i) => i)
-        .filter(i => !WHEEL_SEGMENTS[i].isGiftBox)
-      targetSegment = noWinIndices[Math.floor(Math.random() * noWinIndices.length)]
+      prizeType = 'boleto_eleccion'
+      prizeName = '1 Boleto del Sorteo a Eleccion'
     }
 
-    // Create premio object
+    // Index pools matching VISUAL_SEGMENT_MAP (4 gifts, 16 lose)
+    const winningIndexes = [4, 9, 14, 19]                                          // gift box segments
+    const loseIndexes    = [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18] // "sigue intentando"
+
+    const result = prizeType ? 'win' : 'lose'
+
+    // Select index ONLY from the correct pool — no mixing possible
+    const selectedIndex =
+      result === 'win'
+        ? winningIndexes[Math.floor(Math.random() * winningIndexes.length)]
+        : loseIndexes[Math.floor(Math.random() * loseIndexes.length)]
+
+    // Build premio object
     let premio: Premio
-    
     if (prizeType) {
       premio = premios.find(p => p.tipo === 'premio') || {
         id: 'prize-' + prizeType,
         nombre: prizeName,
         tipo: 'premio' as const,
-        probabilidad: 1
+        probabilidad: 1,
       }
       premio = { ...premio, nombre: prizeName }
     } else {
@@ -462,11 +531,11 @@ export function RuletaWheel({
         id: 'no-prize',
         nombre: 'Sigue Intentando',
         tipo: 'sin_premio' as const,
-        probabilidad: 100
+        probabilidad: 100,
       }
     }
 
-    return { premio, targetSegment }
+    return { premio, selectedIndex }
   }, [premios, globalSpinCount])
 
   // Animate the wheel spin
@@ -477,28 +546,55 @@ export function RuletaWheel({
     setIsAnimating(true)
     initAudio()
 
-    const { premio, targetSegment } = await determinePrize()
+    const { premio, selectedIndex } = await determineResult()
     const isWin = premio.tipo === 'premio'
+    const expectedResult: 'lose' | 'gift' = isWin ? 'gift' : 'lose'
 
-    // Calculate rotation
-    const fullSpins = 5 + Math.floor(Math.random() * 3)
-    const segmentMiddle = targetSegment * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
-    const targetRotation = (fullSpins * 360) + (360 - segmentMiddle)
+    // ─── SIMPLE, BULLETPROOF ROTATION CALCULATION ─────────────────────────
+    // 1. The selectedIndex is ALREADY guaranteed to be from the correct pool
+    //    (gift indexes for wins, lose indexes for losses) by determineResult()
+    // 2. We use getExactRotationForIndex which is mathematically exact
+    // 3. We add full spins for visual effect
+    // 4. We verify with getVisibleIndexFromRotation (exact inverse function)
+    // ──────────────────────────────────────────────────────────────────────
     
+    const extraSpins = 360 * 6  // 6 full rotations for visual effect
+    const exactBaseRotation = getExactRotationForIndex(selectedIndex)
+    let targetRotation = extraSpins + exactBaseRotation
+    
+    // VERIFICATION: Confirm the math works
+    let verifyIndex = getVisibleIndexFromRotation(targetRotation)
+    
+    // If somehow the index doesn't match (shouldn't happen with exact math),
+    // force to the correct segment
+    if (verifyIndex !== selectedIndex || VISUAL_SEGMENT_MAP[verifyIndex] !== expectedResult) {
+      // Find closest valid index from the correct pool
+      const validIndexes = expectedResult === 'gift'
+        ? [4, 9, 14, 19]
+        : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
+      
+      // Use first valid index as fallback
+      const fallbackIndex = validIndexes[0]
+      targetRotation = extraSpins + getExactRotationForIndex(fallbackIndex)
+      verifyIndex = fallbackIndex
+    }
+
     const startRotation = rotation
     const totalRotation = targetRotation
-    const duration = 6000
+
+    const duration = 7000 // ms
     const startTime = performance.now()
 
-    const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3)
+    // easeOutQuint: fast start, very gradual precise stop
+    const easeOut = (t: number): number => 1 - Math.pow(1 - t, 5)
 
     const animate = (currentTime: number) => {
       const elapsed = currentTime - startTime
       const progress = Math.min(elapsed / duration, 1)
-      const easedProgress = easeOutCubic(progress)
-      
+      const easedProgress = easeOut(progress)
+
       const currentRotation = startRotation + totalRotation * easedProgress
-      setRotation(currentRotation % 360)
+      setRotation(currentRotation)
 
       const speed = (totalRotation / duration) * (1 - progress) * 1000
       if (speed > 50 && Math.random() > 0.7) {
@@ -508,26 +604,69 @@ export function RuletaWheel({
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
+        // ─── SNAP FINAL FORZADO ─────────────────────────────────────────────
+        // After animation completes, verify alignment and force-snap if needed.
+        // Uses the SAME functions as pre-calculation for consistency.
+        // ───────────────────────────────────────────────────────────────────
+        
+        const rawFinalRotation = startRotation + totalRotation
+        
+        // Use the EXACT same function to determine visible index
+        let actualVisibleIndex = getVisibleIndexFromRotation(rawFinalRotation)
+        const actualSegmentType = VISUAL_SEGMENT_MAP[actualVisibleIndex]
+        
+        // Calculate the exact snap rotation
+        let snapRotation: number
+        
+        if (actualSegmentType === expectedResult) {
+          // Correct type - just snap to exact center of this segment
+          const exactRot = getExactRotationForIndex(actualVisibleIndex)
+          const fullSpins = Math.floor(rawFinalRotation / 360) * 360
+          snapRotation = fullSpins + exactRot
+        } else {
+          // MISMATCH - force to nearest valid segment (this should never happen
+          // if the pre-calculation is correct, but it's a safety net)
+          const validIndexes = expectedResult === 'gift'
+            ? [4, 9, 14, 19]
+            : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
+          
+          // Find closest valid
+          let closest = validIndexes[0]
+          let minDist = Math.abs(validIndexes[0] - actualVisibleIndex)
+          for (const idx of validIndexes) {
+            const d = Math.abs(idx - actualVisibleIndex)
+            if (d < minDist) { minDist = d; closest = idx }
+          }
+          
+          const exactRot = getExactRotationForIndex(closest)
+          const fullSpins = Math.floor(rawFinalRotation / 360) * 360
+          snapRotation = fullSpins + exactRot
+          actualVisibleIndex = closest
+        }
+        
+        // Apply the exact snap
+        setRotation(snapRotation)
         setIsAnimating(false)
+
         if (isWin) {
           playWinSound()
           setShowParticles(true)
           setTimeout(() => setShowParticles(false), 3000)
         }
-        
+
         setGlobalSpinCount(prev => prev + 1)
-        
+
         fetch('/api/ruleta/spin-count', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         }).catch(console.error)
-        
+
         onSpinComplete(premio)
       }
     }
 
     animationRef.current = requestAnimationFrame(animate)
-  }, [canSpin, isSpinning, isAnimating, onStartSpin, determinePrize, rotation, playTickSound, playWinSound, onSpinComplete, initAudio])
+  }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, rotation, playTickSound, playWinSound, onSpinComplete, initAudio])
 
   // Cleanup
   useEffect(() => {

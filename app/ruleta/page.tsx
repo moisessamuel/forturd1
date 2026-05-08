@@ -639,20 +639,19 @@ function RuletaPageContent() {
           </Card>
         )}
 
-        {/* Prizes section */}
+        {/* Premios Disponibles */}
         <div className="mt-12">
           <h2 className="mb-6 text-center text-2xl font-bold text-foreground">
             PREMIOS DISPONIBLES
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {premios.filter(p => p.tipo === 'premio').map((premio) => (
-              <Card key={premio.id} className="border-primary/30 bg-card/50">
-                <CardContent className="flex flex-col items-center p-4 text-center">
-                  <Gift className="mb-2 h-8 w-8 text-primary" />
-                  <p className="text-sm font-bold text-foreground">{premio.nombre}</p>
-                </CardContent>
-              </Card>
-            ))}
+            <PrizeCard nombre="1 Boleto del Sorteo" />
+            <PrizeCard nombre="1 Boleto BMW X6 + 1 Boleto BMW X7" />
+            <PrizeCard nombre="RD$5,000" />
+            <PrizeCard nombre="RD$100,000" />
+            <PrizeCard nombre="iPhone" />
+            <PrizeCard nombre="Motor" />
+            <PrizeCard nombre="Patineta/PS5/TV" />
           </div>
         </div>
       </div>
@@ -1057,6 +1056,18 @@ function RuletaPageContent() {
         </DialogContent>
       </Dialog>
     </main>
+  )
+}
+
+// Prize Card Component (for Premios Disponibles section)
+function PrizeCard({ nombre }: { nombre: string }) {
+  return (
+    <Card className="border-primary/30 bg-card/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
+      <CardContent className="flex flex-col items-center p-6 text-center">
+        <Gift className="mb-3 h-10 w-10 text-primary" />
+        <p className="text-sm font-bold text-foreground">{nombre}</p>
+      </CardContent>
+    </Card>
   )
 }
 
