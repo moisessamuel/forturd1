@@ -339,21 +339,30 @@ export function RuletaWheel({
           setTimeout(() => setShowParticles(false), 3000)
         }
 
-        // Registrar el giro
-        fetch('/api/ruleta/spin-count', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telefono: playerTelefono,
-            nombre: playerNombre,
-            tipo: spinType,
-            resultado: prizeName,
-            es_premio: isWin,
-            jugada_id: jugadaId,
-            monto: spinMonto,
-            moneda: spinMoneda
+        // Registrar el giro - DEBE completarse antes de notificar resultado
+        const spinDataToSend = {
+          telefono: playerTelefono,
+          nombre: playerNombre,
+          tipo: spinType,
+          resultado: prizeName,
+          es_premio: isWin,
+          jugada_id: jugadaId,
+          monto: spinMonto,
+          moneda: spinMoneda
+        }
+        console.log('[v0] RuletaWheel sending to spin-count:', spinDataToSend)
+        
+        try {
+          const response = await fetch('/api/ruleta/spin-count', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(spinDataToSend)
           })
-        }).catch(console.error)
+          const result = await response.json()
+          console.log('[v0] RuletaWheel spin-count response:', result)
+        } catch (err) {
+          console.error('[v0] RuletaWheel spin-count error:', err)
+        }
 
         // Notificar resultado
         const premio: Premio = isWin
