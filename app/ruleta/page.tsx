@@ -199,27 +199,26 @@ function RuletaPageContent() {
                 toast.warning(`Tu boleto #${data.numero_boleto} está pendiente de confirmación. Una vez aprobado podrás usar tu giro gratis.`, { duration: 6000 })
               } else if (girosDisponibles > 0) {
                 setCanSpin(true)
+                // Update sessionStorage with correct values from server
+                sessionStorage.setItem('freeSpin', JSON.stringify(updatedData))
                 toast.success(`Bienvenido ${data.nombre}! Tienes ${girosDisponibles} giro${girosDisponibles > 1 ? 's' : ''} gratis.`, { duration: 4000 })
               } else {
+                // No spins available - REMOVE sessionStorage to prevent restoration
+                sessionStorage.removeItem('freeSpin')
+                setFreeSpinData(null)
                 setHasFreeSpinUsed(true)
+                setCanSpin(false)
                 toast.info('Ya usaste todos tus giros gratis. Puedes comprar más giros.', { duration: 4000 })
               }
             })
             .catch(() => {
-              // Fallback to stored data
-              if (!data.used) {
-                setFreeSpinData(data)
-                setFreeSpinsRemaining(1)
-                setCanSpin(true)
-                setFormData({
-                  nombre: data.nombre,
-                  telefono: data.telefono,
-                  email: '',
-                })
-                toast.success(`Bienvenido ${data.nombre}! Tienes 1 giro gratis.`, { duration: 4000 })
-              } else {
-                setHasFreeSpinUsed(true)
-              }
+              // Network error - clear sessionStorage to be safe
+              // User must verify again to prevent ghost spins
+              sessionStorage.removeItem('freeSpin')
+              setFreeSpinData(null)
+              setHasFreeSpinUsed(false)
+              setCanSpin(false)
+              toast.error('Error de conexión. Por favor verifica tu número de teléfono nuevamente.', { duration: 4000 })
             })
         } catch {
           console.error('Error parsing free spin data')
@@ -341,25 +340,33 @@ function RuletaPageContent() {
           const freeSpins = data.giros_gratis_disponibles || 0
           const paidSpins = data.giros_pagados_disponibles || 0
           
-          // IMPORTANT: Reset ALL spin states to EXACTLY what the server says
+          // IMPORTANT: Clear ALL previous session data first
+          // This prevents ghost spins from previous sessions
+          sessionStorage.removeItem('freeSpin')
+          
+          // Reset ALL spin states to EXACTLY what the server says
           // This prevents any accumulation from previous sessions or purchases
           setFreeSpinsRemaining(0) // Reset first
           setPaidSpinsRemaining(0) // Reset first
           setFreeSpinData(null) // Reset first
           setJugadaId(null) // Reset first
+          setHasFreeSpinUsed(false) // Reset this too
           
           // Now set the EXACT values from the server
           // Set free spin data if they have free spins from approved tickets
           if (freeSpins > 0) {
             setFreeSpinsRemaining(freeSpins)
             // Create a free spin data object for the session
-            setFreeSpinData({
+            const newFreeSpinData = {
               numero_boleto: 'TICKET', // Generic since it's from verification
               nombre: data.nombre || '',
               telefono: verificationPhone,
               used: false,
               giros_disponibles: freeSpins,
-            })
+            }
+            setFreeSpinData(newFreeSpinData)
+            // Store in sessionStorage with correct values
+            sessionStorage.setItem('freeSpin', JSON.stringify(newFreeSpinData))
           }
           
           // Set paid spins if they have them
@@ -390,6 +397,14 @@ function RuletaPageContent() {
           
           toast.success(message, { duration: 5000 })
         } else {
+          // No spins available - clear ALL session data to prevent ghost spins
+          sessionStorage.removeItem('freeSpin')
+          setFreeSpinsRemaining(0)
+          setPaidSpinsRemaining(0)
+          setFreeSpinData(null)
+          setJugadaId(null)
+          setHasFreeSpinUsed(true)
+          setCanSpin(false)
           setVerificationError('No tienes giros disponibles. Compra giros para participar.')
         }
       } else if (data.pending) {
@@ -466,9 +481,9 @@ function RuletaPageContent() {
         setFreeSpinsRemaining(newRemaining)
         
         if (newRemaining <= 0) {
-          const updatedData = { ...freeSpinData, used: true, giros_disponibles: 0 }
-          sessionStorage.setItem('freeSpin', JSON.stringify(updatedData))
-          setFreeSpinData(updatedData)
+          // All free spins used - REMOVE sessionStorage to prevent restoration
+          sessionStorage.removeItem('freeSpin')
+          setFreeSpinData(null)
           setHasFreeSpinUsed(true)
           setCanSpin(paidSpinsRemaining > 0)
         } else {
@@ -485,11 +500,15 @@ function RuletaPageContent() {
       setPaidSpinsRemaining(Math.max(0, newPaidRemaining))
       
       if (newPaidRemaining <= 0 && freeSpinsRemaining <= 0) {
+        // All spins exhausted - clear everything
+        sessionStorage.removeItem('freeSpin')
         setCanSpin(false)
       } else {
         setCanSpin(true)
       }
     } else if (!jugadaId && freeSpinsRemaining <= 0) {
+      // No spins left - clear sessionStorage
+      sessionStorage.removeItem('freeSpin')
       setCanSpin(false)
     }
   }
