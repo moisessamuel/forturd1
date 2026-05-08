@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus, Clock } from 'lucide-react'
+import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus, Clock, Car, Smartphone, Tv, Bike, Ticket, Trophy } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 
@@ -639,20 +639,94 @@ function RuletaPageContent() {
           </Card>
         )}
 
-        {/* Prizes section */}
+        {/* Premios por Giros (Reglas) */}
+        <div className="mt-12">
+          <div className="mb-6 flex items-center gap-2">
+            <Gift className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold text-primary">Premios por Giros (Reglas)</h2>
+          </div>
+          <p className="mb-6 text-sm text-muted-foreground">
+            Por defecto sale &quot;Sigue Intentando&quot;. Los premios garantizados se otorgan al alcanzar los siguientes hitos:
+          </p>
+          
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {/* 20 giros - Boleto a eleccion */}
+            <PrizeMilestoneCard
+              giros={20}
+              premio="1 Boleto del Sorteo a Eleccion"
+              icon={<Ticket className="h-5 w-5" />}
+              iconColor="text-green-500"
+              progress={40}
+            />
+            
+            {/* 71 giros - Boleto BMW */}
+            <PrizeMilestoneCard
+              giros={71}
+              premio="1 Boleto BMW X6 + 1 Boleto BMW X7"
+              icon={<Car className="h-5 w-5" />}
+              iconColor="text-orange-500"
+              progress={0}
+            />
+            
+            {/* 211 giros - RD$5,000 */}
+            <PrizeMilestoneCard
+              giros={211}
+              premio="RD$5,000"
+              icon={<DollarSign className="h-5 w-5" />}
+              iconColor="text-pink-500"
+              progress={0}
+            />
+            
+            {/* 3,504 giros - Tech */}
+            <PrizeMilestoneCard
+              giros={3504}
+              premio="Patineta / PS5 / Smart TV"
+              icon={<Tv className="h-5 w-5" />}
+              iconColor="text-cyan-500"
+              progress={0}
+            />
+            
+            {/* 8,605 giros - iPhone */}
+            <PrizeMilestoneCard
+              giros={8605}
+              premio="iPhone"
+              icon={<Smartphone className="h-5 w-5" />}
+              iconColor="text-purple-500"
+              progress={0}
+            />
+            
+            {/* 12,506 giros - RD$100,000 */}
+            <PrizeMilestoneCard
+              giros={12506}
+              premio="RD$100,000"
+              icon={<Trophy className="h-5 w-5" />}
+              iconColor="text-yellow-500"
+              progress={0}
+            />
+            
+            {/* 16,207 giros - Motor */}
+            <PrizeMilestoneCard
+              giros={16207}
+              premio="Motor"
+              icon={<Bike className="h-5 w-5" />}
+              iconColor="text-red-500"
+              progress={0}
+            />
+          </div>
+        </div>
+
+        {/* Premios Disponibles */}
         <div className="mt-12">
           <h2 className="mb-6 text-center text-2xl font-bold text-foreground">
             PREMIOS DISPONIBLES
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {premios.filter(p => p.tipo === 'premio').map((premio) => (
-              <Card key={premio.id} className="border-primary/30 bg-card/50">
-                <CardContent className="flex flex-col items-center p-4 text-center">
-                  <Gift className="mb-2 h-8 w-8 text-primary" />
-                  <p className="text-sm font-bold text-foreground">{premio.nombre}</p>
-                </CardContent>
-              </Card>
-            ))}
+            <PrizeCard nombre="1 Boleto del Sorteo" />
+            <PrizeCard nombre="RD$5,000" />
+            <PrizeCard nombre="RD$100,000" />
+            <PrizeCard nombre="iPhone" />
+            <PrizeCard nombre="Motor" />
+            <PrizeCard nombre="Patineta/PS5/TV" />
           </div>
         </div>
       </div>
@@ -1057,6 +1131,67 @@ function RuletaPageContent() {
         </DialogContent>
       </Dialog>
     </main>
+  )
+}
+
+// Prize Milestone Card Component
+function PrizeMilestoneCard({ 
+  giros, 
+  premio, 
+  icon, 
+  iconColor,
+  progress = 0,
+  achieved = false 
+}: { 
+  giros: number
+  premio: string
+  icon: React.ReactNode
+  iconColor: string
+  progress?: number
+  achieved?: boolean
+}) {
+  return (
+    <div className={`min-w-[160px] flex-shrink-0 rounded-xl border p-4 ${
+      achieved 
+        ? 'border-green-500/50 bg-gradient-to-b from-green-500/20 to-green-500/5' 
+        : 'border-border/50 bg-card/30'
+    }`}>
+      <div className={`mb-2 flex justify-center ${iconColor}`}>
+        {icon}
+      </div>
+      <div className="text-center">
+        <p className="text-2xl font-bold text-foreground">{giros.toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground">giros</p>
+      </div>
+      <p className="mt-2 text-center text-xs font-medium text-foreground">{premio}</p>
+      {achieved ? (
+        <div className="mt-3 flex justify-center">
+          <Badge className="bg-green-500 text-white">Alcanzado</Badge>
+        </div>
+      ) : (
+        <div className="mt-3">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/30">
+            <div 
+              className="h-full rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 transition-all" 
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="mt-1 text-center text-[10px] text-muted-foreground">{progress}%</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Prize Card Component (for Premios Disponibles section)
+function PrizeCard({ nombre }: { nombre: string }) {
+  return (
+    <Card className="border-primary/30 bg-card/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
+      <CardContent className="flex flex-col items-center p-6 text-center">
+        <Gift className="mb-3 h-10 w-10 text-primary" />
+        <p className="text-sm font-bold text-foreground">{nombre}</p>
+      </CardContent>
+    </Card>
   )
 }
 

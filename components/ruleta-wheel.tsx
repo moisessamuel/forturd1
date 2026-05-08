@@ -476,11 +476,17 @@ export function RuletaWheel({
     let prizeType: string | null = null
     let prizeName: string = 'Sigue Intentando'
 
-    // Check milestones (rarest to most common)
-    if (nextSpinCount % 12506 === 0) {
+    // ─── PREMIOS OFICIALES FORTURD ─────────────────────────────────────────
+    // Check milestones from rarest to most common (order matters!)
+    // Each milestone is REPETITIVE and AUTOMATIC (cycles)
+    // ───────────────────────────────────────────────────────────────────────
+    if (nextSpinCount % 16207 === 0) {
       prizeType = 'motor'
       prizeName = 'Motor'
-    } else if (nextSpinCount % 7605 === 0) {
+    } else if (nextSpinCount % 12506 === 0) {
+      prizeType = 'dinero_100k'
+      prizeName = 'RD$100,000'
+    } else if (nextSpinCount % 8605 === 0) {
       prizeType = 'iphone'
       prizeName = 'iPhone'
     } else if (nextSpinCount % 3504 === 0) {
@@ -488,14 +494,14 @@ export function RuletaWheel({
       const techPrizes = ['Patineta Electrica', 'PS5', 'Smart TV']
       prizeName = techPrizes[Math.floor(Math.random() * techPrizes.length)]
     } else if (nextSpinCount % 211 === 0) {
-      prizeType = 'dinero'
+      prizeType = 'dinero_5k'
       prizeName = 'RD$5,000'
-    } else if (nextSpinCount % 201 === 0) {
-      prizeType = 'boleto'
+    } else if (nextSpinCount % 71 === 0) {
+      prizeType = 'boleto_bmw'
       prizeName = '1 Boleto BMW X6 + 1 Boleto BMW X7'
     } else if (nextSpinCount % 20 === 0) {
-      prizeType = 'boleto_vehiculo'
-      prizeName = '1 Boleto de Vehiculo a Eleccion'
+      prizeType = 'boleto_eleccion'
+      prizeName = '1 Boleto del Sorteo a Eleccion'
     }
 
     // Index pools matching VISUAL_SEGMENT_MAP (4 gifts, 16 lose)
