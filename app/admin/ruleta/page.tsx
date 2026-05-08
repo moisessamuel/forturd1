@@ -440,44 +440,79 @@ export default function RuletaAdminPage() {
             {stats && getAllPrizesProgress(stats.giros_jugados).map((prizeProgress) => {
               const Icon = prizeProgress.icon
               const hasCompletedAtLeastOnce = prizeProgress.completedCycles > 0
+              // Extract color name for glow effect (e.g., "green" from "text-green-500")
+              const colorName = prizeProgress.color.replace('text-', '').replace('-500', '')
+              const glowColor = `${colorName}-500`
+              
               return (
                 <div
                   key={prizeProgress.spins}
-                  className={`rounded-lg border p-4 text-center transition-all ${
+                  className={`relative overflow-hidden rounded-xl border p-4 text-center transition-all duration-500 ${
                     hasCompletedAtLeastOnce 
-                      ? 'border-green-500/50 bg-green-500/5' 
-                      : 'border-border'
+                      ? 'border-green-500/50 bg-gradient-to-b from-green-500/10 to-transparent' 
+                      : 'border-border/50 bg-card/30 hover:border-border'
                   }`}
                 >
-                  <Icon className={`mx-auto h-6 w-6 ${prizeProgress.color}`} />
-                  <p className="mt-2 text-xl font-bold">{prizeProgress.spins.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">giros</p>
-                  <p className="mt-2 text-xs font-medium leading-tight">{prizeProgress.prize}</p>
+                  {/* Subtle glow effect based on progress */}
+                  <div 
+                    className={`absolute inset-0 opacity-20 blur-xl transition-opacity duration-700`}
+                    style={{ 
+                      background: `radial-gradient(circle at center, var(--${glowColor}, #DAA520) 0%, transparent 70%)`,
+                      opacity: prizeProgress.progressPercent > 50 ? 0.3 : 0.1
+                    }}
+                  />
                   
-                  {/* Progress toward next cycle */}
-                  <div className="mt-3">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                      <div 
-                        className={`h-full transition-all ${prizeProgress.color.replace('text-', 'bg-')}`}
-                        style={{ width: `${prizeProgress.progressPercent}%` }}
-                      />
+                  <div className="relative z-10">
+                    <Icon className={`mx-auto h-6 w-6 ${prizeProgress.color} drop-shadow-sm`} />
+                    <p className="mt-2 text-xl font-bold">{prizeProgress.spins.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">giros</p>
+                    <p className="mt-2 text-xs font-medium leading-tight">{prizeProgress.prize}</p>
+                    
+                    {/* Enhanced Progress Bar with percentage */}
+                    <div className="mt-4">
+                      {/* Percentage display */}
+                      <p className={`mb-1 text-lg font-bold ${prizeProgress.color}`}>
+                        {prizeProgress.progressPercent.toFixed(0)}%
+                      </p>
+                      
+                      {/* Animated progress bar with glow */}
+                      <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-muted/50">
+                        {/* Glow layer */}
+                        <div 
+                          className={`absolute inset-y-0 left-0 rounded-full blur-sm transition-all duration-700 ease-out`}
+                          style={{ 
+                            width: `${prizeProgress.progressPercent}%`,
+                            background: `linear-gradient(90deg, transparent, var(--${glowColor}, #DAA520))`
+                          }}
+                        />
+                        {/* Main progress bar */}
+                        <div 
+                          className={`relative h-full rounded-full transition-all duration-700 ease-out ${prizeProgress.color.replace('text-', 'bg-')}`}
+                          style={{ 
+                            width: `${prizeProgress.progressPercent}%`,
+                            boxShadow: `0 0 8px var(--${glowColor}, #DAA520)`
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Counter */}
+                      <p className="mt-1.5 text-[11px] text-muted-foreground">
+                        {prizeProgress.progressInCurrentCycle.toLocaleString()}/{prizeProgress.spins.toLocaleString()}
+                      </p>
                     </div>
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      {prizeProgress.progressInCurrentCycle}/{prizeProgress.spins}
+                    
+                    {/* Completed cycles indicator */}
+                    {hasCompletedAtLeastOnce && (
+                      <Badge className="mt-2 bg-green-500/90 text-[10px] shadow-sm shadow-green-500/30">
+                        {prizeProgress.completedCycles}x entregado
+                      </Badge>
+                    )}
+                    
+                    {/* Remaining spins */}
+                    <p className={`mt-1.5 text-[11px] font-medium ${prizeProgress.color}`}>
+                      Faltan {prizeProgress.remaining.toLocaleString()} giros
                     </p>
                   </div>
-                  
-                  {/* Completed cycles indicator */}
-                  {hasCompletedAtLeastOnce && (
-                    <Badge className="mt-2 bg-green-500/80 text-[10px]">
-                      {prizeProgress.completedCycles}x entregado
-                    </Badge>
-                  )}
-                  
-                  {/* Remaining spins */}
-                  <p className="mt-1 text-[10px] text-primary">
-                    Faltan {prizeProgress.remaining} giros
-                  </p>
                 </div>
               )
             })}
