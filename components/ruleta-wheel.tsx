@@ -400,8 +400,8 @@ export function RuletaWheel({
     }
   }, [initAudio])
 
-  // Determine prize based on controlled probability
-  const determinePrize = useCallback(async (): Promise<{ premio: Premio; targetSegment: number }> => {
+  // Determine result: win or lose, and select the exact segment index
+  const determineResult = useCallback(async (): Promise<{ premio: Premio; selectedIndex: number }> => {
     // Always fetch the REAL spin count from the server to avoid client drift
     let serverSpinCount = globalSpinCount
     try {
@@ -416,10 +416,10 @@ export function RuletaWheel({
     }
 
     const nextSpinCount = serverSpinCount + 1
-    
+
     let prizeType: string | null = null
     let prizeName: string = 'Sigue Intentando'
-    
+
     // Check milestones (rarest to most common)
     if (nextSpinCount % 12506 === 0) {
       prizeType = 'motor'
@@ -442,25 +442,19 @@ export function RuletaWheel({
       prizeName = '1 Boleto de Vehiculo a Eleccion'
     }
 
-    // Strictly separate prize vs no-prize segment pools
-    const giftBoxIndices = WHEEL_SEGMENTS
-      .map((_, i) => i)
-      .filter(i => WHEEL_SEGMENTS[i].isGiftBox)
+    // Hardcoded index pools — exactly as specified
+    const winningIndexes = [2, 5, 8, 11, 14, 17]   // gift box segments
+    const loseIndexes    = [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19] // "sigue intentando"
 
-    const noWinIndices = WHEEL_SEGMENTS
-      .map((_, i) => i)
-      .filter(i => !WHEEL_SEGMENTS[i].isGiftBox)
+    const result = prizeType ? 'win' : 'lose'
 
-    // CRITICAL: if no prize, ONLY pick from no-win segments
-    //           if prize, ONLY pick from gift-box segments
-    let targetSegment: number
-    if (prizeType) {
-      targetSegment = giftBoxIndices[Math.floor(Math.random() * giftBoxIndices.length)]
-    } else {
-      targetSegment = noWinIndices[Math.floor(Math.random() * noWinIndices.length)]
-    }
+    // Select index ONLY from the correct pool — no mixing possible
+    const selectedIndex =
+      result === 'win'
+        ? winningIndexes[Math.floor(Math.random() * winningIndexes.length)]
+        : loseIndexes[Math.floor(Math.random() * loseIndexes.length)]
 
-    // Create premio object
+    // Build premio object
     let premio: Premio
     if (prizeType) {
       premio = premios.find(p => p.tipo === 'premio') || {
@@ -479,7 +473,7 @@ export function RuletaWheel({
       }
     }
 
-    return { premio, targetSegment }
+    return { premio, selectedIndex }
   }, [premios, globalSpinCount])
 
   // Animate the wheel spin
@@ -490,45 +484,30 @@ export function RuletaWheel({
     setIsAnimating(true)
     initAudio()
 
-    const { premio, targetSegment } = await determinePrize()
+    const { premio, selectedIndex } = await determineResult()
     const isWin = premio.tipo === 'premio'
 
-    // ─── EXACT SEGMENT ALIGNMENT ──────────────────────────────────────────
-    // The canvas draws segment[i] using:
-    //   segmentStart = startAngle + i * angle - π/2
-    //   segmentCenter (in degrees from top) = rotation - 90 + i*18 + 9
+    // ─── EXACT ALIGNMENT (prescribed formula) ────────────────────────────
+    // segmentAngle = 360 / 20 = 18°
+    // targetAngle  = selectedIndex * segmentAngle + segmentAngle / 2
+    //              = center of that segment in the wheel's own coordinate
+    // finalRotation = extraSpins + (360 - targetAngle)
     //
-    // The pointer points DOWN from the top, landing on the segment whose
-    // center is at the 12-o'clock position (canvas angle = top = 0 relative
-    // to the -π/2 offset).
-    //
-    // For the pointer to land exactly at the CENTER of segment [targetSegment]:
-    //   rotation_final - 90 + targetSegment*18 + 9 ≡ 0  (mod 360)
-    //   rotation_final ≡ 81 - targetSegment * 18          (mod 360)
-    //
-    // NO JITTER. The wheel stops dead-center on the target segment.
-    // This is the only way to guarantee visual = logical result.
+    // This is the exact formula from the specification.
+    // NO random offsets. NO jitter. NO additional degrees.
     // ─────────────────────────────────────────────────────────────────────
-    const targetAngleNormalized = ((81 - targetSegment * SEGMENT_ANGLE) % 360 + 360) % 360
+    const segmentAngle = 360 / TOTAL_SEGMENTS                          // 18
+    const targetAngle  = selectedIndex * segmentAngle + segmentAngle / 2 // center of segment
+    const extraSpins   = 360 * 6                                        // 6 full rotations
+    const finalRotation = extraSpins + (360 - targetAngle)             // prescribed formula
 
-    // How many full spins to add (5–8), always spinning forward
-    const fullSpins = 5 + Math.floor(Math.random() * 4) // 5, 6, 7, or 8
-
-    // Current position normalised to [0, 360)
-    const currentMod = ((rotation % 360) + 360) % 360
-
-    // Forward delta to reach the target
-    let delta = (targetAngleNormalized - currentMod + 360) % 360
-    // If delta is 0 we still need to travel at least one full spin
-    if (delta === 0) delta = 360
-
-    const totalRotation = fullSpins * 360 + delta
     const startRotation = rotation
+    const totalRotation = finalRotation  // always starts from 0 reference each spin
 
-    const duration = 7000 // ms — long enough for smooth deceleration
+    const duration = 7000 // ms
     const startTime = performance.now()
 
-    // easeOutQuint gives a fast start and very gradual, precise stop
+    // easeOutQuint: fast start, very gradual precise stop
     const easeOut = (t: number): number => 1 - Math.pow(1 - t, 5)
 
     const animate = (currentTime: number) => {
@@ -536,11 +515,8 @@ export function RuletaWheel({
       const progress = Math.min(elapsed / duration, 1)
       const easedProgress = easeOut(progress)
 
-      // Accumulate rotation without modding — canvas handles large angles fine
-      const currentRotation = startRotation + totalRotation * easedProgress
-      setRotation(currentRotation)
+      setRotation(startRotation + totalRotation * easedProgress)
 
-      // Tick sound proportional to current speed
       const speed = (totalRotation / duration) * (1 - progress) * 1000
       if (speed > 50 && Math.random() > 0.7) {
         playTickSound()
@@ -549,7 +525,7 @@ export function RuletaWheel({
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
-        // Snap exactly to the computed final rotation to eliminate float drift
+        // Hard-snap to exact final value — eliminates any floating-point drift
         setRotation(startRotation + totalRotation)
         setIsAnimating(false)
 
@@ -571,7 +547,7 @@ export function RuletaWheel({
     }
 
     animationRef.current = requestAnimationFrame(animate)
-  }, [canSpin, isSpinning, isAnimating, onStartSpin, determinePrize, rotation, playTickSound, playWinSound, onSpinComplete, initAudio])
+  }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, rotation, playTickSound, playWinSound, onSpinComplete, initAudio])
 
   // Cleanup
   useEffect(() => {
