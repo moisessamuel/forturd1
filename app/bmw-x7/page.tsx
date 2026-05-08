@@ -56,12 +56,12 @@ export default function BMWX7Page() {
   }, [])
 
   // ─── ROTACION AUTOMATICA DE IMAGENES ────────────────────────────────────
-  // Rota automáticamente entre las 2 imágenes cada 5 segundos
+  // Rota automáticamente entre las 4 imágenes cada 3 segundos
   // ────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const imageRotationInterval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % BMWX7Images.length)
-    }, 5000) // Cambia cada 5 segundos
+    }, 3000) // Cambia cada 3 segundos
 
     return () => clearInterval(imageRotationInterval)
   }, [])
