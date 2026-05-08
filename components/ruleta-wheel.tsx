@@ -19,44 +19,87 @@ interface RuletaWheelProps {
   onStartSpin: () => void
 }
 
-// 20 segments: 14 black "SIGUE INTENTANDO" and 6 gold "gift box"
-// Gift boxes are distributed evenly throughout the wheel
+// ─── DEFINITIVE VISUAL SEGMENT TABLE ──────────────────────────────────────
+// This table represents the EXACT visual order as rendered by the canvas.
+// The canvas draws segment[i] starting at angle: startAngle + i * angle - π/2
+// So segment[0] starts at the TOP (12 o'clock) when rotation = 0.
+//
+// 'lose' = "SIGUE INTENTANDO" (black segment)
+// 'gift' = gift box (gold segment)
+// ──────────────────────────────────────────────────────────────────────────
+const VISUAL_SEGMENT_MAP: ('lose' | 'gift')[] = [
+  'lose', // index 0
+  'lose', // index 1
+  'gift', // index 2
+  'lose', // index 3
+  'lose', // index 4
+  'gift', // index 5
+  'lose', // index 6
+  'lose', // index 7
+  'gift', // index 8
+  'lose', // index 9
+  'lose', // index 10
+  'gift', // index 11
+  'lose', // index 12
+  'lose', // index 13
+  'gift', // index 14
+  'lose', // index 15
+  'lose', // index 16
+  'gift', // index 17
+  'lose', // index 18
+  'lose', // index 19
+]
+
+// Full segment data for rendering
 const WHEEL_SEGMENTS: Array<{
   label: string
   color: string
   textColor: string
   tipo: string
   isGiftBox: boolean
-}> = []
-
-// Gift box positions: evenly distributed among 20 segments (roughly every 3-4 segments)
-const giftBoxPositions = [2, 5, 8, 11, 14, 17] // 6 gift boxes
-
-// Generate 20 segments
-for (let i = 0; i < 20; i++) {
-  if (giftBoxPositions.includes(i)) {
-    // Gold segment with gift box
-    WHEEL_SEGMENTS.push({
+}> = VISUAL_SEGMENT_MAP.map((type) => {
+  if (type === 'gift') {
+    return {
       label: '',
       color: '#DAA520',
       textColor: '#000000',
       tipo: 'premio',
       isGiftBox: true,
-    })
+    }
   } else {
-    // Black segment with "SIGUE INTENTANDO"
-    WHEEL_SEGMENTS.push({
+    return {
       label: 'SIGUE\nINTENTANDO',
       color: '#1a1a1a',
       textColor: '#DAA520',
       tipo: 'sin_premio',
       isGiftBox: false,
-    })
+    }
   }
-}
+})
 
-const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length
-const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS
+const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length // 20
+const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS   // 18°
+
+// ─── CRITICAL FUNCTION: Get the REAL visible index under the pointer ──────
+// This must match EXACTLY how the canvas draws segments.
+// Canvas formula: segmentStart = startAngle + index * angle - π/2
+// The pointer is at the TOP (12 o'clock position).
+// ──────────────────────────────────────────────────────────────────────────
+function getVisibleIndexFromRotation(rotationDegrees: number): number {
+  // Normalize rotation to [0, 360)
+  const normalized = ((rotationDegrees % 360) + 360) % 360
+  
+  // The canvas draws segment[i] with its START at: rotation - 90 + i * 18
+  // For a segment to be under the pointer (at 0°/360°/top), we need:
+  //   rotation - 90 + i * 18 <= 0 < rotation - 90 + (i+1) * 18
+  // Solving for i:
+  //   i = floor((90 - rotation) / 18) mod 20
+  // But we need to handle negative modulo properly
+  const rawIndex = Math.floor((90 - normalized) / SEGMENT_ANGLE)
+  const visibleIndex = ((rawIndex % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
+  
+  return visibleIndex
+}
 
 export function RuletaWheel({ 
   premios, 
@@ -340,6 +383,34 @@ export function RuletaWheel({
     ctx.lineWidth = 3
     ctx.stroke()
 
+    // ─── DEBUG: RED LINE from pointer to center of detected segment ──────
+    // This confirms VISUALLY which index the system is reading.
+    // REMOVE THIS AFTER CONFIRMING ALIGNMENT IS CORRECT.
+    // ──────────────────────────────────────────────────────────────────────
+    const debugVisibleIndex = getVisibleIndexFromRotation(currentRotation)
+    const debugSegmentCenterAngle = currentRotation - 90 + debugVisibleIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
+    const debugAngleRad = (debugSegmentCenterAngle * Math.PI) / 180
+    
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(centerX, 25) // From pointer position
+    ctx.lineTo(
+      centerX + Math.cos(debugAngleRad - Math.PI / 2) * (radius * 0.7),
+      centerY + Math.sin(debugAngleRad - Math.PI / 2) * (radius * 0.7)
+    )
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)'
+    ctx.lineWidth = 3
+    ctx.stroke()
+    
+    // Draw detected index number
+    ctx.fillStyle = 'red'
+    ctx.font = 'bold 14px Arial'
+    ctx.textAlign = 'center'
+    ctx.fillText(`IDX: ${debugVisibleIndex}`, centerX, 18)
+    ctx.fillText(`TYPE: ${VISUAL_SEGMENT_MAP[debugVisibleIndex]}`, centerX, size - 10)
+    ctx.restore()
+    // ─── END DEBUG ────────────────────────────────────────────────────────
+
   }, [rotation, idleRotation, isAnimating, logoLoaded, pulsePhase])
 
   // Initialize Audio Context
@@ -486,46 +557,68 @@ export function RuletaWheel({
 
     const { premio, selectedIndex } = await determineResult()
     const isWin = premio.tipo === 'premio'
+    const expectedResult: 'lose' | 'gift' = isWin ? 'gift' : 'lose'
 
-    // ─── ROTATION CALCULATION WITH POST-SPIN AUTO-CORRECTION ──────────────
-    // Step 1: Calculate initial rotation
-    const centerOfSegment = selectedIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
+    // ─── DEFINITIVE ROTATION CALCULATION ──────────────────────────────────
+    // We will compute a rotation that lands EXACTLY on a segment where:
+    //   VISUAL_SEGMENT_MAP[visibleIndex] === expectedResult
+    //
+    // Step 1: Calculate base rotation to land on selectedIndex
+    // The center of segment[i] is at angle: i * 18 + 9 (from top, in wheel space)
+    // To make segment[i] appear under the pointer (at top), we rotate by:
+    //   rotation = 90 - (i * 18 + 9) = 81 - i * 18
+    // Adding full spins for visual effect:
+    const baseRotation = 81 - selectedIndex * SEGMENT_ANGLE
     const extraSpins = 360 * 6
-    let wheelRotation = extraSpins + (360 - centerOfSegment)
+    let finalRotation = extraSpins + baseRotation
 
-    // Step 2: Calculate REAL visible index after this rotation
-    // This is the ONLY truth - what segment is actually under the pointer
-    const normalizedRotation = ((wheelRotation % 360) + 360) % 360
-    let visibleIndex = Math.floor(((360 - normalizedRotation + 90) % 360) / SEGMENT_ANGLE) % TOTAL_SEGMENTS
+    // Normalize to get final angle
+    const normalizedFinal = ((finalRotation % 360) + 360) % 360
 
-    // Step 3: AUTO-CORRECT if visibleIndex !== selectedIndex
-    // This guarantees mathematical precision between result and visual
-    if (visibleIndex !== selectedIndex) {
-      const correction = (selectedIndex - visibleIndex) * SEGMENT_ANGLE
-      wheelRotation += correction
+    // Step 2: Use the REAL function to get visibleIndex
+    let visibleIndex = getVisibleIndexFromRotation(normalizedFinal)
 
-      // Recalculate to verify
-      const correctedNormalized = ((wheelRotation % 360) + 360) % 360
-      visibleIndex = Math.floor(((360 - correctedNormalized + 90) % 360) / SEGMENT_ANGLE) % TOTAL_SEGMENTS
+    // Step 3: VALIDATION LOOP — keep correcting until visual matches result
+    // This is the ABSOLUTE RULE: the wheel does NOT stop until correct
+    let attempts = 0
+    const maxAttempts = 20 // safety limit
+    
+    while (VISUAL_SEGMENT_MAP[visibleIndex] !== expectedResult && attempts < maxAttempts) {
+      // Find the nearest valid segment
+      const validIndexes = expectedResult === 'gift' 
+        ? [2, 5, 8, 11, 14, 17]    // gift segments
+        : [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19] // lose segments
+
+      // Find closest valid index
+      let closestValid = validIndexes[0]
+      let minDist = Math.abs(validIndexes[0] - visibleIndex)
+      for (const idx of validIndexes) {
+        const dist = Math.abs(idx - visibleIndex)
+        if (dist < minDist) {
+          minDist = dist
+          closestValid = idx
+        }
+      }
+
+      // Apply correction
+      const correction = (closestValid - visibleIndex) * SEGMENT_ANGLE
+      finalRotation += correction
+
+      // Recalculate visible index
+      const newNormalized = ((finalRotation % 360) + 360) % 360
+      visibleIndex = getVisibleIndexFromRotation(newNormalized)
+      attempts++
     }
 
-    // Step 4: ABSOLUTE RULE - if result is "Sigue Intentando", the visible segment
-    // MUST NOT be a gift box. If it is, force correction to nearest lose segment.
-    if (!isWin && WHEEL_SEGMENTS[visibleIndex].isGiftBox) {
-      // Find nearest lose segment
-      const loseIndexes = [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19]
-      const nearestLose = loseIndexes.reduce((nearest, idx) => {
-        const dist = Math.abs(idx - visibleIndex)
-        const nearestDist = Math.abs(nearest - visibleIndex)
-        return dist < nearestDist ? idx : nearest
-      }, loseIndexes[0])
-      
-      const emergencyCorrection = (nearestLose - visibleIndex) * SEGMENT_ANGLE
-      wheelRotation += emergencyCorrection
+    // Step 4: Final validation — if still wrong after max attempts, force to first valid
+    if (VISUAL_SEGMENT_MAP[visibleIndex] !== expectedResult) {
+      const validIndexes = expectedResult === 'gift' ? [2, 5, 8, 11, 14, 17] : [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19]
+      const forceIndex = validIndexes[0]
+      finalRotation = extraSpins + (81 - forceIndex * SEGMENT_ANGLE)
     }
 
     const startRotation = rotation
-    const totalRotation = wheelRotation
+    const totalRotation = finalRotation
 
     const duration = 7000 // ms
     const startTime = performance.now()
@@ -538,7 +631,8 @@ export function RuletaWheel({
       const progress = Math.min(elapsed / duration, 1)
       const easedProgress = easeOut(progress)
 
-      setRotation(startRotation + totalRotation * easedProgress)
+      const currentRotation = startRotation + totalRotation * easedProgress
+      setRotation(currentRotation)
 
       const speed = (totalRotation / duration) * (1 - progress) * 1000
       if (speed > 50 && Math.random() > 0.7) {
@@ -548,7 +642,7 @@ export function RuletaWheel({
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
-        // Hard-snap to exact final value — eliminates any floating-point drift
+        // Hard-snap to exact final value
         setRotation(startRotation + totalRotation)
         setIsAnimating(false)
 
