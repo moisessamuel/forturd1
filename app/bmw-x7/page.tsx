@@ -11,8 +11,8 @@ import { UnifiedPurchaseSection } from '@/components/unified-purchase-section'
 import type { Sorteo } from '@/lib/types'
 
 const BMWX7Images = [
-  '/images/bmw-x7.jpg',
-  '/images/bmw-x6.jpg',
+  '/images/bmw-x7-front.jpg',
+  '/images/bmw-x7-duo.jpg',
 ]
 
 export default function BMWX7Page() {
