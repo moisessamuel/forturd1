@@ -341,6 +341,14 @@ function RuletaPageContent() {
           const freeSpins = data.giros_gratis_disponibles || 0
           const paidSpins = data.giros_pagados_disponibles || 0
           
+          // IMPORTANT: Reset ALL spin states to EXACTLY what the server says
+          // This prevents any accumulation from previous sessions or purchases
+          setFreeSpinsRemaining(0) // Reset first
+          setPaidSpinsRemaining(0) // Reset first
+          setFreeSpinData(null) // Reset first
+          setJugadaId(null) // Reset first
+          
+          // Now set the EXACT values from the server
           // Set free spin data if they have free spins from approved tickets
           if (freeSpins > 0) {
             setFreeSpinsRemaining(freeSpins)
@@ -403,21 +411,43 @@ function RuletaPageContent() {
     setIsSpinning(false)
     setShowResultModal(true)
 
-    // Record the result
+    // Record the result and get EXACT remaining spins from server
     if (jugadaId) {
-      await fetch('/api/ruleta/spin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jugada_id: jugadaId,
-          premio_id: premio.id,
-          resultado: premio.nombre,
-        }),
-      })
+      try {
+        const spinResponse = await fetch('/api/ruleta/spin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jugada_id: jugadaId,
+            premio_id: premio.id,
+            resultado: premio.nombre,
+          }),
+        })
+        
+        const spinData = await spinResponse.json()
+        
+        // Use server's EXACT remaining count - this is the source of truth
+        if (spinData.giros_restantes !== undefined) {
+          setPaidSpinsRemaining(spinData.giros_restantes)
+          
+          // If all paid spins are used, check if we have free spins
+          if (spinData.giros_restantes <= 0) {
+            setCanSpin(freeSpinsRemaining > 0)
+          } else {
+            setCanSpin(true)
+          }
+        }
+      } catch (error) {
+        console.error('Error recording spin:', error)
+        // Fallback to local decrement if server call fails
+        const newPaidRemaining = paidSpinsRemaining - 1
+        setPaidSpinsRemaining(Math.max(0, newPaidRemaining))
+        setCanSpin(newPaidRemaining > 0 || freeSpinsRemaining > 0)
+      }
     }
 
-    // If this was a free spin, record it and decrement counter
-    if (freeSpinData && freeSpinsRemaining > 0) {
+    // If this was a free spin (no jugadaId or using free spin data)
+    if (freeSpinData && freeSpinsRemaining > 0 && !jugadaId) {
       try {
         await fetch('/api/ruleta/free-spin', {
           method: 'POST',
@@ -448,17 +478,18 @@ function RuletaPageContent() {
       } catch (error) {
         console.error('Error recording free spin:', error)
       }
-    } else if (paidSpinsRemaining > 0) {
-      // Paid spin used
+    } else if (!jugadaId && paidSpinsRemaining > 0) {
+      // No jugadaId but we're supposed to have paid spins - something is wrong
+      // This shouldn't happen but handle gracefully
       const newPaidRemaining = paidSpinsRemaining - 1
-      setPaidSpinsRemaining(newPaidRemaining)
+      setPaidSpinsRemaining(Math.max(0, newPaidRemaining))
       
       if (newPaidRemaining <= 0 && freeSpinsRemaining <= 0) {
         setCanSpin(false)
       } else {
         setCanSpin(true)
       }
-    } else {
+    } else if (!jugadaId && freeSpinsRemaining <= 0) {
       setCanSpin(false)
     }
   }

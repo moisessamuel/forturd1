@@ -86,10 +86,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Separate pending vs confirmed paid spin purchases
+    // IMPORTANT: Only include 'confirmado' jugadas that STILL HAVE spins remaining
+    // Do NOT include 'jugado' (fully used) jugadas - they have 0 remaining spins
     const pendingJugadas = jugadas?.filter(j => j.estado === 'pendiente') || []
-    const activeJugadas = jugadas?.filter(j => j.estado === 'confirmado' || j.estado === 'jugado') || []
+    
+    // ONLY include jugadas that are 'confirmado' (approved but not fully used)
+    // 'jugado' means ALL spins were used, so exclude them completely
+    const activeJugadas = jugadas?.filter(j => j.estado === 'confirmado') || []
 
-    // Calculate paid spins available
+    // Calculate paid spins available from ACTIVE (not fully used) jugadas only
     let totalPaidSpins = 0
     let totalPaidSpinsUsed = 0
     let latestActiveJugada = null
@@ -107,11 +112,16 @@ export async function GET(request: NextRequest) {
         }
       }
       
-      totalPaidSpins += cantidadGiros
-      totalPaidSpinsUsed += (jugada.giros_usados || 0)
+      const girosRestantes = cantidadGiros - (jugada.giros_usados || 0)
       
-      if (!latestActiveJugada && (cantidadGiros - (jugada.giros_usados || 0)) > 0) {
-        latestActiveJugada = jugada
+      // Only count this jugada if it actually has remaining spins
+      if (girosRestantes > 0) {
+        totalPaidSpins += cantidadGiros
+        totalPaidSpinsUsed += (jugada.giros_usados || 0)
+        
+        if (!latestActiveJugada) {
+          latestActiveJugada = jugada
+        }
       }
     }
 
