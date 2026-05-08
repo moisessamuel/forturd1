@@ -14,6 +14,7 @@ interface SorteoWithProgress extends Sorteo {
 }
 
 const carouselImages = [
+  '/images/bmw-carousel-cover.jpg',
   '/images/bmw-carousel-1.png',
   '/images/bmw-carousel-2.png',
   '/images/bmw-carousel-3.png',
