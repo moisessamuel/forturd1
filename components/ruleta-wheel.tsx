@@ -73,12 +73,6 @@ export function RuletaWheel({
   const [globalSpinCount, setGlobalSpinCount] = useState(0)
   const [logoLoaded, setLogoLoaded] = useState(false)
   const [pulsePhase, setPulsePhase] = useState(0)
-  const [debugInfo, setDebugInfo] = useState<{
-    selectedIndex: number
-    selectedLabel: string
-    finalAngle: number
-    currentTopSegment: number
-  } | null>(null)
   const logoRef = useRef<HTMLImageElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const animationRef = useRef<number | null>(null)
@@ -493,36 +487,45 @@ export function RuletaWheel({
     const { premio, selectedIndex } = await determineResult()
     const isWin = premio.tipo === 'premio'
 
-    // ─── EXACT PRESCRIBED FORMULA ─────────────────────────────────────────
-    // The canvas draws segment[i] starting at: startAngle + i*angle - π/2
-    // That -π/2 offset means the wheel's "zero" is at the top (12 o'clock).
-    // The pointer sits at the top. To land segment [selectedIndex] under it:
-    //
-    //   centerOfSegment = selectedIndex * 18 + 9      (wheel-space degrees)
-    //   pointerOffset   = 90                          (compensates -π/2 canvas offset)
-    //   finalAngle      = 360 - centerOfSegment - pointerOffset
-    //   totalRotation   = (360 * 6) + finalAngle
-    //
-    // NO jitter. NO random offset. NO easing offsets. NO corrections.
-    // wheelRotation = totalRotation  — exactly.
-    // ─────────────────────────────────────────────────────────────────────
-    const centerOfSegment = selectedIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2  // e.g. index 0 → 9°
-    const pointerOffset   = 90                                                  // -π/2 compensation
-    const finalAngle      = 360 - centerOfSegment - pointerOffset
-    const totalRotation   = (360 * 6) + finalAngle
+    // ─── ROTATION CALCULATION WITH POST-SPIN AUTO-CORRECTION ──────────────
+    // Step 1: Calculate initial rotation
+    const centerOfSegment = selectedIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2
+    const extraSpins = 360 * 6
+    let wheelRotation = extraSpins + (360 - centerOfSegment)
 
-    // Compute which segment is at the top after this rotation (for debug)
-    const finalRotationMod  = ((totalRotation % 360) + 360) % 360
-    const currentTopSegment = Math.floor(((360 - finalRotationMod + 90) % 360) / SEGMENT_ANGLE) % TOTAL_SEGMENTS
+    // Step 2: Calculate REAL visible index after this rotation
+    // This is the ONLY truth - what segment is actually under the pointer
+    const normalizedRotation = ((wheelRotation % 360) + 360) % 360
+    let visibleIndex = Math.floor(((360 - normalizedRotation + 90) % 360) / SEGMENT_ANGLE) % TOTAL_SEGMENTS
 
-    setDebugInfo({
-      selectedIndex,
-      selectedLabel: WHEEL_SEGMENTS[selectedIndex].isGiftBox ? 'REGALO' : 'SIGUE INTENTANDO',
-      finalAngle,
-      currentTopSegment,
-    })
+    // Step 3: AUTO-CORRECT if visibleIndex !== selectedIndex
+    // This guarantees mathematical precision between result and visual
+    if (visibleIndex !== selectedIndex) {
+      const correction = (selectedIndex - visibleIndex) * SEGMENT_ANGLE
+      wheelRotation += correction
+
+      // Recalculate to verify
+      const correctedNormalized = ((wheelRotation % 360) + 360) % 360
+      visibleIndex = Math.floor(((360 - correctedNormalized + 90) % 360) / SEGMENT_ANGLE) % TOTAL_SEGMENTS
+    }
+
+    // Step 4: ABSOLUTE RULE - if result is "Sigue Intentando", the visible segment
+    // MUST NOT be a gift box. If it is, force correction to nearest lose segment.
+    if (!isWin && WHEEL_SEGMENTS[visibleIndex].isGiftBox) {
+      // Find nearest lose segment
+      const loseIndexes = [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19]
+      const nearestLose = loseIndexes.reduce((nearest, idx) => {
+        const dist = Math.abs(idx - visibleIndex)
+        const nearestDist = Math.abs(nearest - visibleIndex)
+        return dist < nearestDist ? idx : nearest
+      }, loseIndexes[0])
+      
+      const emergencyCorrection = (nearestLose - visibleIndex) * SEGMENT_ANGLE
+      wheelRotation += emergencyCorrection
+    }
 
     const startRotation = rotation
+    const totalRotation = wheelRotation
 
     const duration = 7000 // ms
     const startTime = performance.now()
@@ -660,43 +663,6 @@ export function RuletaWheel({
 
       {/* Platform/pedestal glow effect */}
       <div className="mt-4 h-4 w-72 rounded-full bg-gradient-to-r from-transparent via-yellow-600/40 to-transparent blur-sm" />
-
-      {/* DEBUG OVERLAY — remove once alignment is confirmed correct */}
-      {debugInfo && (
-        <div
-          className="mt-4 w-full max-w-sm rounded-lg border border-yellow-500/50 bg-black/80 p-3 font-mono text-xs"
-          style={{ color: '#DAA520' }}
-        >
-          <p className="mb-1 font-bold text-yellow-400">DEBUG — Alineacion de Segmento</p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-            <span className="text-gray-400">selectedIndex:</span>
-            <span className="text-white">{debugInfo.selectedIndex}</span>
-            <span className="text-gray-400">selectedLabel:</span>
-            <span className={debugInfo.selectedLabel === 'REGALO' ? 'text-green-400' : 'text-yellow-300'}>
-              {debugInfo.selectedLabel}
-            </span>
-            <span className="text-gray-400">finalAngle:</span>
-            <span className="text-white">{debugInfo.finalAngle.toFixed(2)}°</span>
-            <span className="text-gray-400">topSegment (calc):</span>
-            <span className={debugInfo.currentTopSegment === debugInfo.selectedIndex ? 'text-green-400' : 'text-red-500 font-bold'}>
-              {debugInfo.currentTopSegment}
-              {debugInfo.currentTopSegment !== debugInfo.selectedIndex ? ' ← ERROR' : ' ← OK'}
-            </span>
-            <span className="text-gray-400">topIsGift:</span>
-            <span className={WHEEL_SEGMENTS[debugInfo.currentTopSegment]?.isGiftBox ? 'text-green-400' : 'text-yellow-300'}>
-              {WHEEL_SEGMENTS[debugInfo.currentTopSegment]?.isGiftBox ? 'SI (REGALO)' : 'NO (Sigue Intentando)'}
-            </span>
-            <span className="text-gray-400">match logico:</span>
-            <span className={
-              (debugInfo.selectedLabel === 'REGALO') === (WHEEL_SEGMENTS[debugInfo.currentTopSegment]?.isGiftBox)
-                ? 'text-green-400' : 'text-red-500 font-bold'
-            }>
-              {(debugInfo.selectedLabel === 'REGALO') === (WHEEL_SEGMENTS[debugInfo.currentTopSegment]?.isGiftBox)
-                ? 'CORRECTO' : 'INCORRECTO — DESFASE'}
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
