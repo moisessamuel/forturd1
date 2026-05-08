@@ -646,6 +646,7 @@ function RuletaPageContent() {
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <PrizeCard nombre="1 Boleto del Sorteo" />
+            <PrizeCard nombre="1 Boleto BMW X6 + 1 Boleto BMW X7" />
             <PrizeCard nombre="RD$5,000" />
             <PrizeCard nombre="RD$100,000" />
             <PrizeCard nombre="iPhone" />
