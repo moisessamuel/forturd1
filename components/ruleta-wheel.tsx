@@ -289,19 +289,23 @@ export function RuletaWheel({
       ? GIFT_INDEXES[Math.floor(Math.random() * GIFT_INDEXES.length)]
       : LOSE_INDEXES[Math.floor(Math.random() * LOSE_INDEXES.length)]
 
-    // Calcular rotacion final para que el segmento quede arriba (bajo el puntero)
-    // El puntero esta en la posicion "top" (270 grados en coordenadas estandar)
-    // Cada segmento ocupa 18 grados
-    // Segmento 0 empieza en -90 grados (top) cuando rotation = 0
-    // Para centrar el segmento i bajo el puntero:
-    // rotation = -i * 18 + 9 (el +9 es para centrar, no el borde)
-    // Normalizado a positivo: rotation = 360 - i * 18 + 9 = 369 - i * 18
+    // ─── CALCULO DE ROTACION SIMPLE Y EXACTO ─────────────────────────────────
+    // El segmento 0 tiene su CENTRO en -81 grados cuando rotation = 0
+    // (empieza en -90, termina en -72, centro = -81)
+    // Para poner el segmento i en el centro (bajo el puntero arriba):
+    // Necesitamos que: rotation - 90 + i*18 + 9 = -90 (mod 360)
+    // Simplificando: rotation = -i * 18 (mod 360)
+    // Para valores positivos: rotation = (360 - i * 18) % 360
+    // ────────────────────────────────────────────────────────────────────────
     
-    const baseRotation = (369 - targetIndex * SEGMENT_ANGLE) % 360
+    // Rotacion exacta para centrar el segmento objetivo bajo el puntero
+    const targetRotation = (360 - targetIndex * SEGMENT_ANGLE) % 360
     
-    // Agregar vueltas completas para efecto visual (5-7 vueltas)
-    const extraSpins = 360 * (5 + Math.floor(Math.random() * 3))
-    const finalRotation = rotation + extraSpins + baseRotation - (rotation % 360)
+    // Agregar vueltas completas para efecto visual (6 vueltas)
+    const fullSpins = 360 * 6
+    
+    // La rotacion final es: vueltas completas + posicion exacta del segmento
+    const finalRotation = Math.floor(rotation / 360) * 360 + fullSpins + targetRotation
     
     // Duracion de la animacion
     const duration = 6000
