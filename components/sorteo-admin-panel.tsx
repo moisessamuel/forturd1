@@ -241,7 +241,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
         throw new Error(data.error || 'Error al guardar progreso')
       }
       
-      toast.success(`Progreso actualizado a ${newProgress}%`)
+      toast.success(`Progreso actualizado a ${newProgress.toFixed(2)}%`)
     } catch (error) {
       console.error('Error saving progress:', error)
       toast.error(error instanceof Error ? error.message : 'Error al guardar el progreso')
@@ -343,7 +343,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                     Progreso del Sorteo
                   </label>
                   <span className="text-lg font-bold text-primary">
-                    {progress}%
+                    {typeof progress === 'number' ? progress.toFixed(2) : progress}%
                   </span>
                 </div>
                 <Slider
@@ -351,7 +351,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                   onValueChange={handleProgressChange}
                   min={0}
                   max={100}
-                  step={1}
+                  step={0.01}
                   disabled={isSavingProgress}
                   className="w-full"
                 />

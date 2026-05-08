@@ -191,7 +191,7 @@ export function SorteosDisponibles() {
                   <div className="mb-3">
                     <div className="mb-1 flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Progreso</span>
-                      <span className="font-bold text-green-500">{(sorteo.progress || 0).toFixed(1)}%</span>
+                      <span className="font-bold text-green-500">{(sorteo.progress || 0).toFixed(2)}%</span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
                       <div
