@@ -31,12 +31,45 @@ export async function GET() {
   }
 }
 
-// POST: Increment global spin count
-export async function POST() {
+// POST: Increment global spin count AND record individual spin
+export async function POST(request: Request) {
   try {
     const supabase = await createClient()
+    
+    // Parse optional body for spin details
+    let spinData = {
+      telefono: 'unknown',
+      nombre: null as string | null,
+      tipo: 'pagado',
+      resultado: 'Sigue Intentando',
+      es_premio: false,
+      jugada_id: null as string | null,
+      monto: 0,
+      moneda: 'DOP'
+    }
+    
+    try {
+      const body = await request.json()
+      spinData = { ...spinData, ...body }
+    } catch {
+      // No body provided, use defaults
+    }
 
-    // Try to increment counter in global_spin_counter table
+    // 1. Insert individual spin record
+    await supabase
+      .from('spins_individuales')
+      .insert({
+        telefono: spinData.telefono,
+        nombre: spinData.nombre,
+        tipo: spinData.tipo,
+        resultado: spinData.resultado,
+        es_premio: spinData.es_premio,
+        jugada_id: spinData.jugada_id,
+        monto: spinData.monto,
+        moneda: spinData.moneda
+      })
+
+    // 2. Increment global counter
     const { data: existing } = await supabase
       .from('global_spin_counter')
       .select('id, count')
@@ -48,7 +81,6 @@ export async function POST() {
         .update({ count: existing.count + 1 })
         .eq('id', existing.id)
     } else {
-      // Create counter if it doesn't exist
       await supabase
         .from('global_spin_counter')
         .insert({ count: 1 })

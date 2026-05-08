@@ -17,6 +17,13 @@ interface RuletaWheelProps {
   canSpin: boolean
   isSpinning: boolean
   onStartSpin: () => void
+  // Player info for tracking individual spins
+  playerTelefono?: string
+  playerNombre?: string
+  jugadaId?: string
+  spinType?: 'pagado' | 'gratis' | 'boleto'
+  spinMonto?: number
+  spinMoneda?: 'DOP' | 'USD'
 }
 
 // ─── DEFINITIVE VISUAL SEGMENT TABLE ──────────────────────────────────────
@@ -119,7 +126,13 @@ export function RuletaWheel({
   onSpinComplete, 
   canSpin, 
   isSpinning,
-  onStartSpin 
+  onStartSpin,
+  playerTelefono = 'unknown',
+  playerNombre,
+  jugadaId,
+  spinType = 'pagado',
+  spinMonto = 0,
+  spinMoneda = 'DOP'
 }: RuletaWheelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [rotation, setRotation] = useState(0)
@@ -656,9 +669,20 @@ export function RuletaWheel({
 
         setGlobalSpinCount(prev => prev + 1)
 
+        // Record individual spin with player details
         fetch('/api/ruleta/spin-count', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telefono: playerTelefono,
+            nombre: playerNombre,
+            tipo: spinType,
+            resultado: premio.nombre,
+            es_premio: isWin,
+            jugada_id: jugadaId,
+            monto: spinMonto,
+            moneda: spinMoneda
+          })
         }).catch(console.error)
 
         onSpinComplete(premio)
