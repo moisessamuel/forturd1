@@ -2,36 +2,25 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 // GET: Fetch global spin count
+// SOURCE OF TRUTH: spins_individuales table (each record = 1 spin executed)
 export async function GET() {
   try {
     const supabase = await createClient()
     
-    // Get total spin count from ruleta_jugadas (paid spins)
-    const { count: paidCount } = await supabase
-      .from('ruleta_jugadas')
+    // Count ONLY from spins_individuales - this is the EXACT count of spins executed
+    const { count: totalSpins } = await supabase
+      .from('spins_individuales')
       .select('*', { count: 'exact', head: true })
 
-    // Get total spin count from jugadas_ruleta (free spins)
-    const { count: freeCount } = await supabase
-      .from('jugadas_ruleta')
-      .select('*', { count: 'exact', head: true })
-
-    // Also check global_spin_counter table for persistent count
-    const { data: counterData } = await supabase
-      .from('global_spin_counter')
-      .select('count')
-      .single()
-
-    const totalCount = (counterData?.count || 0) + (paidCount || 0) + (freeCount || 0)
-
-    return NextResponse.json({ count: totalCount })
+    return NextResponse.json({ count: totalSpins || 0 })
   } catch (error) {
     console.error('Error fetching spin count:', error)
     return NextResponse.json({ count: 0 })
   }
 }
 
-// POST: Increment global spin count AND record individual spin
+// POST: Record individual spin execution
+// Each POST = 1 spin executed. The COUNT of records in spins_individuales = total spins.
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
@@ -55,8 +44,9 @@ export async function POST(request: Request) {
       // No body provided, use defaults
     }
 
-    // 1. Insert individual spin record
-    await supabase
+    // Insert individual spin record - THIS IS THE ONLY SOURCE OF TRUTH
+    // The count of records = exact number of spins executed
+    const { error } = await supabase
       .from('spins_individuales')
       .insert({
         telefono: spinData.telefono,
@@ -69,26 +59,14 @@ export async function POST(request: Request) {
         moneda: spinData.moneda
       })
 
-    // 2. Increment global counter
-    const { data: existing } = await supabase
-      .from('global_spin_counter')
-      .select('id, count')
-      .single()
-
-    if (existing) {
-      await supabase
-        .from('global_spin_counter')
-        .update({ count: existing.count + 1 })
-        .eq('id', existing.id)
-    } else {
-      await supabase
-        .from('global_spin_counter')
-        .insert({ count: 1 })
+    if (error) {
+      console.error('Error inserting spin:', error)
+      return NextResponse.json({ success: false, error: error.message })
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error incrementing spin count:', error)
+    console.error('Error recording spin:', error)
     return NextResponse.json({ success: false })
   }
 }

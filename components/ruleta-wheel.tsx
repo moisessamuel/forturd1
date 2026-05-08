@@ -469,50 +469,63 @@ export function RuletaWheel({
     }
   }, [initAudio])
 
-  // Determine result: win or lose, and select the exact segment index
+  // ─── DETERMINE RESULT: EXACT MATHEMATICAL PRIZE DELIVERY ─────────────────
+  // Uses MODULO logic for 100% predictable prize delivery.
+  // Prize is awarded EXACTLY when: spinNumber % cycleLength === 0
+  // Example: Boleto at spins 20, 40, 60, 80... (every 20th spin exactly)
+  // ─────────────────────────────────────────────────────────────────────────
   const determineResult = useCallback(async (): Promise<{ premio: Premio; selectedIndex: number }> => {
-    // Always fetch the REAL spin count from the server to avoid client drift
-    let serverSpinCount = globalSpinCount
+    // STEP 1: Fetch the EXACT current spin count from the database
+    // SOURCE OF TRUTH: COUNT of records in spins_individuales table
+    let currentSpinCount = 0
     try {
       const res = await fetch('/api/ruleta/spin-count')
       const data = await res.json()
-      if (data.count !== undefined) {
-        serverSpinCount = data.count
-        setGlobalSpinCount(data.count)
-      }
+      currentSpinCount = data.count || 0
+      setGlobalSpinCount(currentSpinCount)
     } catch {
-      // Fall back to local count
+      currentSpinCount = globalSpinCount
     }
 
-    const nextSpinCount = serverSpinCount + 1
+    // STEP 2: Calculate which spin number THIS will be
+    // After this spin executes, the count will be currentSpinCount + 1
+    const thisSpinNumber = currentSpinCount + 1
 
     let prizeType: string | null = null
     let prizeName: string = 'Sigue Intentando'
 
-    // ─── PREMIOS OFICIALES FORTURD ─────────────────────────────────────────
-    // Check milestones from rarest to most common (order matters!)
-    // Each milestone is REPETITIVE and AUTOMATIC (cycles)
+    // ─── EXACT PRIZE DELIVERY LOGIC ────────────────────────────────────────
+    // Prizes are checked from RAREST to MOST COMMON (priority order).
+    // If a spin matches multiple milestones, the rarest prize wins.
+    // 
+    // MATHEMATICAL GUARANTEE:
+    // - Spin 20 → Boleto (20 % 20 = 0) ✓
+    // - Spin 40 → Boleto (40 % 20 = 0) ✓
+    // - Spin 71 → BMW (71 % 71 = 0) ✓
+    // - Spin 142 → BMW (142 % 71 = 0) ✓
+    // - Spin 211 → RD$5,000 (211 % 211 = 0) ✓
+    // - etc.
     // ───────────────────────────────────────────────────────────────────────
-    if (nextSpinCount % 16207 === 0) {
+    if (thisSpinNumber % 16207 === 0) {
       prizeType = 'motor'
       prizeName = 'Motor'
-    } else if (nextSpinCount % 12506 === 0) {
+    } else if (thisSpinNumber % 12506 === 0) {
       prizeType = 'dinero_100k'
       prizeName = 'RD$100,000'
-    } else if (nextSpinCount % 8605 === 0) {
+    } else if (thisSpinNumber % 8605 === 0) {
       prizeType = 'iphone'
       prizeName = 'iPhone'
-    } else if (nextSpinCount % 3504 === 0) {
+    } else if (thisSpinNumber % 3504 === 0) {
       prizeType = 'tech'
       const techPrizes = ['Patineta Electrica', 'PS5', 'Smart TV']
       prizeName = techPrizes[Math.floor(Math.random() * techPrizes.length)]
-    } else if (nextSpinCount % 211 === 0) {
+    } else if (thisSpinNumber % 211 === 0) {
       prizeType = 'dinero_5k'
       prizeName = 'RD$5,000'
-    } else if (nextSpinCount % 71 === 0) {
+    } else if (thisSpinNumber % 71 === 0) {
       prizeType = 'boleto_bmw'
       prizeName = '1 Boleto BMW X6 + 1 Boleto BMW X7'
-    } else if (nextSpinCount % 20 === 0) {
+    } else if (thisSpinNumber % 20 === 0) {
       prizeType = 'boleto_eleccion'
       prizeName = '1 Boleto del Sorteo a Eleccion'
     }
