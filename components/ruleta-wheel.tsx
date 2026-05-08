@@ -87,38 +87,59 @@ const WHEEL_SEGMENTS: Array<{
 const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length // 20
 const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS   // 18°
 
-// ─── DEFINITIVE INVERSE FUNCTIONS ─────────────────────────────────────────
-// These two functions MUST be exact mathematical inverses of each other.
+// ─── ROTATION MATHEMATICS ─────────────────────────────────────────────────
 // 
-// Canvas draws segment[i] with its START edge at angle:
-//   canvasAngle = rotation - 90 + i * 18  (in degrees, 0 = right, CCW positive)
+// Canvas drawing: segment[i] starts at angle = rotation - 90 + i * 18 degrees
+// The pointer is at the TOP of the wheel (12 o'clock position).
+// 
+// When rotation = 0:
+//   - Segment 0 spans from -90° to -72° (center at -81°)
+//   - The TOP (where pointer is) is at -90° or equivalently 270°
+//   - So segment 0's START edge is right at the pointer
 //
-// The pointer is at the TOP = -90° in canvas coords = 270° in standard coords.
-// A segment is "under the pointer" when the pointer falls within its arc.
+// For segment[i] to have its CENTER at the pointer (top):
+//   rotation - 90 + i*18 + 9 = -90  (center at -90° = top)
+//   rotation = -i * 18
+//   
+// Since we want positive rotation values, add multiples of 360:
+//   rotation = 360 - (i * 18) for i > 0
+//   rotation = 0 for i = 0
 //
-// For the CENTER of segment[i] to be at the pointer:
-//   rotation - 90 + i * 18 + 9 = 0  (mod 360, where 0 = top)
-//   rotation = 81 - i * 18          (mod 360)
-//
-// INVERSE: given rotation, which segment's center is at the pointer?
-//   i = (81 - rotation) / 18        (mod 20)
+// SIMPLIFIED: To land on segment[i], we need rotation such that
+// after normalizing to [0, 360), the segment index = i
 // ──────────────────────────────────────────────────────────────────────────
 
 function getExactRotationForIndex(targetIndex: number): number {
-  // Returns the rotation (0-360) that centers segment[targetIndex] under pointer
-  const rot = (81 - targetIndex * SEGMENT_ANGLE) % 360
-  return rot < 0 ? rot + 360 : rot
+  // For segment 0, rotation = 0 means its start is at top
+  // But we want the CENTER to be at top, so we add half a segment (9°)
+  // Actually, let's think differently:
+  // 
+  // When rotation increases, the wheel spins clockwise visually
+  // Each +18° of rotation moves to the next segment
+  // 
+  // To put segment[i] under the pointer:
+  // We need to "undo" i segments worth of rotation from the base position
+  // Base position: segment 0 center at pointer requires rotation = 9°
+  // (so the center, not the edge, is at the pointer)
+  // 
+  // For segment i: rotation = 9 - i * 18, normalized to [0, 360)
+  
+  let rot = 9 - targetIndex * SEGMENT_ANGLE
+  while (rot < 0) rot += 360
+  return rot % 360
 }
 
 function getVisibleIndexFromRotation(rotationDegrees: number): number {
-  // Returns which segment index is centered under the pointer at this rotation
+  // Inverse of above: given rotation, which segment is at the pointer?
+  // rotation = 9 - index * 18
+  // index * 18 = 9 - rotation
+  // index = (9 - rotation) / 18
+  
   const normalized = ((rotationDegrees % 360) + 360) % 360
-  // Exact inverse of getExactRotationForIndex
-  const rawIndex = (81 - normalized) / SEGMENT_ANGLE
-  // Use Math.round to snap to nearest segment (handles edge cases)
-  const rounded = Math.round(rawIndex)
+  let index = (9 - normalized) / SEGMENT_ANGLE
   // Normalize to [0, 19]
-  return ((rounded % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
+  index = ((Math.round(index) % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
+  return index
 }
 
 export function RuletaWheel({ 
@@ -469,7 +490,7 @@ export function RuletaWheel({
     }
   }, [initAudio])
 
-  // ─── DETERMINE RESULT: EXACT MATHEMATICAL PRIZE DELIVERY ──────────────���──
+  // ─── DETERMINE RESULT: EXACT MATHEMATICAL PRIZE DELIVERY ──────────────�����──
   // Uses MODULO logic for 100% predictable prize delivery.
   // Prize is awarded EXACTLY when: spinNumber % cycleLength === 0
   // Example: Boleto at spins 20, 40, 60, 80... (every 20th spin exactly)
@@ -576,69 +597,51 @@ export function RuletaWheel({
     const isWin = premio.tipo === 'premio'
     const expectedResult: 'lose' | 'gift' = isWin ? 'gift' : 'lose'
 
-    // ─── SIMPLE, BULLETPROOF ROTATION CALCULATION ─────────────────────────
-    // 1. The selectedIndex is ALREADY guaranteed to be from the correct pool
-    //    (gift indexes for wins, lose indexes for losses) by determineResult()
-    // 2. We use getExactRotationForIndex which is mathematically exact
-    // 3. We add full spins for visual effect
-    // 4. We verify with getVisibleIndexFromRotation (exact inverse function)
-    // ──────────────────────────────────────────────────────────────────────
+    // ─── SIMPLIFIED ROTATION CALCULATION ─────────────────────────────────────
+    // The key insight: we need the FINAL rotation to land on the correct segment.
+    // 
+    // Formula: finalRotation = startRotation + spinAmount
+    // We need: getVisibleIndexFromRotation(finalRotation) === selectedIndex
+    // 
+    // Solution: Calculate the exact final rotation needed, then work backwards
+    // to find the spinAmount.
+    // ────────────────────────────────────────────────────────────────────────
     
-    const extraSpins = 360 * 6  // 6 full rotations for visual effect
-    const exactBaseRotation = getExactRotationForIndex(selectedIndex)
-    let targetRotation = extraSpins + exactBaseRotation
+    // Start from current visual position (idle rotation when not spinning)
+    const startRotation = idleRotation
     
-    // VERIFICATION: Confirm the math works
-    let verifyIndex = getVisibleIndexFromRotation(targetRotation)
+    // Calculate the exact rotation that centers selectedIndex under the pointer
+    const exactRotationForTarget = getExactRotationForIndex(selectedIndex)
     
-    console.log('[v0] SPIN DEBUG:', {
-      isWin,
-      expectedResult,
-      selectedIndex,
-      exactBaseRotation,
-      targetRotation,
-      verifyIndex,
-      verifySegmentType: VISUAL_SEGMENT_MAP[verifyIndex],
-      match: verifyIndex === selectedIndex && VISUAL_SEGMENT_MAP[verifyIndex] === expectedResult
-    })
+    // We want to spin multiple times (6 full rotations) plus land exactly on target
+    // The final rotation should be: N * 360 + exactRotationForTarget
+    // where N is large enough to ensure we spin forward
+    const minSpins = 6 // minimum full rotations for visual effect
     
-    // If somehow the index doesn't match (shouldn't happen with exact math),
-    // force to the correct segment
-    if (verifyIndex !== selectedIndex || VISUAL_SEGMENT_MAP[verifyIndex] !== expectedResult) {
-      console.log('[v0] MISMATCH DETECTED! Forcing correction...')
-      // Find closest valid index from the correct pool
-      const validIndexes = expectedResult === 'gift'
-        ? [4, 9, 14, 19]
-        : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
-      
-      // Use first valid index as fallback
-      const fallbackIndex = validIndexes[0]
-      targetRotation = extraSpins + getExactRotationForIndex(fallbackIndex)
-      verifyIndex = fallbackIndex
-      console.log('[v0] Corrected to fallback index:', fallbackIndex, 'rotation:', targetRotation)
-    }
-
-    // IMPORTANT: Start from the ACTUAL visual position (idle rotation when not spinning)
-    // This prevents the "jump" that can cause misalignment
-    const startRotation = isAnimating ? rotation : idleRotation
-    const totalRotation = targetRotation
+    // Calculate how many full rotations we need to go "forward" from startRotation
+    // and land on exactRotationForTarget
+    const baseSpins = Math.ceil(startRotation / 360) + minSpins
+    const finalRotation = baseSpins * 360 + exactRotationForTarget
     
-    // Sync the rotation state to match where we're starting from
+    // The amount we need to rotate
+    const spinAmount = finalRotation - startRotation
+    
+    // Sync the rotation state
     setRotation(startRotation)
 
     const duration = 7000 // ms
-    const startTime = performance.now()
+    const animStartTime = performance.now()
 
     // easeOutQuint: fast start, very gradual precise stop
     const easeOut = (t: number): number => 1 - Math.pow(1 - t, 5)
 
     const animate = (currentTime: number) => {
-      const elapsed = currentTime - startTime
+      const elapsed = currentTime - animStartTime
       const progress = Math.min(elapsed / duration, 1)
       const easedProgress = easeOut(progress)
 
-      const currentRotation = startRotation + totalRotation * easedProgress
-      setRotation(currentRotation)
+      const currentRot = startRotation + spinAmount * easedProgress
+      setRotation(currentRot)
 
       const speed = (totalRotation / duration) * (1 - progress) * 1000
       if (speed > 50 && Math.random() > 0.7) {
@@ -648,65 +651,13 @@ export function RuletaWheel({
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate)
       } else {
-        // ─── SNAP FINAL FORZADO ─────────────────────────────────────────────
-        // After animation completes, verify alignment and force-snap if needed.
-        // Uses the SAME functions as pre-calculation for consistency.
-        // ───────────────────────────────────────────────────────────────────
-        
-        const rawFinalRotation = startRotation + totalRotation
-        
-        // Use the EXACT same function to determine visible index
-        let actualVisibleIndex = getVisibleIndexFromRotation(rawFinalRotation)
-        const actualSegmentType = VISUAL_SEGMENT_MAP[actualVisibleIndex]
-        
-        console.log('[v0] FINAL SNAP DEBUG:', {
-          rawFinalRotation,
-          actualVisibleIndex,
-          actualSegmentType,
-          expectedResult,
-          isCorrect: actualSegmentType === expectedResult
-        })
-        
-        // ─── FORCED CORRECT SNAP ────────────────────────────────────────────
-        // ALWAYS force the wheel to land on a segment of the correct type.
-        // Don't trust the calculated rotation - use the pre-selected index.
+        // ─── FINAL SNAP ─────────────────────────────────────────────────────
+        // Force-snap to the exact calculated final rotation to ensure
+        // the wheel lands precisely on the selected segment.
         // ────────────────────────────────────────────────────────────────────
-        const fullSpins = Math.floor(rawFinalRotation / 360) * 360
         
-        // The selectedIndex was already chosen from the correct pool
-        // (gift indexes for wins, lose indexes for losses)
-        // So we ALWAYS use it for the final snap
-        const forcedIndex = selectedIndex
-        const exactRotForSelected = getExactRotationForIndex(forcedIndex)
-        let snapRotation = fullSpins + exactRotForSelected
-        
-        // Verify the segment type matches
-        const finalSegmentType = VISUAL_SEGMENT_MAP[forcedIndex]
-        
-        console.log('[v0] FORCED SNAP:', {
-          forcedIndex,
-          exactRotForSelected,
-          snapRotation,
-          finalSegmentType,
-          expectedResult,
-          isMatch: finalSegmentType === expectedResult
-        })
-        
-        // Final safety check - if still wrong type, use explicit pool
-        if (finalSegmentType !== expectedResult) {
-          console.log('[v0] CRITICAL: Final segment type mismatch! Forcing correction...')
-          const validIndexes = expectedResult === 'gift'
-            ? [4, 9, 14, 19]
-            : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
-          const correctedIndex = validIndexes[0]
-          snapRotation = fullSpins + getExactRotationForIndex(correctedIndex)
-          console.log('[v0] Forced to index:', correctedIndex)
-        }
-        
-        actualVisibleIndex = forcedIndex
-        
-        // Apply the exact snap
-        setRotation(snapRotation)
+        // Apply the exact final rotation (should already be correct, but ensure it)
+        setRotation(finalRotation)
         setIsAnimating(false)
 
         if (isWin) {
@@ -738,7 +689,7 @@ export function RuletaWheel({
     }
 
     animationRef.current = requestAnimationFrame(animate)
-  }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, rotation, idleRotation, playTickSound, playWinSound, onSpinComplete, initAudio, playerTelefono, playerNombre, spinType, jugadaId, spinMonto, spinMoneda])
+  }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, idleRotation, playTickSound, playWinSound, onSpinComplete, initAudio, playerTelefono, playerNombre, spinType, jugadaId, spinMonto, spinMoneda])
 
   // Cleanup
   useEffect(() => {
