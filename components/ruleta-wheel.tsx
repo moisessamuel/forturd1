@@ -268,7 +268,7 @@ export function RuletaWheel({
     if (thisSpinNumber % 71 === 0) {
       return { isWin: true, prizeName: '1 Boleto BMW X6 + 1 Boleto BMW X7' }
     }
-    if (thisSpinNumber % 20 === 0) {
+    if (thisSpinNumber % 12 === 0) {
       return { isWin: true, prizeName: '1 Boleto del Sorteo a Eleccion' }
     }
 
