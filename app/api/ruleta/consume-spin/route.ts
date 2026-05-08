@@ -2,27 +2,31 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 /**
- * CONSUME-SPIN: Endpoint atómico para consumir UN giro ANTES de la animación.
+ * CONSUME-SPIN: Endpoint ATÓMICO para consumir UN giro ANTES de la animación.
  * 
- * FLUJO CORRECTO:
+ * FÓRMULA OFICIAL:
+ * girosDisponibles = (girosPorBoletos + girosComprados) - girosConsumidos
+ * 
+ * FLUJO:
  * 1. Usuario hace clic en "Girar"
- * 2. Frontend llama POST /api/ruleta/consume-spin
- * 3. Backend verifica disponibilidad y descuenta 1 giro en una transacción atómica
- * 4. Si tiene giros, devuelve { success: true, giros_restantes }
- * 5. Si NO tiene giros, devuelve { success: false, error }
+ * 2. Frontend llama POST /api/ruleta/consume-spin con { telefono }
+ * 3. Backend calcula giros disponibles desde la BD (ÚNICA FUENTE DE VERDAD)
+ * 4. Si tiene giros, descuenta 1 atómicamente y devuelve { success: true, giros_restantes }
+ * 5. Si NO tiene giros, devuelve { success: false }
  * 6. SOLO si success=true, el frontend inicia la animación
  * 
- * Esto PREVIENE:
+ * PREVIENE:
  * - Giros fantasmas
  * - Doble conteo
+ * - Race conditions (usa optimistic locking)
+ * - Giros negativos
  * - Restauración de giros usados
- * - Race conditions
  */
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { telefono, tipo, jugada_id } = body
+    const { telefono } = body
 
     if (!telefono) {
       return NextResponse.json({ 
@@ -32,148 +36,131 @@ export async function POST(request: Request) {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // CASO 1: GIROS PAGADOS (tiene jugada_id)
+    // PASO 1: CALCULAR GIROS DISPONIBLES DESDE LA BD (ÚNICA FUENTE DE VERDAD)
     // ════════════════════════════════════════════════════════════════════════
-    if (jugada_id) {
-      // Obtener estado actual de la jugada
-      const { data: jugada, error: fetchError } = await supabase
-        .from('ruleta_jugadas')
-        .select('id, cantidad_giros, giros_usados, estado')
-        .eq('id', jugada_id)
-        .single()
 
-      if (fetchError || !jugada) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Jugada no encontrada' 
-        })
-      }
+    // 1A. Buscar player por teléfono
+    const { data: player } = await supabase
+      .from('players')
+      .select('id, nombre')
+      .eq('phone_number', telefono)
+      .single()
 
-      // Verificar que aún tiene giros disponibles
-      const cantidadGiros = jugada.cantidad_giros || 1
-      const girosUsados = jugada.giros_usados || 0
-      const girosDisponibles = cantidadGiros - girosUsados
-
-      if (girosDisponibles <= 0 || jugada.estado === 'jugado') {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'No tienes giros disponibles. Ya usaste todos tus giros comprados.',
-          giros_restantes: 0
-        })
-      }
-
-      // CONSUMIR EL GIRO: Incrementar giros_usados atomicamente
-      const newGirosUsados = girosUsados + 1
-      const newEstado = newGirosUsados >= cantidadGiros ? 'jugado' : 'confirmado'
-      const girosRestantes = cantidadGiros - newGirosUsados
-
-      const { error: updateError } = await supabase
-        .from('ruleta_jugadas')
-        .update({
-          giros_usados: newGirosUsados,
-          estado: newEstado,
-          jugado_at: new Date().toISOString(),
-        })
-        .eq('id', jugada_id)
-        .eq('giros_usados', girosUsados) // Optimistic lock - solo actualiza si no cambió
-
-      if (updateError) {
-        console.error('Error consuming paid spin:', updateError)
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Error al consumir giro. Intenta nuevamente.' 
-        })
-      }
-
-      return NextResponse.json({
-        success: true,
-        tipo: 'pagado',
-        giros_restantes: girosRestantes,
-        message: `Giro consumido. Te quedan ${girosRestantes} giro${girosRestantes !== 1 ? 's' : ''}.`
-      })
-    }
-
-    // ════════════════════════════════════════════════════════════════════════
-    // CASO 2: GIROS GRATIS (por boletos de sorteo)
-    // ════════════════════════════════════════════════════════════════════════
-    if (tipo === 'gratis') {
-      // Obtener player por teléfono
-      const { data: player } = await supabase
-        .from('players')
-        .select('id')
-        .eq('phone_number', telefono)
-        .single()
-
-      if (!player) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'No se encontró tu cuenta. Verifica tu número de teléfono.' 
-        })
-      }
-
-      // Contar boletos aprobados (cada boleto = 1 giro gratis)
+    // 1B. Calcular GIROS GRATIS por boletos aprobados
+    let totalGirosGratis = 0
+    if (player) {
       const { data: purchaseGroups } = await supabase
         .from('purchase_groups')
         .select('id')
         .eq('player_id', player.id)
         .eq('estado', 'aprobado')
 
-      if (!purchaseGroups || purchaseGroups.length === 0) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'No tienes boletos aprobados para giros gratis.' 
-        })
+      if (purchaseGroups && purchaseGroups.length > 0) {
+        const { count } = await supabase
+          .from('tickets')
+          .select('*', { count: 'exact', head: true })
+          .in('purchase_group_id', purchaseGroups.map(pg => pg.id))
+        totalGirosGratis = count || 0
       }
+    }
 
-      const { count: totalBoletos } = await supabase
-        .from('tickets')
-        .select('*', { count: 'exact', head: true })
-        .in('purchase_group_id', purchaseGroups.map(pg => pg.id))
+    // 1C. Obtener giros gratis YA USADOS
+    const { data: freeSpinRecord } = await supabase
+      .from('ruleta_giros_gratis')
+      .select('id, giros_usados')
+      .eq('telefono', telefono)
+      .single()
+    
+    const girosGratisUsados = freeSpinRecord?.giros_usados || 0
+    const girosGratisDisponibles = Math.max(0, totalGirosGratis - girosGratisUsados)
 
-      const totalGirosGratis = totalBoletos || 0
+    // 1D. Calcular GIROS PAGADOS (solo de la jugada activa más reciente)
+    const { data: jugadas } = await supabase
+      .from('ruleta_jugadas')
+      .select('id, cantidad_giros, giros_usados, estado')
+      .eq('telefono', telefono)
+      .eq('estado', 'confirmado')
+      .order('created_at', { ascending: false })
 
-      // Obtener giros usados de ruleta_giros_gratis
-      const { data: freeSpinRecord } = await supabase
-        .from('ruleta_giros_gratis')
-        .select('id, giros_usados')
-        .eq('telefono', telefono)
-        .single()
+    let jugadaActiva: { id: string; cantidad_giros: number; giros_usados: number } | null = null
+    let girosPagadosDisponibles = 0
 
-      const girosUsados = freeSpinRecord?.giros_usados || 0
-      const girosDisponibles = totalGirosGratis - girosUsados
+    if (jugadas && jugadas.length > 0) {
+      for (const jugada of jugadas) {
+        const cantidad = jugada.cantidad_giros || 1
+        const usados = jugada.giros_usados || 0
+        const disponibles = cantidad - usados
 
-      if (girosDisponibles <= 0) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'No tienes giros gratis disponibles. Ya usaste todos tus giros.',
-          giros_restantes: 0
-        })
+        if (disponibles > 0) {
+          jugadaActiva = { 
+            id: jugada.id, 
+            cantidad_giros: cantidad, 
+            giros_usados: usados 
+          }
+          girosPagadosDisponibles = disponibles
+          break // Solo usar la jugada más reciente con giros disponibles
+        } else {
+          // Auto-fix: marcar como 'jugado' si no tiene giros restantes
+          await supabase
+            .from('ruleta_jugadas')
+            .update({ estado: 'jugado' })
+            .eq('id', jugada.id)
+        }
       }
+    }
 
-      // CONSUMIR EL GIRO: Incrementar giros_usados en ruleta_giros_gratis
-      const newGirosUsados = girosUsados + 1
-      const girosRestantes = totalGirosGratis - newGirosUsados
+    // 1E. CALCULAR TOTAL DISPONIBLE
+    const totalDisponibles = girosGratisDisponibles + girosPagadosDisponibles
+
+    // ════════════════════════════════════════════════════════════════════════
+    // PASO 2: VALIDAR QUE HAY GIROS DISPONIBLES
+    // ════════════════════════════════════════════════════════════════════════
+    
+    if (totalDisponibles <= 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'No tienes giros disponibles. Ya usaste todos tus giros.',
+        giros_restantes: 0,
+        giros_gratis_restantes: 0,
+        giros_pagados_restantes: 0,
+      })
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // PASO 3: CONSUMIR UN GIRO (PRIORIDAD: GRATIS PRIMERO, LUEGO PAGADOS)
+    // ════════════════════════════════════════════════════════════════════════
+    
+    let tipoConsumido: 'gratis' | 'pagado' = 'gratis'
+    let nuevosGirosGratisRestantes = girosGratisDisponibles
+    let nuevosGirosPagadosRestantes = girosPagadosDisponibles
+
+    if (girosGratisDisponibles > 0) {
+      // CONSUMIR UN GIRO GRATIS
+      tipoConsumido = 'gratis'
+      const newGirosUsados = girosGratisUsados + 1
+      nuevosGirosGratisRestantes = girosGratisDisponibles - 1
 
       if (freeSpinRecord) {
-        // Actualizar registro existente
-        const { error: updateError } = await supabase
+        // Actualizar registro existente con OPTIMISTIC LOCK
+        const { error: updateError, count } = await supabase
           .from('ruleta_giros_gratis')
           .update({
             giros_usados: newGirosUsados,
             updated_at: new Date().toISOString(),
           })
           .eq('id', freeSpinRecord.id)
-          .eq('giros_usados', girosUsados) // Optimistic lock
+          .eq('giros_usados', girosGratisUsados) // LOCK: solo actualiza si no cambió
 
-        if (updateError) {
-          console.error('Error consuming free spin:', updateError)
-          return NextResponse.json({ 
-            success: false, 
-            error: 'Error al consumir giro gratis. Intenta nuevamente.' 
+        if (updateError || count === 0) {
+          // Race condition detectada - otro request ya consumió un giro
+          return NextResponse.json({
+            success: false,
+            error: 'Error de sincronización. Por favor intenta de nuevo.',
+            retry: true,
           })
         }
       } else {
-        // Crear nuevo registro con 1 giro usado
+        // Crear nuevo registro
         const { error: insertError } = await supabase
           .from('ruleta_giros_gratis')
           .insert({
@@ -182,35 +169,68 @@ export async function POST(request: Request) {
           })
 
         if (insertError) {
-          console.error('Error creating free spin record:', insertError)
-          return NextResponse.json({ 
-            success: false, 
-            error: 'Error al registrar giro gratis. Intenta nuevamente.' 
+          // Podría ser un conflicto si otro request creó el registro primero
+          return NextResponse.json({
+            success: false,
+            error: 'Error al registrar giro. Por favor intenta de nuevo.',
+            retry: true,
           })
         }
       }
+    } else if (girosPagadosDisponibles > 0 && jugadaActiva) {
+      // CONSUMIR UN GIRO PAGADO
+      tipoConsumido = 'pagado'
+      const newGirosUsados = jugadaActiva.giros_usados + 1
+      nuevosGirosPagadosRestantes = girosPagadosDisponibles - 1
+      const newEstado = newGirosUsados >= jugadaActiva.cantidad_giros ? 'jugado' : 'confirmado'
 
+      const { error: updateError, count } = await supabase
+        .from('ruleta_jugadas')
+        .update({
+          giros_usados: newGirosUsados,
+          estado: newEstado,
+          jugado_at: new Date().toISOString(),
+        })
+        .eq('id', jugadaActiva.id)
+        .eq('giros_usados', jugadaActiva.giros_usados) // LOCK: solo actualiza si no cambió
+
+      if (updateError || count === 0) {
+        // Race condition detectada
+        return NextResponse.json({
+          success: false,
+          error: 'Error de sincronización. Por favor intenta de nuevo.',
+          retry: true,
+        })
+      }
+    } else {
+      // No debería llegar aquí si totalDisponibles > 0, pero por seguridad
       return NextResponse.json({
-        success: true,
-        tipo: 'gratis',
-        giros_restantes: girosRestantes,
-        message: `Giro gratis consumido. Te quedan ${girosRestantes} giro${girosRestantes !== 1 ? 's' : ''} gratis.`
+        success: false,
+        error: 'Error inesperado. Por favor intenta de nuevo.',
       })
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // CASO 3: Sin tipo válido
+    // PASO 4: DEVOLVER RESULTADO CON BALANCE ACTUALIZADO
     // ════════════════════════════════════════════════════════════════════════
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Tipo de giro no válido' 
-    }, { status: 400 })
+    
+    const nuevosGirosTotales = nuevosGirosGratisRestantes + nuevosGirosPagadosRestantes
+
+    return NextResponse.json({
+      success: true,
+      tipo: tipoConsumido,
+      giros_restantes: nuevosGirosTotales,
+      giros_gratis_restantes: nuevosGirosGratisRestantes,
+      giros_pagados_restantes: nuevosGirosPagadosRestantes,
+      puede_seguir_girando: nuevosGirosTotales > 0,
+      message: `Giro ${tipoConsumido} consumido. Te quedan ${nuevosGirosTotales} giro${nuevosGirosTotales !== 1 ? 's' : ''}.`
+    })
 
   } catch (error) {
     console.error('Consume spin error:', error)
     return NextResponse.json({ 
       success: false, 
-      error: 'Error interno del servidor' 
+      error: 'Error interno del servidor. Por favor intenta de nuevo.' 
     }, { status: 500 })
   }
 }
