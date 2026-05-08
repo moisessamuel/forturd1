@@ -46,7 +46,9 @@ export async function POST(request: Request) {
       .eq('phone_number', telefono)
       .single()
 
-    // 1B. Calcular GIROS GRATIS por boletos aprobados
+    // 1B. Calcular GIROS GRATIS por boletos aprobados DE SORTEOS BMW ÚNICAMENTE
+    // IMPORTANTE: Solo boletos de bmw-x6 y bmw-x7 generan giros gratis
+    // Las compras directas de giros NO generan giros adicionales
     let totalGirosGratis = 0
     if (player) {
       const { data: purchaseGroups } = await supabase
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
         .select('id')
         .eq('player_id', player.id)
         .eq('estado', 'aprobado')
+        .in('sorteo_slug', ['bmw-x6', 'bmw-x7']) // SOLO sorteos BMW
 
       if (purchaseGroups && purchaseGroups.length > 0) {
         const { count } = await supabase
