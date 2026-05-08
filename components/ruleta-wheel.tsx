@@ -62,6 +62,8 @@ export function RuletaWheel({
   const [logoLoaded, setLogoLoaded] = useState(false)
   const logoRef = useRef<HTMLImageElement | null>(null)
   const animationRef = useRef<number | null>(null)
+  const idleAnimationRef = useRef<number | null>(null)
+  const lastIdleTimeRef = useRef<number>(0)
 
   // Cargar logo
   useEffect(() => {
@@ -365,11 +367,61 @@ export function RuletaWheel({
     animationRef.current = requestAnimationFrame(animate)
   }, [canSpin, isSpinning, isAnimating, onStartSpin, determineResult, rotation, playerTelefono, playerNombre, spinType, jugadaId, spinMonto, spinMoneda, onSpinComplete])
 
-  // Cleanup
+  // ─── ANIMACION IDLE (MOVIMIENTO LENTO AUTOMATICO) ──────────────────────────
+  // La ruleta gira MUY lentamente cuando esta en espera
+  // Se detiene cuando el usuario hace un giro real
+  // Se reanuda despues de terminar el giro
+  // IMPORTANTE: Esto es SOLO visual, NO afecta premios ni backend
+  // ──────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    // No ejecutar idle si hay un giro real en progreso
+    if (isAnimating || isSpinning) {
+      if (idleAnimationRef.current) {
+        cancelAnimationFrame(idleAnimationRef.current)
+        idleAnimationRef.current = null
+      }
+      return
+    }
+
+    // Velocidad muy lenta: 3 grados por segundo (1 vuelta completa en 120 segundos)
+    const IDLE_SPEED = 3 // grados por segundo
+
+    const animateIdle = (currentTime: number) => {
+      if (!lastIdleTimeRef.current) {
+        lastIdleTimeRef.current = currentTime
+      }
+
+      const deltaTime = (currentTime - lastIdleTimeRef.current) / 1000 // en segundos
+      lastIdleTimeRef.current = currentTime
+
+      // Actualizar rotacion con movimiento suave
+      setRotation(prev => prev + IDLE_SPEED * deltaTime)
+
+      // Continuar la animacion
+      idleAnimationRef.current = requestAnimationFrame(animateIdle)
+    }
+
+    // Iniciar animacion idle
+    lastIdleTimeRef.current = 0
+    idleAnimationRef.current = requestAnimationFrame(animateIdle)
+
+    // Cleanup
+    return () => {
+      if (idleAnimationRef.current) {
+        cancelAnimationFrame(idleAnimationRef.current)
+        idleAnimationRef.current = null
+      }
+    }
+  }, [isAnimating, isSpinning])
+
+  // Cleanup general
   useEffect(() => {
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
+      }
+      if (idleAnimationRef.current) {
+        cancelAnimationFrame(idleAnimationRef.current)
       }
     }
   }, [])
