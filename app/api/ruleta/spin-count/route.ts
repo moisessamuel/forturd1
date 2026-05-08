@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: error.message })
     }
 
-    // ─── UPDATE GIROS_USADOS IN RULETA_JUGADAS ─────────────────────────────
+    // ─── UPDATE GIROS_USADOS IN RULETA_JUGADAS (PAID SPINS) ─────────────────
     // This is CRITICAL - without this, verify-spins returns incorrect counts
     // ───────────────────────────────────────────────────────────────────────
     if (spinData.jugada_id) {
@@ -91,6 +91,38 @@ export async function POST(request: Request) {
             jugado_at: new Date().toISOString(),
           })
           .eq('id', spinData.jugada_id)
+      }
+    }
+
+    // ─── UPDATE GIROS_USADOS IN RULETA_GIROS_GRATIS (FREE SPINS FROM TICKETS) ───
+    // When tipo is 'gratis', increment giros_usados in ruleta_giros_gratis
+    // This ensures verify-spins returns correct available free spins
+    // ─────────────────────────────────────────────────────────────────────────────
+    if (spinData.tipo === 'gratis' && spinData.telefono && spinData.telefono !== 'unknown') {
+      // Get or create the user's free spin tracking record
+      const { data: existingRecord } = await supabase
+        .from('ruleta_giros_gratis')
+        .select('id, giros_usados')
+        .eq('telefono', spinData.telefono)
+        .single()
+
+      if (existingRecord) {
+        // Increment giros_usados
+        await supabase
+          .from('ruleta_giros_gratis')
+          .update({
+            giros_usados: (existingRecord.giros_usados || 0) + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingRecord.id)
+      } else {
+        // Create new record with 1 spin used
+        await supabase
+          .from('ruleta_giros_gratis')
+          .insert({
+            telefono: spinData.telefono,
+            giros_usados: 1,
+          })
       }
     }
 
