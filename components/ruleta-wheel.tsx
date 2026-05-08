@@ -30,24 +30,24 @@ interface RuletaWheelProps {
 const VISUAL_SEGMENT_MAP: ('lose' | 'gift')[] = [
   'lose', // index 0
   'lose', // index 1
-  'gift', // index 2
+  'lose', // index 2
   'lose', // index 3
-  'lose', // index 4
-  'gift', // index 5
+  'gift', // index 4  ← gift (1 of 4)
+  'lose', // index 5
   'lose', // index 6
   'lose', // index 7
-  'gift', // index 8
-  'lose', // index 9
+  'lose', // index 8
+  'gift', // index 9  ← gift (2 of 4)
   'lose', // index 10
-  'gift', // index 11
+  'lose', // index 11
   'lose', // index 12
   'lose', // index 13
-  'gift', // index 14
+  'gift', // index 14 ← gift (3 of 4)
   'lose', // index 15
   'lose', // index 16
-  'gift', // index 17
+  'lose', // index 17
   'lose', // index 18
-  'lose', // index 19
+  'gift', // index 19 ← gift (4 of 4)
 ]
 
 // Full segment data for rendering
@@ -489,9 +489,9 @@ export function RuletaWheel({
       prizeName = '1 Boleto de Vehiculo a Eleccion'
     }
 
-    // Hardcoded index pools — exactly as specified
-    const winningIndexes = [2, 5, 8, 11, 14, 17]   // gift box segments
-    const loseIndexes    = [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19] // "sigue intentando"
+    // Index pools matching VISUAL_SEGMENT_MAP (4 gifts, 16 lose)
+    const winningIndexes = [4, 9, 14, 19]                                          // gift box segments
+    const loseIndexes    = [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18] // "sigue intentando"
 
     const result = prizeType ? 'win' : 'lose'
 
@@ -561,9 +561,9 @@ export function RuletaWheel({
     
     while (VISUAL_SEGMENT_MAP[visibleIndex] !== expectedResult && attempts < maxAttempts) {
       // Find the nearest valid segment
-      const validIndexes = expectedResult === 'gift' 
-        ? [2, 5, 8, 11, 14, 17]    // gift segments
-        : [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19] // lose segments
+      const validIndexes = expectedResult === 'gift'
+        ? [4, 9, 14, 19]                                              // gift segments
+        : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18] // lose segments
 
       // Find closest valid index
       let closestValid = validIndexes[0]
@@ -588,7 +588,7 @@ export function RuletaWheel({
 
     // Step 4: Final validation — if still wrong after max attempts, force to first valid
     if (VISUAL_SEGMENT_MAP[visibleIndex] !== expectedResult) {
-      const validIndexes = expectedResult === 'gift' ? [2, 5, 8, 11, 14, 17] : [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19]
+      const validIndexes = expectedResult === 'gift' ? [4, 9, 14, 19] : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
       const forceIndex = validIndexes[0]
       finalRotation = extraSpins + (81 - forceIndex * SEGMENT_ANGLE)
     }
@@ -640,9 +640,9 @@ export function RuletaWheel({
         
         // Step 3: If mismatch, FORCE correction to nearest valid segment
         if (actualSegmentType !== expectedResult) {
-          const validIndexes = expectedResult === 'gift' 
-            ? [2, 5, 8, 11, 14, 17] 
-            : [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19]
+          const validIndexes = expectedResult === 'gift'
+            ? [4, 9, 14, 19]
+            : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
           
           // Find closest valid index
           let closestValid = validIndexes[0]
@@ -671,7 +671,7 @@ export function RuletaWheel({
         const finalCheck = VISUAL_SEGMENT_MAP[actualVisibleIndex]
         if (finalCheck !== expectedResult) {
           // Emergency: force to first valid segment
-          const validIndexes = expectedResult === 'gift' ? [2, 5, 8, 11, 14, 17] : [0, 1, 3, 4, 6, 7, 9, 10, 12, 13, 15, 16, 18, 19]
+          const validIndexes = expectedResult === 'gift' ? [4, 9, 14, 19] : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
           const forceIndex = validIndexes[0]
           const correctedRotation = getExactRotationForIndex(forceIndex)
           finalWheelRotation = (Math.floor(finalWheelRotation / 360) * 360) + correctedRotation
