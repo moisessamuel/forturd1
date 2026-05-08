@@ -80,29 +80,38 @@ const WHEEL_SEGMENTS: Array<{
 const TOTAL_SEGMENTS = WHEEL_SEGMENTS.length // 20
 const SEGMENT_ANGLE = 360 / TOTAL_SEGMENTS   // 18°
 
-// ─── CRITICAL FUNCTION: Get the REAL visible index under the pointer ──────
-// This must match EXACTLY how the canvas draws segments.
-// Canvas formula: segmentStart = startAngle + index * angle - π/2
-// The pointer is at the TOP (12 o'clock position).
-// IMPORTANT: Using Math.round instead of Math.floor to handle edge cases
-// where the pointer lands near segment boundaries.
+// ─── DEFINITIVE INVERSE FUNCTIONS ─────────────────────────────────────────
+// These two functions MUST be exact mathematical inverses of each other.
+// 
+// Canvas draws segment[i] with its START edge at angle:
+//   canvasAngle = rotation - 90 + i * 18  (in degrees, 0 = right, CCW positive)
+//
+// The pointer is at the TOP = -90° in canvas coords = 270° in standard coords.
+// A segment is "under the pointer" when the pointer falls within its arc.
+//
+// For the CENTER of segment[i] to be at the pointer:
+//   rotation - 90 + i * 18 + 9 = 0  (mod 360, where 0 = top)
+//   rotation = 81 - i * 18          (mod 360)
+//
+// INVERSE: given rotation, which segment's center is at the pointer?
+//   i = (81 - rotation) / 18        (mod 20)
 // ──────────────────────────────────────────────────────────────────────────
-function getVisibleIndexFromRotation(rotationDegrees: number): number {
-  // Normalize rotation to [0, 360)
-  const normalized = ((rotationDegrees % 360) + 360) % 360
-  
-  // Using Math.round for precision at segment edges
-  const rawIndex = Math.round(((360 - normalized + 90) % 360) / SEGMENT_ANGLE)
-  const visibleIndex = ((rawIndex % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
-  
-  return visibleIndex
+
+function getExactRotationForIndex(targetIndex: number): number {
+  // Returns the rotation (0-360) that centers segment[targetIndex] under pointer
+  const rot = (81 - targetIndex * SEGMENT_ANGLE) % 360
+  return rot < 0 ? rot + 360 : rot
 }
 
-// ─── Calculate the EXACT rotation needed to center a segment under pointer ──
-function getExactRotationForIndex(targetIndex: number): number {
-  // To center segment[i] under the pointer:
-  // correctedRotation = 360 - (targetIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2) - 90
-  return 360 - (targetIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2) - 90
+function getVisibleIndexFromRotation(rotationDegrees: number): number {
+  // Returns which segment index is centered under the pointer at this rotation
+  const normalized = ((rotationDegrees % 360) + 360) % 360
+  // Exact inverse of getExactRotationForIndex
+  const rawIndex = (81 - normalized) / SEGMENT_ANGLE
+  // Use Math.round to snap to nearest segment (handles edge cases)
+  const rounded = Math.round(rawIndex)
+  // Normalize to [0, 19]
+  return ((rounded % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
 }
 
 export function RuletaWheel({ 
@@ -535,66 +544,37 @@ export function RuletaWheel({
     const isWin = premio.tipo === 'premio'
     const expectedResult: 'lose' | 'gift' = isWin ? 'gift' : 'lose'
 
-    // ─── DEFINITIVE ROTATION CALCULATION ──────────────────────────────────
-    // We will compute a rotation that lands EXACTLY on a segment where:
-    //   VISUAL_SEGMENT_MAP[visibleIndex] === expectedResult
-    //
-    // Step 1: Calculate base rotation to land on selectedIndex
-    // The center of segment[i] is at angle: i * 18 + 9 (from top, in wheel space)
-    // To make segment[i] appear under the pointer (at top), we rotate by:
-    //   rotation = 90 - (i * 18 + 9) = 81 - i * 18
-    // Adding full spins for visual effect:
-    const baseRotation = 81 - selectedIndex * SEGMENT_ANGLE
-    const extraSpins = 360 * 6
-    let finalRotation = extraSpins + baseRotation
-
-    // Normalize to get final angle
-    const normalizedFinal = ((finalRotation % 360) + 360) % 360
-
-    // Step 2: Use the REAL function to get visibleIndex
-    let visibleIndex = getVisibleIndexFromRotation(normalizedFinal)
-
-    // Step 3: VALIDATION LOOP — keep correcting until visual matches result
-    // This is the ABSOLUTE RULE: the wheel does NOT stop until correct
-    let attempts = 0
-    const maxAttempts = 20 // safety limit
+    // ─── SIMPLE, BULLETPROOF ROTATION CALCULATION ─────────────────────────
+    // 1. The selectedIndex is ALREADY guaranteed to be from the correct pool
+    //    (gift indexes for wins, lose indexes for losses) by determineResult()
+    // 2. We use getExactRotationForIndex which is mathematically exact
+    // 3. We add full spins for visual effect
+    // 4. We verify with getVisibleIndexFromRotation (exact inverse function)
+    // ──────────────────────────────────────────────────────────────────────
     
-    while (VISUAL_SEGMENT_MAP[visibleIndex] !== expectedResult && attempts < maxAttempts) {
-      // Find the nearest valid segment
+    const extraSpins = 360 * 6  // 6 full rotations for visual effect
+    const exactBaseRotation = getExactRotationForIndex(selectedIndex)
+    let targetRotation = extraSpins + exactBaseRotation
+    
+    // VERIFICATION: Confirm the math works
+    let verifyIndex = getVisibleIndexFromRotation(targetRotation)
+    
+    // If somehow the index doesn't match (shouldn't happen with exact math),
+    // force to the correct segment
+    if (verifyIndex !== selectedIndex || VISUAL_SEGMENT_MAP[verifyIndex] !== expectedResult) {
+      // Find closest valid index from the correct pool
       const validIndexes = expectedResult === 'gift'
-        ? [4, 9, 14, 19]                                              // gift segments
-        : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18] // lose segments
-
-      // Find closest valid index
-      let closestValid = validIndexes[0]
-      let minDist = Math.abs(validIndexes[0] - visibleIndex)
-      for (const idx of validIndexes) {
-        const dist = Math.abs(idx - visibleIndex)
-        if (dist < minDist) {
-          minDist = dist
-          closestValid = idx
-        }
-      }
-
-      // Apply correction
-      const correction = (closestValid - visibleIndex) * SEGMENT_ANGLE
-      finalRotation += correction
-
-      // Recalculate visible index
-      const newNormalized = ((finalRotation % 360) + 360) % 360
-      visibleIndex = getVisibleIndexFromRotation(newNormalized)
-      attempts++
-    }
-
-    // Step 4: Final validation — if still wrong after max attempts, force to first valid
-    if (VISUAL_SEGMENT_MAP[visibleIndex] !== expectedResult) {
-      const validIndexes = expectedResult === 'gift' ? [4, 9, 14, 19] : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
-      const forceIndex = validIndexes[0]
-      finalRotation = extraSpins + (81 - forceIndex * SEGMENT_ANGLE)
+        ? [4, 9, 14, 19]
+        : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
+      
+      // Use first valid index as fallback
+      const fallbackIndex = validIndexes[0]
+      targetRotation = extraSpins + getExactRotationForIndex(fallbackIndex)
+      verifyIndex = fallbackIndex
     }
 
     const startRotation = rotation
-    const totalRotation = finalRotation
+    const totalRotation = targetRotation
 
     const duration = 7000 // ms
     const startTime = performance.now()
@@ -619,66 +599,47 @@ export function RuletaWheel({
         animationRef.current = requestAnimationFrame(animate)
       } else {
         // ─── SNAP FINAL FORZADO ─────────────────────────────────────────────
-        // After easing completes, recalculate the REAL visible index
-        // and FORCE a snap to the EXACT center of the correct segment.
-        // This eliminates ANY decimal drift or edge-case alignment issues.
+        // After animation completes, verify alignment and force-snap if needed.
+        // Uses the SAME functions as pre-calculation for consistency.
         // ───────────────────────────────────────────────────────────────────
         
-        let finalWheelRotation = startRotation + totalRotation
+        const rawFinalRotation = startRotation + totalRotation
         
-        // Step 1: Calculate which segment is ACTUALLY visible after animation
-        const normalizedRotation = ((finalWheelRotation % 360) + 360) % 360
-        let actualVisibleIndex = Math.round(
-          ((360 - normalizedRotation + 90) % 360) / SEGMENT_ANGLE
-        ) % TOTAL_SEGMENTS
-        
-        // Handle negative modulo
-        actualVisibleIndex = ((actualVisibleIndex % TOTAL_SEGMENTS) + TOTAL_SEGMENTS) % TOTAL_SEGMENTS
-        
-        // Step 2: Check if the visible segment matches the expected result
+        // Use the EXACT same function to determine visible index
+        let actualVisibleIndex = getVisibleIndexFromRotation(rawFinalRotation)
         const actualSegmentType = VISUAL_SEGMENT_MAP[actualVisibleIndex]
         
-        // Step 3: If mismatch, FORCE correction to nearest valid segment
-        if (actualSegmentType !== expectedResult) {
+        // Calculate the exact snap rotation
+        let snapRotation: number
+        
+        if (actualSegmentType === expectedResult) {
+          // Correct type - just snap to exact center of this segment
+          const exactRot = getExactRotationForIndex(actualVisibleIndex)
+          const fullSpins = Math.floor(rawFinalRotation / 360) * 360
+          snapRotation = fullSpins + exactRot
+        } else {
+          // MISMATCH - force to nearest valid segment (this should never happen
+          // if the pre-calculation is correct, but it's a safety net)
           const validIndexes = expectedResult === 'gift'
             ? [4, 9, 14, 19]
             : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
           
-          // Find closest valid index
-          let closestValid = validIndexes[0]
+          // Find closest valid
+          let closest = validIndexes[0]
           let minDist = Math.abs(validIndexes[0] - actualVisibleIndex)
           for (const idx of validIndexes) {
-            const dist = Math.abs(idx - actualVisibleIndex)
-            if (dist < minDist) {
-              minDist = dist
-              closestValid = idx
-            }
+            const d = Math.abs(idx - actualVisibleIndex)
+            if (d < minDist) { minDist = d; closest = idx }
           }
           
-          // Calculate exact rotation for this index
-          const correctedRotation = getExactRotationForIndex(closestValid)
-          // Preserve full spins and apply corrected final position
-          finalWheelRotation = (Math.floor(finalWheelRotation / 360) * 360) + correctedRotation
-          actualVisibleIndex = closestValid
-        } else {
-          // Even if type matches, snap to EXACT center of the segment
-          const correctedRotation = getExactRotationForIndex(actualVisibleIndex)
-          finalWheelRotation = (Math.floor(finalWheelRotation / 360) * 360) + correctedRotation
+          const exactRot = getExactRotationForIndex(closest)
+          const fullSpins = Math.floor(rawFinalRotation / 360) * 360
+          snapRotation = fullSpins + exactRot
+          actualVisibleIndex = closest
         }
         
-        // Step 4: FINAL VALIDATION - ABSOLUTE RULE
-        // visibleIndex MUST equal the correct type, period.
-        const finalCheck = VISUAL_SEGMENT_MAP[actualVisibleIndex]
-        if (finalCheck !== expectedResult) {
-          // Emergency: force to first valid segment
-          const validIndexes = expectedResult === 'gift' ? [4, 9, 14, 19] : [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18]
-          const forceIndex = validIndexes[0]
-          const correctedRotation = getExactRotationForIndex(forceIndex)
-          finalWheelRotation = (Math.floor(finalWheelRotation / 360) * 360) + correctedRotation
-        }
-        
-        // Step 5: Apply the EXACT snap (instant, no transition)
-        setRotation(finalWheelRotation)
+        // Apply the exact snap
+        setRotation(snapRotation)
         setIsAnimating(false)
 
         if (isWin) {
