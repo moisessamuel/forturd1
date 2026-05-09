@@ -94,19 +94,25 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
   const uploadRef = useRef<HTMLDivElement>(null)
   const confirmationRef = useRef<HTMLDivElement>(null)
 
-  const allPaymentMethods = [
-    { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
-    { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', monedas: ['DOP'] },
-    { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', monedas: ['DOP'] },
-    { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', monedas: ['DOP'] },
-    { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
-    { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
-    { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'], isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
-    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
-    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
+  // Métodos principales (siempre visibles) - ordenados según requerimiento
+  const mainPaymentMethods = [
+    { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', moneda: 'DOP' as const },
+    { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', moneda: 'DOP' as const },
+    { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', moneda: 'DOP' as const },
+    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', moneda: 'USD' as const },
+    { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '$FortunaRD', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', moneda: 'USD' as const, isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
+    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', moneda: 'USD' as const },
   ]
 
-  const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
+  // Métodos secundarios (ocultos en "Más cuentas")
+  const secondaryPaymentMethods = [
+    { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', moneda: 'DOP' as const },
+    { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', moneda: 'DOP' as const },
+    { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', moneda: 'DOP' as const },
+  ]
+
+  const allPaymentMethods = [...mainPaymentMethods, ...secondaryPaymentMethods]
+  const [showMoreAccounts, setShowMoreAccounts] = useState(false)
 
   const titularEduardo = {
     nombre: 'Eduardo Enrique Rodriguez Montas',
@@ -136,6 +142,20 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
     return titularMoises
   }
   const titular = selectedBanco ? getTitular(selectedBanco.id) : titularMoises
+
+  // La moneda se determina automáticamente según el método de pago seleccionado
+  const getMonedaFromMethod = (methodId: string): 'DOP' | 'USD' => {
+    const method = allPaymentMethods.find(m => m.id === methodId)
+    return method?.moneda || 'DOP'
+  }
+
+  // Cuando se selecciona un banco, actualizar la moneda automáticamente
+  const handleSelectBank = (method: typeof mainPaymentMethods[0]) => {
+    const newMoneda = method.moneda
+    setMoneda(newMoneda)
+    setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
+    setFormData(prev => ({ ...prev, banco: method.nombre }))
+  }
 
   const precioActual = moneda === 'DOP' ? precioBoleto : precioBoletoUsd
   const total = (parseInt(quantity) || 0) * precioActual
@@ -491,26 +511,11 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
               </div>
             </div>
 
-            {/* Currency Toggle */}
+            {/* Total Display - La moneda se determina automáticamente por el método de pago */}
             <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-2">
-              <div className="flex gap-1">
-                <button
-                  onClick={() => setMoneda('DOP')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                    moneda === 'DOP' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  DOP
-                </button>
-                <button
-                  onClick={() => setMoneda('USD')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-semibold transition-all ${
-                    moneda === 'USD' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  USD
-                </button>
-              </div>
+              <span className="text-xs text-muted-foreground">
+                {selectedBanco ? (moneda === 'USD' ? 'Pago en USD' : 'Pago en RD$') : 'Selecciona método de pago'}
+              </span>
               <span className="text-sm font-bold text-primary">
                 {formatCurrency(total || 0)}
               </span>
@@ -567,16 +572,13 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                 Método de Pago
               </p>
 
-              {/* Payment Method Logos Grid - App Icon Style */}
+              {/* Main Payment Methods - Always Visible */}
               <div className="mb-3 flex flex-wrap justify-center gap-3">
-                {paymentMethods.map((method) => (
+                {mainPaymentMethods.map((method) => (
                   <button
                     key={method.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
-                      setFormData(prev => ({ ...prev, banco: method.nombre }))
-                    }}
+                    onClick={() => handleSelectBank(method)}
                     className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
                       selectedBanco?.id === method.id
                         ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
@@ -593,9 +595,46 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                 ))}
               </div>
 
+              {/* More Accounts Button */}
+              <div className="mb-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMoreAccounts(!showMoreAccounts)}
+                  className="mx-auto flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/10"
+                >
+                  <Plus className={`h-3 w-3 transition-transform ${showMoreAccounts ? 'rotate-45' : ''}`} />
+                  {showMoreAccounts ? 'Ocultar cuentas' : 'Más cuentas'}
+                </button>
+
+                {/* Secondary Payment Methods - Hidden by default */}
+                {showMoreAccounts && (
+                  <div className="mt-3 flex flex-wrap justify-center gap-3">
+                    {secondaryPaymentMethods.map((method) => (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => handleSelectBank(method)}
+                        className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
+                          selectedBanco?.id === method.id
+                            ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
+                            : 'hover:shadow-lg'
+                        }`}
+                      >
+                        <Image
+                          src={method.image}
+                          alt={method.nombre}
+                          fill
+                          className="object-contain p-1.5"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Payment Info - Compact Inline Display */}
               {selectedBanco && (() => {
-                const method = paymentMethods.find(m => m.id === selectedBanco.id)
+                const method = allPaymentMethods.find(m => m.id === selectedBanco.id)
                 if (!method) return null
                 return (
                   <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">

@@ -49,17 +49,24 @@ interface PaymentMethod {
 const PRECIO_GIRO_DOP = 100
 const PRECIO_GIRO_USD = 2
 
-const allPaymentMethods: PaymentMethod[] = [
+// Métodos principales (siempre visibles) - ordenados según requerimiento
+const mainPaymentMethods: PaymentMethod[] = [
   { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
   { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', monedas: ['DOP'] },
   { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', monedas: ['DOP'] },
+  { id: 'zelle', nombre: 'Zelle', shortName: 'Z', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
+  { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', cuenta: '$FortunaRD', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'], isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
+  { id: 'paypal', nombre: 'PayPal', shortName: 'PP', cuenta: 'paypal.me/moisessamuel1', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
+]
+
+// Métodos secundarios (ocultos en "Más cuentas")
+const secondaryPaymentMethods: PaymentMethod[] = [
   { id: 'qik', nombre: 'QIK', shortName: 'QIK', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', monedas: ['DOP'] },
   { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
   { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
-  { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', cuenta: '$FortunaRD', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'], isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
-  { id: 'zelle', nombre: 'Zelle', shortName: 'Z', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
-  { id: 'paypal', nombre: 'PayPal', shortName: 'PP', cuenta: 'paypal.me/moisessamuel1', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
 ]
+
+const allPaymentMethods: PaymentMethod[] = [...mainPaymentMethods, ...secondaryPaymentMethods]
 
 const titulares: Record<string, { nombre: string; cedula: string }> = {
   bhd: { nombre: 'Moises Samuel Escano Bravo', cedula: '402-3305853-2' },
@@ -116,12 +123,18 @@ function RuletaPageContent() {
   const [verifying, setVerifying] = useState(false)
   const [verificationError, setVerificationError] = useState('')
   const [isPendingPayment, setIsPendingPayment] = useState(false)
+  const [showMoreAccounts, setShowMoreAccounts] = useState(false)
   
   // Calculate total price
   const totalPriceDOP = spinQuantity * PRECIO_GIRO_DOP
   const totalPriceUSD = spinQuantity * PRECIO_GIRO_USD
 
-  const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
+  // Cuando se selecciona un método, actualizar la moneda automáticamente
+  const handleSelectMethod = (method: PaymentMethod) => {
+    const newMoneda = method.monedas.includes('USD') ? 'USD' : 'DOP'
+    setMoneda(newMoneda)
+    setSelectedMethod(method)
+  }
 
   const copyToClipboard = (text: string, label: string) => {
     if (navigator.clipboard && window.isSecureContext) {
@@ -818,37 +831,21 @@ function RuletaPageContent() {
               </div>
             </div>
 
-            {/* Currency selection */}
-            <div>
-              <Label className="mb-2 block text-sm font-semibold">MONEDA DE PAGO</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant={moneda === 'DOP' ? 'default' : 'outline'}
-                  onClick={() => setMoneda('DOP')}
-                  className="flex-1"
-                >
-                  DOP (Pesos)
-                </Button>
-                <Button
-                  variant={moneda === 'USD' ? 'default' : 'outline'}
-                  onClick={() => setMoneda('USD')}
-                  className="flex-1"
-                >
-                  USD (Dolares)
-                </Button>
+            {/* Price breakdown - La moneda se determina automáticamente */}
+            <div className="rounded-lg bg-primary/10 p-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {selectedMethod 
+                    ? `${spinQuantity} giro${spinQuantity > 1 ? 's' : ''} x ${selectedMethod.monedas.includes('USD') ? `US$${PRECIO_GIRO_USD}` : `RD$${PRECIO_GIRO_DOP}`}`
+                    : 'Selecciona un método de pago'
+                  }
+                </span>
               </div>
-              
-              {/* Price breakdown */}
-              <div className="mt-3 rounded-lg bg-primary/10 p-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{spinQuantity} giro{spinQuantity > 1 ? 's' : ''} x {moneda === 'DOP' ? `RD$${PRECIO_GIRO_DOP}` : `US$${PRECIO_GIRO_USD}`}</span>
-                </div>
-                <div className="mt-1 flex justify-between border-t border-primary/20 pt-1">
-                  <span className="font-semibold">Total a pagar:</span>
-                  <span className="text-xl font-bold text-primary">
-                    {moneda === 'DOP' ? `RD$${totalPriceDOP.toLocaleString()}` : `US$${totalPriceUSD}`}
-                  </span>
-                </div>
+              <div className="mt-1 flex justify-between border-t border-primary/20 pt-1">
+                <span className="font-semibold">Total a pagar:</span>
+                <span className="text-xl font-bold text-primary">
+                  {moneda === 'DOP' ? `RD$${totalPriceDOP.toLocaleString()}` : `US$${totalPriceUSD}`}
+                </span>
               </div>
             </div>
 
@@ -892,11 +889,13 @@ function RuletaPageContent() {
             {/* Payment method */}
             <div>
               <Label className="mb-3 block text-center text-base font-bold uppercase tracking-wider text-primary" style={{ textShadow: '0 0 8px rgba(218, 165, 32, 0.4)' }}>MÉTODO DE PAGO</Label>
+              
+              {/* Main Payment Methods - Always Visible */}
               <div className="flex flex-wrap justify-center gap-3">
-                {paymentMethods.map((method) => (
+                {mainPaymentMethods.map((method) => (
                   <button
                     key={method.id}
-                    onClick={() => setSelectedMethod(method)}
+                    onClick={() => handleSelectMethod(method)}
                     className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
                       selectedMethod?.id === method.id
                         ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
@@ -911,6 +910,42 @@ function RuletaPageContent() {
                     />
                   </button>
                 ))}
+              </div>
+
+              {/* More Accounts Button */}
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowMoreAccounts(!showMoreAccounts)}
+                  className="mx-auto flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary transition-all hover:bg-primary/10"
+                >
+                  <Plus className={`h-3 w-3 transition-transform ${showMoreAccounts ? 'rotate-45' : ''}`} />
+                  {showMoreAccounts ? 'Ocultar cuentas' : 'Más cuentas'}
+                </button>
+
+                {/* Secondary Payment Methods - Hidden by default */}
+                {showMoreAccounts && (
+                  <div className="mt-3 flex flex-wrap justify-center gap-3">
+                    {secondaryPaymentMethods.map((method) => (
+                      <button
+                        key={method.id}
+                        onClick={() => handleSelectMethod(method)}
+                        className={`relative h-14 w-14 overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:scale-105 ${
+                          selectedMethod?.id === method.id
+                            ? 'ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg shadow-primary/40 scale-105'
+                            : 'hover:shadow-lg'
+                        }`}
+                      >
+                        <Image
+                          src={method.image}
+                          alt={method.nombre}
+                          fill
+                          className="object-contain p-1.5"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {selectedMethod && (

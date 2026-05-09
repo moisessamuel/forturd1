@@ -67,19 +67,34 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
   const [expandedBanco, setExpandedBanco] = useState<string | null>(null)
   const [showCashPanel, setShowCashPanel] = useState(false)
 
-  const allPaymentMethods = [
-    { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', monedas: ['DOP'] },
-    { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', monedas: ['DOP'] },
-    { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', monedas: ['DOP'] },
-    { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', monedas: ['DOP'] },
-    { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', monedas: ['DOP'] },
-    { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', monedas: ['DOP'] },
-    { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', monedas: ['USD'], isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
-    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', monedas: ['USD'] },
-    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', monedas: ['USD'] },
+  // Métodos principales (siempre visibles) - ordenados según requerimiento
+  const mainPaymentMethods = [
+    { id: 'bhd', nombre: 'Banco BHD Leon', shortName: 'BHD', color: 'text-blue-600', bgColor: 'bg-blue-600', cuenta: '39024000017', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/bhd.jpeg', moneda: 'DOP' as const },
+    { id: 'banreservas', nombre: 'Banreservas', shortName: 'BR', color: 'text-green-600', bgColor: 'bg-green-600', cuenta: '9606689516', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/banreservas.jpeg', moneda: 'DOP' as const },
+    { id: 'popular', nombre: 'Banco Popular', shortName: 'BP', color: 'text-orange-600', bgColor: 'bg-orange-600', cuenta: '854866779', tipoCuenta: 'Cuenta Corriente', image: '/images/banks/popular.jpeg', moneda: 'DOP' as const },
+    { id: 'zelle', nombre: 'Zelle', shortName: 'Z', color: 'text-indigo-600', bgColor: 'bg-indigo-600', cuenta: '+1 (504) 777-1271', tipoCuenta: 'Zelle', image: '/images/banks/zelle.jpeg', moneda: 'USD' as const },
+    { id: 'cashapp', nombre: 'Cash App', shortName: 'CA', color: 'text-green-500', bgColor: 'bg-green-500', cuenta: '$FortunaRD', tipoCuenta: '', image: '/images/banks/cashapp.jpeg', moneda: 'USD' as const, isCashApp: true, cashAppLink: 'https://cash.app/$FortunaRD' },
+    { id: 'paypal', nombre: 'PayPal', shortName: 'PP', color: 'text-blue-500', bgColor: 'bg-blue-500', cuenta: '', tipoCuenta: 'Pago en linea', isPaypal: true, paypalLink: 'https://www.paypal.me/moisessamuel1', image: '/images/banks/paypal.jpeg', moneda: 'USD' as const },
   ]
 
-  const paymentMethods = allPaymentMethods.filter(m => m.monedas.includes(moneda))
+  // Métodos secundarios (ocultos en "Más cuentas")
+  const secondaryPaymentMethods = [
+    { id: 'qik', nombre: 'QIK', shortName: 'QIK', color: 'text-purple-600', bgColor: 'bg-purple-600', cuenta: '1011274745', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/qik.jpeg', moneda: 'DOP' as const },
+    { id: 'santacruz', nombre: 'Santa Cruz', shortName: 'SC', color: 'text-red-600', bgColor: 'bg-red-600', cuenta: '11522010002222', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/santacruz.jpeg', moneda: 'DOP' as const },
+    { id: 'apopular', nombre: 'Asociacion Popular', shortName: 'AP', color: 'text-yellow-600', bgColor: 'bg-yellow-600', cuenta: '1036509737', tipoCuenta: 'Cuenta de Ahorro', image: '/images/banks/apopular.jpeg', moneda: 'DOP' as const },
+  ]
+
+  const allPaymentMethods = [...mainPaymentMethods, ...secondaryPaymentMethods]
+  const [showMoreAccounts, setShowMoreAccounts] = useState(false)
+
+  // Cuando se selecciona un banco, actualizar la moneda automáticamente
+  const handleSelectBank = (method: typeof mainPaymentMethods[0]) => {
+    const newMoneda = method.moneda
+    setMoneda(newMoneda)
+    setExpandedBanco(expandedBanco === method.id ? null : method.id)
+    setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
+    setFormData(prev => ({ ...prev, banco: method.nombre }))
+  }
 
   const titularEduardo = {
     nombre: 'Eduardo Enrique Rodriguez Montas',
@@ -398,29 +413,12 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
         <h2 className="mb-2 text-center text-2xl font-bold text-primary">MODOS DE PAGO</h2>
         <p className="mb-4 text-center text-muted-foreground">Elige una opción.</p>
 
-        {/* Currency Selector */}
+        {/* Price Display - La moneda se determina automáticamente */}
         <div className="mb-6">
-          <p className="mb-2 text-center text-sm font-medium text-muted-foreground">MONEDA DE PAGO</p>
-          <div className="flex justify-center gap-2">
-            <Button
-              variant={moneda === 'DOP' ? 'default' : 'outline'}
-              onClick={() => setMoneda('DOP')}
-              className={moneda === 'DOP' ? 'bg-primary text-primary-foreground' : ''}
-            >
-              DOP (Pesos)
-            </Button>
-            <Button
-              variant={moneda === 'USD' ? 'default' : 'outline'}
-              onClick={() => setMoneda('USD')}
-              className={moneda === 'USD' ? 'bg-primary text-primary-foreground' : ''}
-            >
-              USD (Dólares)
-            </Button>
-          </div>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            {moneda === 'DOP' 
-              ? `RD$ ${new Intl.NumberFormat('es-DO').format(precioBoleto)} por boleto`
-              : `US$ ${precioBoletoUsd} por boleto`
+          <p className="text-center text-sm text-muted-foreground">
+            {selectedBanco 
+              ? (moneda === 'USD' ? `Pago en USD - US$ ${precioBoletoUsd} por boleto` : `Pago en RD$ - RD$ ${new Intl.NumberFormat('es-DO').format(precioBoleto)} por boleto`)
+              : 'Selecciona un método de pago'
             }
           </p>
         </div>
@@ -466,8 +464,9 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           </Card>
         )}
 
+        {/* Main Payment Methods - Always Visible */}
         <div className="mb-6 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          {paymentMethods.map((method) => (
+          {mainPaymentMethods.map((method) => (
             <div key={method.id}>
               <p className="mb-2 text-center text-sm font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
                 {method.nombre}
@@ -478,11 +477,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                     ? 'border-primary shadow-lg shadow-primary/20'
                     : 'border-border/50 hover:border-primary/50'
                 }`}
-                onClick={() => {
-                  setExpandedBanco(expandedBanco === method.id ? null : method.id)
-                  setSelectedBanco({ id: method.id, nombre: method.nombre, cuenta: method.cuenta || '' } as Banco)
-                  setFormData(prev => ({ ...prev, banco: method.nombre }))
-                }}
+                onClick={() => handleSelectBank(method)}
               >
                 <CardContent className="flex items-center justify-center bg-white p-3">
                   <div className="relative h-24 w-full overflow-hidden">
@@ -623,6 +618,123 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
           ))}
         </div>
 
+        {/* More Accounts Button */}
+        <div className="mb-6">
+          <button
+            type="button"
+            onClick={() => setShowMoreAccounts(!showMoreAccounts)}
+            className="mx-auto flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary/10"
+          >
+            <span className={`transition-transform ${showMoreAccounts ? 'rotate-45' : ''}`}>+</span>
+            {showMoreAccounts ? 'Ocultar cuentas' : 'Más cuentas'}
+          </button>
+
+          {/* Secondary Payment Methods - Hidden by default */}
+          {showMoreAccounts && (
+            <div className="mt-4 grid gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+              {secondaryPaymentMethods.map((method) => (
+                <div key={method.id}>
+                  <p className="mb-2 text-center text-sm font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
+                    {method.nombre}
+                  </p>
+                  <Card
+                    className={`cursor-pointer border-2 transition-all overflow-hidden rounded-xl ${
+                      expandedBanco === method.id
+                        ? 'border-primary shadow-lg shadow-primary/20'
+                        : 'border-border/50 hover:border-primary/50'
+                    }`}
+                    onClick={() => handleSelectBank(method)}
+                  >
+                    <CardContent className="flex items-center justify-center bg-white p-3">
+                      <div className="relative h-24 w-full overflow-hidden">
+                        <Image
+                          src={method.image}
+                          alt={method.nombre}
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Payment Info Modal for secondary methods */}
+                  {expandedBanco === method.id && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setExpandedBanco(null)}>
+                      <Card className="relative w-full max-w-sm border-2 border-primary/50 bg-card shadow-2xl shadow-primary/20" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          onClick={() => setExpandedBanco(null)}
+                          className="absolute right-3 top-3 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                        <CardContent className="px-6 pb-6 pt-8">
+                          <h3 className="mb-5 text-center text-lg font-extrabold uppercase tracking-wider" style={{ color: '#DAA520', textShadow: '0 0 10px rgba(218, 165, 32, 0.6)' }}>
+                            {method.nombre}
+                          </h3>
+                          <div className="space-y-4 text-base">
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Titular</span>
+                              <span className="text-center font-semibold text-foreground">{titular.nombre}</span>
+                            </div>
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Cedula</span>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-foreground">{titular.cedula}</span>
+                                <button
+                                  onClick={() => copyToClipboard(titular.cedula, 'Cedula')}
+                                  className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                            {method.cuenta && (
+                              <>
+                                <div className="h-px w-full bg-border/50" />
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="text-sm text-muted-foreground">Tipo de Cuenta</span>
+                                  <span className="font-semibold text-foreground">{method.tipoCuenta}</span>
+                                </div>
+                                <div className="h-px w-full bg-border/50" />
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="text-sm text-muted-foreground">Número de Cuenta</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg font-bold text-primary">{method.cuenta}</span>
+                                    <button
+                                      onClick={() => copyToClipboard(method.cuenta || '', 'Cuenta')}
+                                      className="rounded-md border border-primary/30 p-1.5 text-primary transition-colors hover:bg-primary/10"
+                                    >
+                                      <Copy className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                            <div className="h-px w-full bg-border/50" />
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="text-sm text-muted-foreground">Monto a Transferir</span>
+                              <span className="text-xl font-bold text-primary">{formatCurrency(total)}</span>
+                            </div>
+                            <button
+                              onClick={() => setStep(3)}
+                              disabled={!selectedBanco}
+                              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-400 py-3.5 text-base font-bold text-black uppercase tracking-wide transition-colors hover:bg-yellow-500 disabled:opacity-50"
+                            >
+                              <Upload className="h-5 w-5" />
+                              Ya transferi, subir comprobante
+                            </button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <Card className="mb-6 border-green-500/50 bg-green-500/10">
           <CardContent className="flex items-start gap-3 p-4">
             <Check className="mt-0.5 h-5 w-5 text-green-500" />
@@ -677,7 +789,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
                 <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
                   <Image
-                    src={paymentMethods.find(m => m.nombre === selectedBanco?.nombre)?.image || '/images/banks/bhd.jpeg'}
+                    src={allPaymentMethods.find(m => m.nombre === selectedBanco?.nombre)?.image || '/images/banks/bhd.jpeg'}
                     alt={selectedBanco?.nombre || 'Banco'}
                     width={40}
                     height={40}
