@@ -1677,95 +1677,76 @@ export default function AdminDashboard() {
           </CardHeader>
           {sectionsOpen.compras && (
             <CardContent>
-              {/* Stats cards */}
+              {/* Stats cards - NEW VISUAL CARDS FOR REFERIDO_PLUS */}
               <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                {/* Ventas (DOP) */}
                 <Card className="border-border/50 bg-secondary/50">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'BOLETOS APROBADOS' : 'COMPRAS APROBADAS'}</p>
-                    <p className="text-2xl font-bold text-green-500">
-                      {userRole === 'boleto_fisico' 
-                        ? flattenedTickets.filter(t => t.estado === 'aprobado').length
-                        : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').length}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {userRole === 'boleto_fisico'
-                        ? formatCurrency(flattenedTickets.filter(t => t.estado === 'aprobado' && (t.moneda || 'DOP') === 'DOP').reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
-                        : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
-                    </p>
-                    {(userRole === 'boleto_fisico' 
-                      ? flattenedTickets.filter(t => t.estado === 'aprobado' && t.moneda === 'USD').length > 0
-                      : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length > 0) && (
-                      <p className="text-xs text-green-400">
-                        {userRole === 'boleto_fisico'
-                          ? formatCurrency(flattenedTickets.filter(t => t.estado === 'aprobado' && t.moneda === 'USD').reduce((s, t) => s + t.monto_unitario, 0), 'USD')
-                          : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'BOLETOS PENDIENTES' : 'CON REFERIDO'}</p>
-                    <p className="text-2xl font-bold text-yellow-500">
-                      {userRole === 'boleto_fisico'
-                        ? flattenedTickets.filter(t => t.estado === 'pendiente').length
-                        : filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo).length}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {userRole === 'boleto_fisico'
-                        ? formatCurrency(flattenedTickets.filter(t => t.estado === 'pendiente' && (t.moneda || 'DOP') === 'DOP').reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
-                        : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
-                    </p>
-                    {(userRole === 'boleto_fisico'
-                      ? flattenedTickets.filter(t => t.estado === 'pendiente' && t.moneda === 'USD').length > 0
-                      : filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').length > 0) && (
-                      <p className="text-xs text-yellow-400">
-                        {userRole === 'boleto_fisico'
-                          ? formatCurrency(flattenedTickets.filter(t => t.estado === 'pendiente' && t.moneda === 'USD').reduce((s, t) => s + t.monto_unitario, 0), 'USD')
-                          : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'BOLETOS RECHAZADOS' : 'COMPRA DIRECTA'}</p>
-                    <p className="text-2xl font-bold text-red-500">
-                      {userRole === 'boleto_fisico'
-                        ? flattenedTickets.filter(t => t.estado === 'rechazado').length
-                        : filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo).length}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {userRole === 'boleto_fisico'
-                        ? formatCurrency(flattenedTickets.filter(t => t.estado === 'rechazado' && (t.moneda || 'DOP') === 'DOP').reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
-                        : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'DOP')}
-                    </p>
-                    {(userRole === 'boleto_fisico'
-                      ? flattenedTickets.filter(t => t.estado === 'rechazado' && t.moneda === 'USD').length > 0
-                      : filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').length > 0) && (
-                      <p className="text-xs text-red-400">
-                        {userRole === 'boleto_fisico'
-                          ? formatCurrency(flattenedTickets.filter(t => t.estado === 'rechazado' && t.moneda === 'USD').reduce((s, t) => s + t.monto_unitario, 0), 'USD')
-                          : formatCurrency(filteredCompras.filter((c: PurchaseGroup) => !c.referido_codigo && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0), 'USD')}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">{userRole === 'boleto_fisico' ? 'TOTAL BOLETOS' : 'BOLETOS VENDIDOS'}</p>
+                    <p className="text-xs text-muted-foreground">VENTAS (DOP)</p>
                     <p className="text-2xl font-bold text-primary">
-                      {userRole === 'boleto_fisico'
-                        ? flattenedTickets.length
-                        : filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado').reduce((s: number, c: PurchaseGroup) => s + c.total_tickets, 0)}
+                      {formatCurrency(
+                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0),
+                        'DOP'
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {userRole === 'boleto_fisico'
-                        ? formatCurrency(flattenedTickets.reduce((s, t) => s + t.monto_unitario, 0), 'DOP')
-                        : 'boletos aprobados'}
+                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').length} compras
                     </p>
                   </CardContent>
                 </Card>
+
+                {/* Comisión DOP (15%) */}
+                <Card className="border-border/50 bg-secondary/50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground">COMISIÓN DOP (15%)</p>
+                    <p className="text-2xl font-bold text-green-500">
+                      {formatCurrency(
+                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0) * 0.15,
+                        'DOP'
+                      )}
+                    </p>
+                    <p className="text-xs text-green-400">
+                      15% de ventas DOP
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Ventas (USD) */}
+                <Card className="border-border/50 bg-secondary/50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground">VENTAS (USD)</p>
+                    <p className="text-2xl font-bold text-blue-500">
+                      {formatCurrency(
+                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0),
+                        'USD'
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length} compras
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Comisión USD (15%) */}
+                <Card className="border-border/50 bg-secondary/50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-muted-foreground">COMISIÓN USD (15%)</p>
+                    <p className="text-2xl font-bold text-cyan-500">
+                      {formatCurrency(
+                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0) * 0.15,
+                        'USD'
+                      )}
+                    </p>
+                    <p className="text-xs text-cyan-400">
+                      15% de ventas USD
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* HIDDEN: Original stats cards (kept for internal calculations, not displayed) */}
+              <div className="hidden" aria-hidden="true">
+                {/* Original stats cards kept for internal calculations only - visually hidden */}
               </div>
 
               {/* Filters */}
