@@ -176,6 +176,26 @@ export default function AdminDashboard() {
   }, [estadoFilter, searchTerm])
 
   useEffect(() => {
+    // First, try sessionStorage (used by referido_plus and other role-based logins)
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('admin_session')
+      if (stored) {
+        try {
+          const session = JSON.parse(stored)
+          // Any valid session in sessionStorage can access the dashboard
+          if (session.username && session.role) {
+            setUsername(session.username)
+            setUserRole(session.role)
+            fetchData()
+            return
+          }
+        } catch {
+          // Invalid stored session, fall through to cookie check
+        }
+      }
+    }
+
+    // Fallback: verify via cookie session
     fetch('/api/admin/session')
       .then(async (res) => {
         if (!res.ok) {
@@ -183,6 +203,10 @@ export default function AdminDashboard() {
           return
         }
         const data = await res.json()
+        if (!data.authenticated || !data.user) {
+          router.push('/admin')
+          return
+        }
         setUsername(data.user.username)
         setUserRole(data.user.role || 'admin')
         fetchData()
