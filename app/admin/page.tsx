@@ -37,6 +37,9 @@ export default function AdminLoginPage() {
       case 'ruleta':
         router.push('/admin/ruleta')
         break
+      case 'referido_plus':
+        router.push('/admin/dashboard')
+        break
       default:
         // For admin role, show panel selection
         break
@@ -56,6 +59,11 @@ export default function AdminLoginPage() {
     if (adminSession) {
       try {
         const session = JSON.parse(adminSession)
+        // referido_plus goes directly to their dashboard, not panel selection
+        if (session.role === 'referido_plus') {
+          router.push('/admin/dashboard')
+          return
+        }
         setCurrentUser({ username: session.username, role: session.role })
         setViewState('panel-selection')
         return
@@ -129,6 +137,10 @@ export default function AdminLoginPage() {
         setCurrentUser({ username: data.user.username, role: data.user.role })
         setViewState('panel-selection')
         toast.success('Bienvenido ' + data.user.username)
+      } else if (data.user.role === 'referido_plus') {
+        sessionStorage.setItem('admin_session', JSON.stringify(sessionData))
+        toast.success('Bienvenido ' + data.user.username)
+        router.push('/admin/dashboard')
       } else if (data.user.role === 'sorteo_bmw-x6') {
         sessionStorage.setItem('bmwx6_admin_session', JSON.stringify(sessionData))
         toast.success('Inicio de sesión exitoso')
@@ -206,53 +218,58 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="grid gap-4">
-            {/* BMW X6 Panel */}
-            <Card 
-              className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
-              onClick={() => handlePanelSelect('bmw-x6')}
-            >
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Car className="h-8 w-8 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold">BMW X6</h3>
-                  <p className="text-sm text-muted-foreground">Panel de administración del sorteo BMW X6</p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* These panels are not accessible to referido_plus */}
+            {currentUser?.role !== 'referido_plus' && (
+              <>
+                {/* BMW X6 Panel */}
+                <Card 
+                  className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
+                  onClick={() => handlePanelSelect('bmw-x6')}
+                >
+                  <CardContent className="flex items-center gap-4 p-6">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Car className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold">BMW X6</h3>
+                      <p className="text-sm text-muted-foreground">Panel de administración del sorteo BMW X6</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* BMW X7 Panel */}
-            <Card 
-              className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
-              onClick={() => handlePanelSelect('bmw-x7')}
-            >
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Car className="h-8 w-8 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold">BMW X7</h3>
-                  <p className="text-sm text-muted-foreground">Panel de administración del sorteo BMW X7</p>
-                </div>
-              </CardContent>
-            </Card>
+                {/* BMW X7 Panel */}
+                <Card 
+                  className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
+                  onClick={() => handlePanelSelect('bmw-x7')}
+                >
+                  <CardContent className="flex items-center gap-4 p-6">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Car className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold">BMW X7</h3>
+                      <p className="text-sm text-muted-foreground">Panel de administración del sorteo BMW X7</p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {/* Ruleta Panel */}
-            <Card 
-              className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
-              onClick={() => handlePanelSelect('ruleta')}
-            >
-              <CardContent className="flex items-center gap-4 p-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                  <Disc3 className="h-8 w-8 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold">Ruleta</h3>
-                  <p className="text-sm text-muted-foreground">Panel de administración de la ruleta de premios</p>
-                </div>
-              </CardContent>
-            </Card>
+                {/* Ruleta Panel */}
+                <Card 
+                  className="cursor-pointer border-border/50 bg-card transition-all hover:border-primary hover:shadow-lg hover:shadow-primary/20"
+                  onClick={() => handlePanelSelect('ruleta')}
+                >
+                  <CardContent className="flex items-center gap-4 p-6">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                      <Disc3 className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold">Ruleta</h3>
+                      <p className="text-sm text-muted-foreground">Panel de administración de la ruleta de premios</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
           </div>
 
           <div className="mt-6 text-center">

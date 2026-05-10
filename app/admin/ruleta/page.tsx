@@ -116,13 +116,27 @@ export default function RuletaAdminPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     
-    const session = sessionStorage.getItem('ruleta_admin_session')
-    if (!session) {
+    const ruletaSession = sessionStorage.getItem('ruleta_admin_session')
+    const adminSession = sessionStorage.getItem('admin_session')
+
+    if (!ruletaSession && !adminSession) {
       router.push('/admin')
-    } else {
-      setIsAuthenticated(true)
-      setIsLoading(false)
+      return
     }
+
+    // referido_plus users are not allowed in this panel — redirect to their own dashboard
+    try {
+      const session = adminSession ? JSON.parse(adminSession) : null
+      if (session?.role === 'referido_plus') {
+        router.push('/admin/dashboard')
+        return
+      }
+    } catch {
+      // Continue
+    }
+
+    setIsAuthenticated(true)
+    setIsLoading(false)
   }, [router])
 
   const fetchData = useCallback(async () => {
