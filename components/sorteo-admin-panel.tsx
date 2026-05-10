@@ -250,14 +250,18 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
   const formatDateTime = (dateStr: string) => {
     if (!dateStr) return '—'
     const date = new Date(dateStr)
-    return new Intl.DateTimeFormat('es-DO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    }).format(date)
+    // Formato compacto: 07/05 14:30
+    const day = date.getDate().toString().padStart(2, '0')
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const hours = date.getHours().toString().padStart(2, '0')
+    const mins = date.getMinutes().toString().padStart(2, '0')
+    return `${day}/${month} ${hours}:${mins}`
+  }
+
+  // Truncar texto largo con tooltip
+  const truncateText = (text: string, maxLen: number = 20) => {
+    if (!text || text.length <= maxLen) return text
+    return text.slice(0, maxLen) + '...'
   }
 
   const formatCurrency = (amount: number, currency: string = 'DOP') => {
@@ -270,11 +274,11 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
   const getEstadoBadge = (estado: string) => {
     switch (estado) {
       case 'aprobado':
-        return <Badge className="bg-green-600">Aprobado</Badge>
+        return <Badge className="bg-green-600 px-1.5 py-0 text-[10px]">OK</Badge>
       case 'rechazado':
-        return <Badge className="bg-red-600">Rechazado</Badge>
+        return <Badge className="bg-red-600 px-1.5 py-0 text-[10px]">No</Badge>
       default:
-        return <Badge className="bg-yellow-600">Pendiente</Badge>
+        return <Badge className="bg-yellow-600 px-1.5 py-0 text-[10px]">Pend.</Badge>
     }
   }
 
@@ -445,40 +449,40 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                 </select>
               </div>
 
-              {/* Table */}
+              {/* Table - Compacta */}
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="text-xs">
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Número de Boleto</TableHead>
-                      <TableHead>Comprador</TableHead>
-                      <TableHead>Teléfono</TableHead>
-                      <TableHead>Correo</TableHead>
-                      <TableHead>Referido</TableHead>
-                      <TableHead>Boletos</TableHead>
-                      <TableHead>Monto</TableHead>
-                      <TableHead>Banco</TableHead>
-                      <TableHead>Hora de Compra</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Comprobante</TableHead>
-                      <TableHead>Acciones</TableHead>
+                    <TableRow className="text-[11px]">
+                      <TableHead className="px-2 py-2">Boleto</TableHead>
+                      <TableHead className="px-2 py-2">Comprador</TableHead>
+                      <TableHead className="px-2 py-2">Tel.</TableHead>
+                      <TableHead className="px-2 py-2">Correo</TableHead>
+                      <TableHead className="px-2 py-2">Ref.</TableHead>
+                      <TableHead className="px-2 py-2 text-center">Qty</TableHead>
+                      <TableHead className="px-2 py-2">Monto</TableHead>
+                      <TableHead className="px-2 py-2">Banco</TableHead>
+                      <TableHead className="px-2 py-2">Fecha</TableHead>
+                      <TableHead className="px-2 py-2">Estado</TableHead>
+                      <TableHead className="px-2 py-2 text-center">Comp.</TableHead>
+                      <TableHead className="px-2 py-2">Acc.</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {compras.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={12} className="text-center text-muted-foreground">
+                        <TableCell colSpan={12} className="py-4 text-center text-muted-foreground">
                           No hay compras para este sorteo
                         </TableCell>
                       </TableRow>
                     ) : (
                       compras.map((compra) => (
-                        <TableRow key={compra.id}>
-                          <TableCell>
+                        <TableRow key={compra.id} className="text-[11px]">
+                          <TableCell className="px-2 py-1.5">
                             {compra.numeros_boletos && compra.numeros_boletos.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
+                              <div className="flex flex-wrap gap-0.5">
                                 {compra.numeros_boletos.map((num: string) => (
-                                  <Badge key={num} variant="outline" className="text-xs font-mono text-primary border-primary/50">
+                                  <Badge key={num} variant="outline" className="px-1 py-0 text-[10px] font-mono text-primary border-primary/50">
                                     #{num}
                                   </Badge>
                                 ))}
@@ -487,34 +491,39 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                               <span className="text-muted-foreground">-</span>
                             )}
                           </TableCell>
-                          <TableCell className="font-medium">
-                            {compra.nombre || compra.player?.nombre || 'N/A'}
+                          <TableCell className="px-2 py-1.5 font-medium max-w-[120px]" title={compra.nombre || compra.player?.nombre || ''}>
+                            {truncateText(compra.nombre || compra.player?.nombre || 'N/A', 18)}
                           </TableCell>
-                          <TableCell>{compra.telefono || compra.player?.phone_number || 'N/A'}</TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {compra.email || compra.player?.email || 'Sin correo'}
+                          <TableCell className="px-2 py-1.5 whitespace-nowrap">{compra.telefono || compra.player?.phone_number || 'N/A'}</TableCell>
+                          <TableCell className="px-2 py-1.5 text-muted-foreground max-w-[100px]" title={compra.email || compra.player?.email || ''}>
+                            {compra.email || compra.player?.email 
+                              ? truncateText(compra.email || compra.player?.email || '', 15)
+                              : <span className="italic">Sin correo</span>
+                            }
                           </TableCell>
-                          <TableCell className="text-xs">
+                          <TableCell className="px-2 py-1.5">
                             {compra.referido_codigo
-                              ? <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-primary">{compra.referido_codigo}</span>
+                              ? <span className="rounded bg-primary/10 px-1 py-0 font-mono text-[10px] text-primary">{compra.referido_codigo}</span>
                               : <span className="text-muted-foreground">—</span>
                             }
                           </TableCell>
-                          <TableCell>{compra.cantidad_boletos || compra.total_tickets || 1}</TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 py-1.5 text-center">{compra.cantidad_boletos || compra.total_tickets || 1}</TableCell>
+                          <TableCell className="px-2 py-1.5 whitespace-nowrap font-medium">
                             {formatCurrency(compra.monto, compra.moneda)}
                           </TableCell>
-                          <TableCell>{compra.banco || 'N/A'}</TableCell>
-                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                          <TableCell className="px-2 py-1.5 max-w-[80px]" title={compra.banco || ''}>
+                            {truncateText(compra.banco || 'N/A', 12)}
+                          </TableCell>
+                          <TableCell className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
                             {formatDateTime(compra.created_at)}
                           </TableCell>
-                          <TableCell>{getEstadoBadge(compra.estado)}</TableCell>
-                          <TableCell>
+                          <TableCell className="px-2 py-1.5">{getEstadoBadge(compra.estado)}</TableCell>
+                          <TableCell className="px-2 py-1.5 text-center">
                             {compra.comprobante_url && (
                               <Dialog>
                                 <DialogTrigger asChild>
-                                  <Button variant="ghost" size="sm">
-                                    <Eye className="h-4 w-4" />
+                                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <Eye className="h-3.5 w-3.5" />
                                   </Button>
                                 </DialogTrigger>
                                 <DialogContent className="max-w-2xl">
@@ -549,49 +558,49 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                               </Dialog>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
+                          <TableCell className="px-2 py-1.5">
+                            <div className="flex gap-0.5">
                               {compra.estado === 'pendiente' && (
                                 <>
                                   <Button
-                                    size="sm"
+                                    size="icon"
                                     variant="ghost"
-                                    className="text-green-500 hover:text-green-600"
+                                    className="h-6 w-6 text-green-500 hover:text-green-600"
                                     onClick={() => handleApprove(compra.id)}
                                     title="Aprobar"
                                   >
-                                    <Check className="h-4 w-4" />
+                                    <Check className="h-3.5 w-3.5" />
                                   </Button>
                                   <Button
-                                    size="sm"
+                                    size="icon"
                                     variant="ghost"
-                                    className="text-red-500 hover:text-red-600"
+                                    className="h-6 w-6 text-red-500 hover:text-red-600"
                                     onClick={() => handleReject(compra.id)}
                                     title="Rechazar"
                                   >
-                                    <X className="h-4 w-4" />
+                                    <X className="h-3.5 w-3.5" />
                                   </Button>
                                 </>
                               )}
                               {(compra.estado === 'rechazado' || compra.estado === 'aprobado') && (
                                 <Button
-                                  size="sm"
+                                  size="icon"
                                   variant="ghost"
-                                  className="text-yellow-500 hover:text-yellow-600"
+                                  className="h-6 w-6 text-yellow-500 hover:text-yellow-600"
                                   onClick={() => handleReset(compra.id)}
                                   title="Restablecer a pendiente"
                                 >
-                                  <RotateCcw className="h-4 w-4" />
+                                  <RotateCcw className="h-3.5 w-3.5" />
                                 </Button>
                               )}
                               <Button
-                                size="sm"
+                                size="icon"
                                 variant="ghost"
-                                className="text-red-400 hover:text-red-500"
+                                className="h-6 w-6 text-red-400 hover:text-red-500"
                                 onClick={() => handleDelete(compra.id)}
                                 title="Eliminar compra"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                             </div>
                           </TableCell>
