@@ -43,6 +43,32 @@ export async function getSession(): Promise<AdminSession | null> {
   return verifySession(token)
 }
 
+// Alternative: get session from request headers (for clients using sessionStorage)
+export async function getSessionFromRequest(request: Request): Promise<AdminSession | null> {
+  // First try cookie-based session
+  const cookieSession = await getSession()
+  if (cookieSession) return cookieSession
+
+  // Fallback: check Authorization header with session JSON
+  const authHeader = request.headers.get('X-Admin-Session')
+  if (authHeader) {
+    try {
+      const session = JSON.parse(authHeader)
+      if (session.username && session.role) {
+        return {
+          userId: session.userId || 'session-storage',
+          username: session.username,
+          role: session.role,
+        }
+      }
+    } catch {
+      // Invalid header
+    }
+  }
+
+  return null
+}
+
 export async function setSessionCookie(token: string) {
   const cookieStore = await cookies()
   cookieStore.set('admin_session', token, {

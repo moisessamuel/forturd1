@@ -18,9 +18,21 @@ export default function AdminBMWX6Page() {
     
     if (!adminSession && !sorteoSession) {
       router.push('/admin')
-    } else {
-      setIsAuthenticated(true)
+      return
     }
+
+    // referido_plus users are not allowed in this panel — redirect to their own dashboard
+    try {
+      const session = adminSession ? JSON.parse(adminSession) : null
+      if (session?.role === 'referido_plus') {
+        router.push('/admin/dashboard')
+        return
+      }
+    } catch {
+      // Continue
+    }
+
+    setIsAuthenticated(true)
     setIsLoading(false)
   }, [router])
 
