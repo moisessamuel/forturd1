@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         banco,
         total_tickets,
         comprobante_url,
+        referido_codigo,
         created_at,
         player:players(id, nombre, phone_number, email)
       `)
@@ -87,6 +88,7 @@ export async function GET(request: NextRequest) {
       moneda: compra.moneda || 'DOP',
       banco: compra.banco || 'N/A',
       comprobante_url: compra.comprobante_url,
+      referido_codigo: compra.referido_codigo || null,
       estado: compra.estado,
       sorteo_slug: compra.sorteo_slug,
       created_at: compra.created_at,

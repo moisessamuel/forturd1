@@ -247,6 +247,19 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
     }
   }
 
+  const formatDateTime = (dateStr: string) => {
+    if (!dateStr) return '—'
+    const date = new Date(dateStr)
+    return new Intl.DateTimeFormat('es-DO', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date)
+  }
+
   const formatCurrency = (amount: number, currency: string = 'DOP') => {
     if (currency === 'USD') {
       return `US$ ${new Intl.NumberFormat('en-US').format(amount)}`
@@ -440,9 +453,12 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                       <TableHead>Número de Boleto</TableHead>
                       <TableHead>Comprador</TableHead>
                       <TableHead>Teléfono</TableHead>
+                      <TableHead>Correo</TableHead>
+                      <TableHead>Referido</TableHead>
                       <TableHead>Boletos</TableHead>
                       <TableHead>Monto</TableHead>
                       <TableHead>Banco</TableHead>
+                      <TableHead>Hora de Compra</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Comprobante</TableHead>
                       <TableHead>Acciones</TableHead>
@@ -451,7 +467,7 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                   <TableBody>
                     {compras.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center text-muted-foreground">
+                        <TableCell colSpan={12} className="text-center text-muted-foreground">
                           No hay compras para este sorteo
                         </TableCell>
                       </TableRow>
@@ -475,11 +491,23 @@ export function SorteoAdminPanel({ sorteoSlug }: SorteoAdminPanelProps) {
                             {compra.nombre || compra.player?.nombre || 'N/A'}
                           </TableCell>
                           <TableCell>{compra.telefono || compra.player?.phone_number || 'N/A'}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {compra.email || compra.player?.email || 'Sin correo'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {compra.referido_codigo
+                              ? <span className="rounded bg-primary/10 px-1.5 py-0.5 font-mono text-primary">{compra.referido_codigo}</span>
+                              : <span className="text-muted-foreground">—</span>
+                            }
+                          </TableCell>
                           <TableCell>{compra.cantidad_boletos || compra.total_tickets || 1}</TableCell>
                           <TableCell>
                             {formatCurrency(compra.monto, compra.moneda)}
                           </TableCell>
                           <TableCell>{compra.banco || 'N/A'}</TableCell>
+                          <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                            {formatDateTime(compra.created_at)}
+                          </TableCell>
                           <TableCell>{getEstadoBadge(compra.estado)}</TableCell>
                           <TableCell>
                             {compra.comprobante_url && (
