@@ -1679,69 +1679,74 @@ export default function AdminDashboard() {
             <CardContent>
               {/* Stats cards - NEW VISUAL CARDS FOR REFERIDO_PLUS */}
               <div className="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                {/* Ventas (DOP) */}
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">VENTAS (DOP)</p>
-                    <p className="text-2xl font-bold text-primary">
-                      {formatCurrency(
-                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0),
-                        'DOP'
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').length} compras
-                    </p>
-                  </CardContent>
-                </Card>
+                {(() => {
+                  // Get referidos for this user (same filter as the table below)
+                  const userReferidos = userRole === 'referido_plus' 
+                    ? referidos.filter((r: Referido & { created_by?: string }) => r.created_by === 'referido_plus_gamundi')
+                    : referidos
 
-                {/* Comisión DOP (15%) */}
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">COMISIÓN DOP (15%)</p>
-                    <p className="text-2xl font-bold text-green-500">
-                      {formatCurrency(
-                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && (c.moneda || 'DOP') === 'DOP').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0) * 0.15,
-                        'DOP'
-                      )}
-                    </p>
-                    <p className="text-xs text-green-400">
-                      15% de ventas DOP
-                    </p>
-                  </CardContent>
-                </Card>
+                  // Calculate totals from referidos data
+                  const totalVentasDOP = userReferidos.reduce((sum: number, r: Referido & { ventas_dop?: number }) => sum + (r.ventas_dop || 0), 0)
+                  const totalComisionDOP = userReferidos.reduce((sum: number, r: Referido & { comision_dop?: number }) => sum + (r.comision_dop || 0), 0)
+                  const totalVentasUSD = userReferidos.reduce((sum: number, r: Referido & { ventas_usd?: number }) => sum + (r.ventas_usd || 0), 0)
+                  const totalComisionUSD = userReferidos.reduce((sum: number, r: Referido & { comision_usd?: number }) => sum + (r.comision_usd || 0), 0)
 
-                {/* Ventas (USD) */}
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">VENTAS (USD)</p>
-                    <p className="text-2xl font-bold text-blue-500">
-                      {formatCurrency(
-                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0),
-                        'USD'
-                      )}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').length} compras
-                    </p>
-                  </CardContent>
-                </Card>
+                  return (
+                    <>
+                      {/* Ventas (DOP) */}
+                      <Card className="border-border/50 bg-secondary/50">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">VENTAS (DOP)</p>
+                          <p className="text-2xl font-bold text-primary">
+                            {formatCurrency(totalVentasDOP, 'DOP')}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {userReferidos.filter((r: Referido & { ventas_dop?: number }) => (r.ventas_dop || 0) > 0).length} agentes con ventas
+                          </p>
+                        </CardContent>
+                      </Card>
 
-                {/* Comisión USD (15%) */}
-                <Card className="border-border/50 bg-secondary/50">
-                  <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground">COMISIÓN USD (15%)</p>
-                    <p className="text-2xl font-bold text-cyan-500">
-                      {formatCurrency(
-                        filteredCompras.filter((c: PurchaseGroup) => c.estado === 'aprobado' && c.moneda === 'USD').reduce((s: number, c: PurchaseGroup) => s + c.monto, 0) * 0.15,
-                        'USD'
-                      )}
-                    </p>
-                    <p className="text-xs text-cyan-400">
-                      15% de ventas USD
-                    </p>
-                  </CardContent>
-                </Card>
+                      {/* Comisión DOP (15%) */}
+                      <Card className="border-border/50 bg-secondary/50">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">COMISIÓN DOP (15%)</p>
+                          <p className="text-2xl font-bold text-green-500">
+                            {formatCurrency(totalComisionDOP, 'DOP')}
+                          </p>
+                          <p className="text-xs text-green-400">
+                            15% de {userReferidos.length} agentes
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      {/* Ventas (USD) */}
+                      <Card className="border-border/50 bg-secondary/50">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">VENTAS (USD)</p>
+                          <p className="text-2xl font-bold text-blue-500">
+                            {totalVentasUSD.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {userReferidos.filter((r: Referido & { ventas_usd?: number }) => (r.ventas_usd || 0) > 0).length} agentes con ventas
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      {/* Comisión USD (15%) */}
+                      <Card className="border-border/50 bg-secondary/50">
+                        <CardContent className="p-4">
+                          <p className="text-xs text-muted-foreground">COMISIÓN USD (15%)</p>
+                          <p className="text-2xl font-bold text-cyan-500">
+                            {totalComisionUSD.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                          </p>
+                          <p className="text-xs text-cyan-400">
+                            15% de {userReferidos.length} agentes
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </>
+                  )
+                })()}
               </div>
 
               {/* HIDDEN: Original stats cards (kept for internal calculations, not displayed) */}
