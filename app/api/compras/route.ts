@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateTicketNumbers } from '@/lib/ticket'
-import { getSession } from '@/lib/auth'
+import { getSessionFromRequest } from '@/lib/auth'
 import { randomUUID } from 'crypto'
 import { sendTicketPendingEmail, sendAdminPurchaseNotification } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession()
+    const session = await getSessionFromRequest(request)
     if (!session) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }

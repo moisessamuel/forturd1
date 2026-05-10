@@ -131,6 +131,13 @@ export default function AdminDashboard() {
 
   // Local overrides for individual ticket edits (persists visual changes until data refresh)
   const [ticketEdits, setTicketEdits] = useState<Record<string, { nombre: string; phone_number: string; email: string | null }>>({})
+
+  // Helper to get auth headers for API calls (supports sessionStorage-based auth)
+  const getAuthHeaders = useCallback((): HeadersInit => {
+    if (typeof window === 'undefined') return {}
+    const stored = sessionStorage.getItem('admin_session')
+    return stored ? { 'X-Admin-Session': stored } : {}
+  }, [])
   
   // Sections collapse state
   const [sectionsOpen, setSectionsOpen] = useState({
@@ -143,11 +150,13 @@ export default function AdminDashboard() {
 
   const fetchData = useCallback(async () => {
     try {
+      const headers = getAuthHeaders()
+
       const [statsRes, configRes, comprasRes, referidosRes] = await Promise.all([
-        fetch('/api/admin/stats'),
-        fetch('/api/config'),
-        fetch(`/api/compras?estado=${estadoFilter}&search=${searchTerm}&exclude_bmw=true`),
-        fetch('/api/referidos'),
+        fetch('/api/admin/stats', { headers }),
+        fetch('/api/config', { headers }),
+        fetch(`/api/compras?estado=${estadoFilter}&search=${searchTerm}&exclude_bmw=true`, { headers }),
+        fetch('/api/referidos', { headers }),
       ])
 
       if (!statsRes.ok || !configRes.ok) {
@@ -173,7 +182,7 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [estadoFilter, searchTerm])
+  }, [estadoFilter, searchTerm, getAuthHeaders])
 
   useEffect(() => {
     // First, try sessionStorage (used by referido_plus and other role-based logins)
@@ -216,6 +225,10 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     try {
+      // Clear sessionStorage first (used by referido_plus and role-based logins)
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('admin_session')
+      }
       await fetch('/api/admin/logout', { method: 'POST' })
       router.push('/admin')
     } catch {
@@ -226,7 +239,7 @@ export default function AdminDashboard() {
   const handleReset = async () => {
     setIsResetting(true)
     try {
-      const res = await fetch('/api/admin/reset', { method: 'POST' })
+      const res = await fetch('/api/admin/reset', { method: 'POST', headers: getAuthHeaders() })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       toast.success('Sistema restablecido correctamente')
@@ -313,7 +326,7 @@ export default function AdminDashboard() {
   const handleResetBoletoFisico = async () => {
     setIsResettingBoletoFisico(true)
     try {
-      const res = await fetch('/api/admin/reset-boleto-fisico', { method: 'POST' })
+      const res = await fetch('/api/admin/reset-boleto-fisico', { method: 'POST', headers: getAuthHeaders() })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
       toast.success('Boletos fisicos restablecidos correctamente')
@@ -331,7 +344,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch('/api/config', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
           ...config,
           total_boletos: parseInt(totalBoletos),
@@ -354,7 +367,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch(`/api/compras/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ estado }),
       })
 
@@ -376,7 +389,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch(`/api/compras/${revertingId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({ estado: 'pendiente', motivo: revertMotivo.trim() }),
       })
 
@@ -400,6 +413,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch(`/api/compras/${deletingId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       })
 
       if (!response.ok) throw new Error('Error al eliminar')
@@ -560,7 +574,7 @@ export default function AdminDashboard() {
     try {
       const response = await fetch('/api/referidos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify({
           nombre_agente: newReferidoNombre,
           codigo: newReferidoCodigo,
@@ -2238,7 +2252,7 @@ export default function AdminDashboard() {
                               onClick={async () => {
                                 if (!confirm(`¿Seguro que deseas eliminar al referido "${referido.nombre_agente}" (${referido.codigo})?`)) return
                                 try {
-                                  const res = await fetch(`/api/referidos?id=${referido.id}`, { method: 'DELETE' })
+                                  const res = await fetch(`/api/referidos?id=${referido.id}`, { method: 'DELETE', headers: getAuthHeaders() })
                                   if (!res.ok) throw new Error('Error al eliminar')
                                   toast.success('Referido eliminado')
                                   fetchData()
