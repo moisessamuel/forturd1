@@ -292,16 +292,15 @@ export function RuletaWheel({
       : LOSE_INDEXES[Math.floor(Math.random() * LOSE_INDEXES.length)]
 
     // ─── CALCULO DE ROTACION SIMPLE Y EXACTO ─────────────────────────────────
-    // El segmento 0 tiene su CENTRO en -81 grados cuando rotation = 0
-    // (empieza en -90, termina en -72, centro = -81)
-    // Para poner el segmento i en el centro (bajo el puntero arriba):
-    // Necesitamos que: rotation - 90 + i*18 + 9 = -90 (mod 360)
-    // Simplificando: rotation = -i * 18 (mod 360)
-    // Para valores positivos: rotation = (360 - i * 18) % 360
+    // Pointer en la parte superior (0 grados visual, -90 en canvas)
+    // Segmento i tiene su CENTRO en: (i * 18 + 9) - 90 = i * 18 - 81 grados
+    // Para centrar segmento i bajo puntero:
+    //   Necesitamos: rotation = 90 - (i * 18 - 81) = 171 - i * 18
+    // Para mantener en rango [0, 360): rotation = (171 - i * 18) mod 360
     // ────────────────────────────────────────────────────────────────────────
     
-    // Rotacion exacta para centrar el segmento objetivo bajo el puntero
-    const targetRotation = (360 - targetIndex * SEGMENT_ANGLE) % 360
+    // Rotacion exacta para centrar el segmento objetivo bajo el puntero (arriba)
+    const targetRotation = (171 - targetIndex * SEGMENT_ANGLE) % 360
     
     // Agregar vueltas completas para efecto visual (6 vueltas)
     const fullSpins = 360 * 6
