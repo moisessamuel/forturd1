@@ -63,7 +63,8 @@ export async function POST(request: Request) {
           .from('tickets')
           .select('*', { count: 'exact', head: true })
           .in('purchase_group_id', purchaseGroups.map(pg => pg.id))
-        totalGirosGratis = count || 0
+        // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
+        totalGirosGratis = Math.floor((count || 0) / 2)
       }
     }
 

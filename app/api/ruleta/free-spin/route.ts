@@ -115,6 +115,9 @@ export async function POST(request: Request) {
           )
         }
 
+        // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
+        const totalGirosGratis = Math.floor(approvedTicketsCount / 2)
+
         // Check how many free spins have been used
         const { data: usageData } = await supabase
           .from('ruleta_giros_gratis')
@@ -123,7 +126,7 @@ export async function POST(request: Request) {
           .single()
 
         const freeSpinsUsed = usageData?.giros_usados || 0
-        const freeSpinsAvailable = approvedTicketsCount - freeSpinsUsed
+        const freeSpinsAvailable = totalGirosGratis - freeSpinsUsed
 
         if (freeSpinsAvailable <= 0) {
           return NextResponse.json(
