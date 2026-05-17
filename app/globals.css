@@ -84,25 +84,25 @@
    ============================================================ */
 .light {
   --background: oklch(0.97 0.005 85);
-  --foreground: oklch(0.15 0.01 85);
+  --foreground: oklch(0.05 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.15 0.01 85);
+  --card-foreground: oklch(0.05 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.15 0.01 85);
+  --popover-foreground: oklch(0.05 0 0);
   /* Gold primary — slightly deeper for contrast on white */
   --primary: oklch(0.62 0.17 85);
-  --primary-foreground: oklch(1 0 0);
+  --primary-foreground: oklch(0.05 0 0);
   --secondary: oklch(0.93 0.01 85);
-  --secondary-foreground: oklch(0.2 0.01 85);
+  --secondary-foreground: oklch(0.05 0 0);
   --muted: oklch(0.93 0.005 85);
-  --muted-foreground: oklch(0.45 0.01 85);
+  --muted-foreground: oklch(0.35 0.01 85);
   --accent: oklch(0.62 0.17 85);
-  --accent-foreground: oklch(1 0 0);
+  --accent-foreground: oklch(0.05 0 0);
   --destructive: oklch(0.55 0.22 25);
   --destructive-foreground: oklch(1 0 0);
   --success: oklch(0.5 0.2 145);
   --success-foreground: oklch(1 0 0);
-  --border: oklch(0.85 0.02 85);
+  --border: oklch(0.82 0.02 85);
   --input: oklch(0.95 0.005 85);
   --ring: oklch(0.62 0.17 85);
   --chart-1: oklch(0.62 0.17 85);
@@ -111,12 +111,12 @@
   --chart-4: oklch(0.5 0.15 260);
   --chart-5: oklch(0.6 0.14 35);
   --sidebar: oklch(0.95 0.008 85);
-  --sidebar-foreground: oklch(0.15 0.01 85);
+  --sidebar-foreground: oklch(0.05 0 0);
   --sidebar-primary: oklch(0.62 0.17 85);
-  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0.05 0 0);
   --sidebar-accent: oklch(0.9 0.01 85);
-  --sidebar-accent-foreground: oklch(0.2 0.01 85);
-  --sidebar-border: oklch(0.85 0.02 85);
+  --sidebar-accent-foreground: oklch(0.05 0 0);
+  --sidebar-border: oklch(0.82 0.02 85);
   --sidebar-ring: oklch(0.62 0.17 85);
 }
 
@@ -232,10 +232,33 @@
     linear-gradient(180deg, oklch(0.97 0.005 85) 0%, oklch(0.95 0.008 85) 100%);
 }
 
-/* Light mode image/overlay adjustments */
-.light .mix-blend-lighten {
-  mix-blend-mode: multiply;
+/* Light mode: force white text → black, keep gold text as-is */
+html.light .text-white,
+html.light .text-foreground {
+  color: oklch(0.05 0 0) !important;
 }
+
+html.light .text-muted-foreground {
+  color: oklch(0.35 0.01 85) !important;
+}
+
+/* Buttons/badges with white text on gold bg — keep white */
+html.light .bg-primary .text-white,
+html.light .bg-accent .text-white,
+html.light button.text-white {
+  color: oklch(0.05 0 0) !important;
+}
+
+/* Gold/primary text stays gold */
+html.light .text-primary,
+html.light .text-accent,
+html.light .text-yellow-500,
+html.light .text-yellow-400,
+html.light .text-amber-500,
+html.light .text-amber-400 {
+  /* keep their own color — no override */
+}
+
 
 /* Gold text adapts in light mode */
 .light .gold-text {
