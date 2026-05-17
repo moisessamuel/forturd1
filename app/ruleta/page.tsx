@@ -124,6 +124,7 @@ function RuletaPageContent() {
   const [verificationError, setVerificationError] = useState('')
   const [isPendingPayment, setIsPendingPayment] = useState(false)
   const [showMoreAccounts, setShowMoreAccounts] = useState(false)
+  const [approvedTicketsCount, setApprovedTicketsCount] = useState(0)
   
   // Calculate total price
   const totalPriceDOP = spinQuantity * PRECIO_GIRO_DOP
@@ -488,6 +489,10 @@ function RuletaPageContent() {
         setVerificationError(data.error || 'Tu boleto está pendiente de confirmación.')
       } else {
         setIsPendingPayment(false)
+        // Capture approvedTicketsCount if provided (for 1 boleto case)
+        if (data.approvedTicketsCount !== undefined) {
+          setApprovedTicketsCount(data.approvedTicketsCount)
+        }
         setVerificationError(data.error || 'No se encontraron compras con este número de teléfono.')
       }
     } catch {
@@ -656,6 +661,31 @@ function RuletaPageContent() {
                 <p className="mt-2 text-xs text-yellow-500">
                   Tu boleto está pendiente de confirmación de pago. Una vez aprobado podrás usar tu giro gratis.
                 </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* 1 Boleto Warning Banner - Show when user has only 1 approved ticket */}
+        {approvedTicketsCount === 1 && verificationError && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-red-500/50 bg-gradient-to-r from-red-500/20 to-red-500/10">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-red-400">
+                  FALTA 1 BOLETO
+                </p>
+                <p className="mt-2 text-sm text-red-300">
+                  Te falta 1 boleto más para activar tus giradas gratis.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Compra otro boleto para obtener giros gratis adicionales.
+                </p>
+                <Button
+                  onClick={() => setShowPurchaseModal(true)}
+                  className="mt-4 w-full bg-yellow-500 text-black hover:bg-yellow-600"
+                >
+                  COMPRAR BOLETO
+                </Button>
               </CardContent>
             </Card>
           </div>

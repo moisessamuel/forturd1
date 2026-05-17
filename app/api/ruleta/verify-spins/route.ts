@@ -165,6 +165,7 @@ export async function GET(request: NextRequest) {
     if (approvedTicketsCount === 1) {
       return NextResponse.json({
         success: false,
+        approvedTicketsCount: 1,
         error: 'Te falta 1 boleto más para activar tus giradas gratis.'
       })
     }
