@@ -21,7 +21,7 @@ export function MiniRuletaPreview({ size = 200 }: { size?: number }) {
       logoRef.current = img
       setLogoLoaded(true)
     }
-    img.src = '/images/forturd-logo.jpeg'
+    img.src = '/images/forturd-logo-new.png'
   }, [])
 
   // Continuous rotation animation

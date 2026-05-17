@@ -73,7 +73,7 @@ export function RuletaWheel({
       logoRef.current = img
       setLogoLoaded(true)
     }
-    img.src = '/images/forturd-logo.jpeg'
+    img.src = '/images/forturd-logo-new.png'
   }, [])
 
   // Dibujar la ruleta
@@ -476,7 +476,7 @@ export function RuletaWheel({
           }}
         >
           <Image
-            src="/images/forturd-logo.jpeg"
+                src="/images/forturd-logo-new.png"
             alt="FortuRD"
             fill
             className="object-cover"
