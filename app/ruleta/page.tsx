@@ -692,7 +692,34 @@ function RuletaPageContent() {
         )}
 
         {/* Free Spin Banner */}
-        {freeSpinData && freeSpinsRemaining > 0 && canSpin && !ticketPending && (
+        {/* Red Disabled Button - Only 1 Approved Ticket */}
+        {freeSpinData && approvedTicketsCount === 1 && !ticketPending && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-red-500/50 bg-gradient-to-r from-red-500/20 to-red-500/10">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-red-400">
+                  1 GIRO GRATIS
+                </p>
+                <p className="mt-2 text-sm text-red-300">
+                  Te falta 1 boleto más para activar tus giradas gratis.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Boleto #{freeSpinData.numero_boleto} - {freeSpinData.nombre}
+                </p>
+                <Button
+                  disabled
+                  className="mt-4 h-12 w-full bg-red-600 text-base font-bold text-white hover:bg-red-600 cursor-not-allowed opacity-75"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  1 GIRO GRATIS
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Green Enabled Banner - 2+ Approved Tickets */}
+        {freeSpinData && freeSpinsRemaining > 0 && canSpin && !ticketPending && approvedTicketsCount >= 2 && (
           <div className="mx-auto mb-6 max-w-lg">
             <Card className="border-green-500/50 bg-gradient-to-r from-green-500/20 to-primary/20">
               <CardContent className="p-4 text-center">
