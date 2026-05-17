@@ -89,6 +89,7 @@ export async function GET(request: NextRequest) {
       .from('ruleta_jugadas')
       .select('*')
       .eq('telefono', telefono)
+      .eq('es_gratis', false) // Solo giros comprados directamente, NO giros gratis por boletos
       .order('created_at', { ascending: false })
 
     if (error) {

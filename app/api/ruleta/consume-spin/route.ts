@@ -91,6 +91,7 @@ export async function POST(request: Request) {
       .select('id, cantidad_giros, giros_usados, estado')
       .eq('telefono', telefono)
       .eq('estado', 'confirmado')
+      .eq('es_gratis', false) // Solo giros comprados directamente, NO giros gratis por boletos
       .order('created_at', { ascending: false })
 
     let jugadaActiva: { id: string; cantidad_giros: number; giros_usados: number } | null = null
