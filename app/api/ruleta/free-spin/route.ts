@@ -107,6 +107,14 @@ export async function POST(request: Request) {
           approvedTicketsCount = count || 0
         }
 
+        // NEW LOGIC: Require 2+ approved tickets for free spins
+        if (approvedTicketsCount < 2) {
+          return NextResponse.json(
+            { error: 'Te falta 1 boleto más para activar tus giradas gratis.' },
+            { status: 403 }
+          )
+        }
+
         // Check how many free spins have been used
         const { data: usageData } = await supabase
           .from('ruleta_giros_gratis')
