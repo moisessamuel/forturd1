@@ -403,6 +403,30 @@ export default function VerificarPage() {
                     )
                   }
                   
+                  // NEW: Show red warning block if only 1 approved ticket
+                  if (singleResult.cantidad_boletos === 1) {
+                    return (
+                      <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4">
+                        <div className="text-center mb-4">
+                          <p className="text-lg font-bold text-red-400">1 GIRO GRATIS</p>
+                          <p className="mt-2 text-sm text-red-300">
+                            Te falta 1 boleto más para activar tus giradas gratis.
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Boleto #{singleResult.numero_boleto} - {singleResult.nombre}
+                          </p>
+                        </div>
+                        <Button
+                          disabled
+                          className="w-full bg-red-600 text-base font-bold text-white hover:bg-red-600 cursor-not-allowed opacity-75"
+                        >
+                          <Gift className="mr-2 h-5 w-5" />
+                          1 GIRO GRATIS
+                        </Button>
+                      </div>
+                    )
+                  }
+                  
                   return (
                     <>
                       <Button
@@ -525,6 +549,28 @@ export default function VerificarPage() {
                                     <Clock className="mr-2 h-4 w-4" />
                                     GIRO GRATIS PENDIENTE
                                   </Button>
+                                )
+                              }
+                              
+                              // NEW: Show red warning block if only 1 approved ticket
+                              if (ticket.cantidad_boletos === 1) {
+                                return (
+                                  <div className="rounded border border-red-500/50 bg-red-500/10 p-3">
+                                    <div className="text-center mb-2">
+                                      <p className="text-sm font-bold text-red-400">1 GIRO GRATIS</p>
+                                      <p className="mt-1 text-xs text-red-300">
+                                        Te falta 1 boleto más para activar tus giradas gratis.
+                                      </p>
+                                    </div>
+                                    <Button
+                                      size="sm"
+                                      disabled
+                                      className="w-full bg-red-600 font-bold text-white hover:bg-red-600 cursor-not-allowed opacity-75"
+                                    >
+                                      <Gift className="mr-2 h-4 w-4" />
+                                      1 GIRO GRATIS
+                                    </Button>
+                                  </div>
                                 )
                               }
                               
