@@ -33,12 +33,12 @@ export function Header() {
       <div className={`mx-auto flex max-w-7xl items-center justify-between px-4 transition-all duration-300 ease-in-out ${scrolled ? 'h-20' : 'h-28'}`}>
         <Link href="/" className="flex cursor-pointer items-center gap-2">
           <Image
-            src="/images/forturd-logo-zeus.png"
+            src="/images/forturd-logo-new.png"
             alt="FortuRD"
-            width={280}
-            height={110}
-            style={{ width: 'auto', height: scrolled ? '70px' : '100px' }}
-            className="object-contain mix-blend-lighten transition-all duration-300 ease-in-out"
+            width={320}
+            height={130}
+            style={{ width: 'auto', height: scrolled ? '75px' : '115px' }}
+            className="object-contain transition-all duration-300 ease-in-out"
           />
         </Link>
 
