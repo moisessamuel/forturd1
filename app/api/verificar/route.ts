@@ -249,21 +249,28 @@ export async function GET(request: NextRequest) {
       }
 
       // Count approved BMW X6 and BMW X7 tickets
-      const approvedBmwX6Count = results.filter(
-        r => r.sorteo_slug === 'bmw-x6' && r.estado === 'aprobado' && !r.caducado
-      ).length
-      
-      const approvedBmwX7Count = results.filter(
-        r => r.sorteo_slug === 'bmw-x7' && r.estado === 'aprobado' && !r.caducado
-      ).length
-      
-      const totalApprovedBmw = approvedBmwX6Count + approvedBmwX7Count
-      const freeSpinsForAll = Math.floor(totalApprovedBmw / 2)
+      const approvedBmwTickets = results.filter(
+        r => (r.sorteo_slug === 'bmw-x6' || r.sorteo_slug === 'bmw-x7') && r.estado === 'aprobado' && !r.caducado
+      )
+      const totalApprovedBmw = approvedBmwTickets.length
+
+      // Get boletos_contados from ruleta_giros_gratis (snapshot of already-processed tickets)
+      const cleanPhone = telefono.replace(/[^0-9]/g, '')
+      const { data: girosGratisRecord } = await supabase
+        .from('ruleta_giros_gratis')
+        .select('boletos_contados, giros_usados')
+        .eq('telefono', cleanPhone)
+        .single()
+
+      const boletosContados = girosGratisRecord?.boletos_contados || 0
+      const boletosNuevos = Math.max(0, totalApprovedBmw - boletosContados)
+      const freeSpinsForAll = Math.floor(boletosNuevos / 2)
 
       return NextResponse.json({ 
         telefono: telefono, 
         results,
         totalApprovedBmw,
+        boletosContados,
         freeSpinsForAll,
       })
     }

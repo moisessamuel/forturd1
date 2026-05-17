@@ -36,6 +36,7 @@ export default function VerificarPage() {
   const [singleResult, setSingleResult] = useState<TicketResult | null>(null)
   const [multiResults, setMultiResults] = useState<TicketResult[]>([])
   const [totalApprovedBmw, setTotalApprovedBmw] = useState(0)
+  const [boletosContados, setBoletosContados] = useState(0)
   const [freeSpinsForAll, setFreeSpinsForAll] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [searched, setSearched] = useState(false)
@@ -61,6 +62,7 @@ export default function VerificarPage() {
         if (lastSearchParams.mode === 'telefono' && data.results) {
           setMultiResults(data.results)
           setTotalApprovedBmw(data.totalApprovedBmw || 0)
+          setBoletosContados(data.boletosContados || 0)
           setFreeSpinsForAll(data.freeSpinsForAll || 0)
         } else {
           setSingleResult(data)
@@ -114,6 +116,7 @@ export default function VerificarPage() {
     setSingleResult(null)
     setMultiResults([])
     setTotalApprovedBmw(0)
+    setBoletosContados(0)
     setFreeSpinsForAll(0)
 
     try {
@@ -140,6 +143,7 @@ export default function VerificarPage() {
       if (searchMode === 'telefono' && data.results) {
         setMultiResults(data.results)
         setTotalApprovedBmw(data.totalApprovedBmw || 0)
+        setBoletosContados(data.boletosContados || 0)
         setFreeSpinsForAll(data.freeSpinsForAll || 0)
       } else {
         setSingleResult(data)
@@ -157,6 +161,7 @@ export default function VerificarPage() {
     setSingleResult(null)
     setMultiResults([])
     setTotalApprovedBmw(0)
+    setBoletosContados(0)
     setFreeSpinsForAll(0)
     setSearched(false)
     setLastSearchParams(null)
@@ -458,7 +463,20 @@ export default function VerificarPage() {
               )}
             </div>
 
-            {multiResults.map((ticket, idx) => {
+            {(() => {
+              // Pre-calcular el índice BMW de cada boleto para saber cuáles están "usados"
+              let bmwCounter = 0
+              const bmwIndexMap: Record<number, number> = {}
+              multiResults.forEach((t, i) => {
+                const isBmw = (t.sorteo_slug === 'bmw-x6' || t.sorteo_slug === 'bmw-x7')
+                const isApproved = t.estado === 'aprobado' && !t.caducado
+                if (isBmw && isApproved) {
+                  bmwIndexMap[i] = bmwCounter
+                  bmwCounter++
+                }
+              })
+
+              return multiResults.map((ticket, idx) => {
               const status = getStatusConfig(ticket.estado)
               const StatusIcon = status.icon
               return (
@@ -559,8 +577,28 @@ export default function VerificarPage() {
                                     </div>
                                   )
                                 }
-                                
-                                // Has enough approved tickets - show green button
+
+                                // Determine if this specific ticket's giros are already used
+                                const thisBmwIndex = bmwIndexMap[idx]
+                                const isUsedTicket = thisBmwIndex !== undefined && thisBmwIndex < boletosContados
+
+                                if (isUsedTicket) {
+                                  // This ticket's giros were already consumed
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      disabled
+                                      className="w-full bg-gray-600/50 text-gray-300 font-bold cursor-not-allowed"
+                                    >
+                                      <Gift className="mr-2 h-4 w-4" />
+                                      GIROS USADOS
+                                    </Button>
+                                  )
+                                }
+
+                                // This ticket has available giros - show green button
+                                // Only the LAST new ticket shows the button with the total available count
+                                const isLastNewTicket = thisBmwIndex !== undefined && thisBmwIndex === (bmwCounter - 1)
                                 return (
                                   <Button
                                     size="sm"
@@ -568,9 +606,9 @@ export default function VerificarPage() {
                                     className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-emerald-500 hover:to-green-600"
                                   >
                                     <Gift className="mr-2 h-4 w-4" />
-                                    {freeSpinsForAll > 0 
-                                      ? `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS` 
-                                      : 'COMPRAR GIROS'}
+                                    {isLastNewTicket && freeSpinsForAll > 0
+                                      ? `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS`
+                                      : `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS`}
                                   </Button>
                                 )
                               }
@@ -593,7 +631,8 @@ export default function VerificarPage() {
                   </CardContent>
                 </Card>
               )
-            })}
+            })
+            })()}
           </div>
         )}
 
