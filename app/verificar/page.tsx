@@ -369,11 +369,16 @@ export default function VerificarPage() {
               {/* Free Spin Button */}
               <div className="mt-4">
                 {(() => {
-                  const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
-                  const girosUsados = singleResult.giros_gratis_usados ?? 0
                   const isPending = singleResult.estado === 'pendiente'
                   const isCaducado = singleResult.estado === 'caducado' || singleResult.caducado
                   const esBoletoFisico = singleResult.es_boleto_fisico
+                  const isApproved = singleResult.estado === 'aprobado'
+                  const isBmwXTicket = singleResult.sorteo_slug === 'bmw-x6' || singleResult.sorteo_slug === 'bmw-x7'
+                  // BMW combined logic — comes from API for single result
+                  const singleTotalBmw = (singleResult as any).totalApprovedBmw ?? 0
+                  const singleBoletosContados = (singleResult as any).boletosContados ?? 0
+                  const singleFreeSpins = (singleResult as any).freeSpinsForAll ?? 0
+                  const singleBmwIndex = (singleResult as any).bmw_index ?? -1
                   
                   // Caducado tickets show expired message
                   if (isCaducado) {
@@ -417,7 +422,60 @@ export default function VerificarPage() {
                       </>
                     )
                   }
-                  
+
+                  // BMW X6/X7 approved — apply combined logic
+                  if (isBmwXTicket && isApproved) {
+                    if (singleTotalBmw < 2) {
+                      return (
+                        <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-center">
+                          <Button
+                            disabled
+                            className="w-full bg-red-600/50 text-red-200 font-bold cursor-not-allowed mb-3"
+                          >
+                            <Gift className="mr-2 h-5 w-5" />
+                            GIRO GRATIS BLOQUEADO
+                          </Button>
+                          <p className="text-sm text-red-400">
+                            Te falta {2 - singleTotalBmw} boleto{2 - singleTotalBmw !== 1 ? 's' : ''} mas para activar tus giradas gratis.
+                          </p>
+                        </div>
+                      )
+                    }
+
+                    const isUsed = singleBmwIndex >= 0 && singleBmwIndex < singleBoletosContados
+                    if (isUsed) {
+                      return (
+                        <Button
+                          disabled
+                          className="w-full bg-gray-700/60 text-gray-400 font-bold cursor-not-allowed"
+                        >
+                          <Gift className="mr-2 h-5 w-5" />
+                          GIROS USADOS
+                        </Button>
+                      )
+                    }
+
+                    return (
+                      <>
+                        <Button
+                          onClick={() => handleFreeSpinClick(singleResult)}
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-emerald-500 hover:to-green-600"
+                        >
+                          <Gift className="mr-2 h-5 w-5" />
+                          {singleFreeSpins > 0
+                            ? `${singleFreeSpins} GIRO${singleFreeSpins > 1 ? 'S' : ''} GRATIS`
+                            : 'GIROS GRATIS'}
+                        </Button>
+                        <p className="mt-2 text-center text-xs text-muted-foreground">
+                          {singleTotalBmw} boleto{singleTotalBmw !== 1 ? 's' : ''} aprobados = {singleFreeSpins} giro{singleFreeSpins !== 1 ? 's' : ''} gratis disponible{singleFreeSpins !== 1 ? 's' : ''}.
+                        </p>
+                      </>
+                    )
+                  }
+
+                  // Non-BMW ticket fallback
+                  const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
+                  const girosUsados = singleResult.giros_gratis_usados ?? 0
                   return (
                     <>
                       <Button
