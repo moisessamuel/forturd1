@@ -124,6 +124,7 @@ function RuletaPageContent() {
   const [verificationError, setVerificationError] = useState('')
   const [isPendingPayment, setIsPendingPayment] = useState(false)
   const [showMoreAccounts, setShowMoreAccounts] = useState(false)
+  const [approvedTicketsCount, setApprovedTicketsCount] = useState(0)
   
   // Calculate total price
   const totalPriceDOP = spinQuantity * PRECIO_GIRO_DOP
@@ -433,18 +434,17 @@ function RuletaPageContent() {
           setFreeSpinsRemaining(freeSpins)
           setPaidSpinsRemaining(paidSpins)
           
-          if (freeSpins > 0) {
-            // Create a free spin data object for the session (solo para tracking, NO para conteo)
-            const newFreeSpinData = {
-              numero_boleto: 'TICKET',
-              nombre: data.nombre || '',
-              telefono: verificationPhone,
-              used: false,
-              // NO guardamos giros_disponibles aquí - siempre consultamos al servidor
-            }
-            setFreeSpinData(newFreeSpinData)
-            // NO guardamos en sessionStorage - el servidor es la fuente de verdad
+          // Always create a free spin data object for UI display (even if 0 spins)
+          // This allows us to show red/green button states based on approvedTicketsCount
+          const newFreeSpinData = {
+            numero_boleto: 'TICKET',
+            nombre: data.nombre || '',
+            telefono: verificationPhone,
+            used: false,
+            // NO guardamos giros_disponibles aquí - siempre consultamos al servidor
           }
+          setFreeSpinData(newFreeSpinData)
+          // NO guardamos en sessionStorage - el servidor es la fuente de verdad
           
           // Set jugada_id if they have paid spins
           if (paidSpins > 0) {
@@ -488,6 +488,18 @@ function RuletaPageContent() {
         setVerificationError(data.error || 'Tu boleto está pendiente de confirmación.')
       } else {
         setIsPendingPayment(false)
+        // Capture approvedTicketsCount if provided (for 1 boleto case)
+        if (data.approvedTicketsCount !== undefined) {
+          setApprovedTicketsCount(data.approvedTicketsCount)
+          // Also set freeSpinData for the UI to show the red/green button
+          setFreeSpinData({
+            numero_boleto: 'TICKET',
+            nombre: data.nombre || '',
+            telefono: verificationPhone,
+            used: false,
+          })
+          setCanSpin(false)
+        }
         setVerificationError(data.error || 'No se encontraron compras con este número de teléfono.')
       }
     } catch {
@@ -661,8 +673,60 @@ function RuletaPageContent() {
           </div>
         )}
 
+        {/* 1 Boleto Warning Banner - Show when user has only 1 approved ticket */}
+        {approvedTicketsCount === 1 && verificationError && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-red-500/50 bg-gradient-to-r from-red-500/20 to-red-500/10">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-red-400">
+                  FALTA 1 BOLETO
+                </p>
+                <p className="mt-2 text-sm text-red-300">
+                  Te falta 1 boleto más para activar tus giradas gratis.
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Compra otro boleto para obtener giros gratis adicionales.
+                </p>
+                <Button
+                  onClick={() => setShowPurchaseModal(true)}
+                  className="mt-4 w-full bg-yellow-500 text-black hover:bg-yellow-600"
+                >
+                  COMPRAR BOLETO
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Free Spin Banner */}
-        {freeSpinData && freeSpinsRemaining > 0 && canSpin && !ticketPending && (
+        {/* Red Disabled Button - Only 1 Approved Ticket */}
+        {freeSpinData && approvedTicketsCount === 1 && !ticketPending && (
+          <div className="mx-auto mb-6 max-w-lg">
+            <Card className="border-red-500/50 bg-gradient-to-r from-red-500/20 to-red-500/10">
+              <CardContent className="p-4 text-center">
+                <p className="text-lg font-bold text-red-400">
+                  1 GIRO GRATIS
+                </p>
+                <p className="mt-2 text-sm text-red-300">
+                  Te falta 1 boleto más para activar tus giradas gratis.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Boleto #{freeSpinData.numero_boleto} - {freeSpinData.nombre}
+                </p>
+                <Button
+                  disabled
+                  className="mt-4 h-12 w-full bg-red-600 text-base font-bold text-white hover:bg-red-600 cursor-not-allowed opacity-75"
+                >
+                  <Gift className="mr-2 h-5 w-5" />
+                  1 GIRO GRATIS
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Green Enabled Banner - 2+ Approved Tickets */}
+        {freeSpinData && freeSpinsRemaining > 0 && canSpin && !ticketPending && approvedTicketsCount >= 2 && (
           <div className="mx-auto mb-6 max-w-lg">
             <Card className="border-green-500/50 bg-gradient-to-r from-green-500/20 to-primary/20">
               <CardContent className="p-4 text-center">
@@ -1175,7 +1239,11 @@ function RuletaPageContent() {
             )}
 
             {verificationError && !isPendingPayment && (
-              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-center text-sm text-red-400">
+              <div className={`rounded-lg border p-3 text-center text-sm ${
+                verificationError.includes('Te falta 1 boleto')
+                  ? 'border-red-500/50 bg-red-500/10 text-red-400'
+                  : 'border-red-500/50 bg-red-500/10 text-red-400'
+              }`}>
                 {verificationError}
               </div>
             )}
