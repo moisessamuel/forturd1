@@ -35,6 +35,8 @@ export default function VerificarPage() {
   const [searchValue, setSearchValue] = useState('')
   const [singleResult, setSingleResult] = useState<TicketResult | null>(null)
   const [multiResults, setMultiResults] = useState<TicketResult[]>([])
+  const [totalApprovedBmw, setTotalApprovedBmw] = useState(0)
+  const [freeSpinsForAll, setFreeSpinsForAll] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [searched, setSearched] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -58,6 +60,8 @@ export default function VerificarPage() {
         
         if (lastSearchParams.mode === 'telefono' && data.results) {
           setMultiResults(data.results)
+          setTotalApprovedBmw(data.totalApprovedBmw || 0)
+          setFreeSpinsForAll(data.freeSpinsForAll || 0)
         } else {
           setSingleResult(data)
         }
@@ -109,6 +113,8 @@ export default function VerificarPage() {
     setSearched(true)
     setSingleResult(null)
     setMultiResults([])
+    setTotalApprovedBmw(0)
+    setFreeSpinsForAll(0)
 
     try {
       const param = searchMode === 'boleto'
@@ -133,6 +139,8 @@ export default function VerificarPage() {
 
       if (searchMode === 'telefono' && data.results) {
         setMultiResults(data.results)
+        setTotalApprovedBmw(data.totalApprovedBmw || 0)
+        setFreeSpinsForAll(data.freeSpinsForAll || 0)
       } else {
         setSingleResult(data)
       }
@@ -148,6 +156,8 @@ export default function VerificarPage() {
     setSearchValue('')
     setSingleResult(null)
     setMultiResults([])
+    setTotalApprovedBmw(0)
+    setFreeSpinsForAll(0)
     setSearched(false)
     setLastSearchParams(null)
   }
@@ -488,10 +498,12 @@ export default function VerificarPage() {
                           </div>
                           <div className="col-span-2 mt-2">
                             {(() => {
-                              const girosDisponibles = ticket.giros_gratis_disponibles ?? ticket.cantidad_boletos
                               const isPending = ticket.estado === 'pendiente'
                               const isCaducado = ticket.estado === 'caducado' || ticket.caducado
                               const esBoletoFisico = ticket.es_boleto_fisico
+                              const isApproved = ticket.estado === 'aprobado'
+                              const isBmwXTicket = ticket.sorteo_slug === 'bmw-x6' || ticket.sorteo_slug === 'bmw-x7'
+                              const hasEnoughApproved = totalApprovedBmw >= 2
                               
                               // Caducado tickets show expired message
                               if (isCaducado) {
@@ -528,6 +540,41 @@ export default function VerificarPage() {
                                 )
                               }
                               
+                              // For approved BMW X6/X7 tickets, check combined count
+                              if (isBmwXTicket && isApproved) {
+                                if (!hasEnoughApproved) {
+                                  return (
+                                    <div className="rounded border border-red-500/50 bg-red-500/10 p-3 text-center">
+                                      <Button
+                                        size="sm"
+                                        disabled
+                                        className="w-full bg-red-600/50 text-red-200 font-bold cursor-not-allowed mb-2"
+                                      >
+                                        <Gift className="mr-2 h-4 w-4" />
+                                        GIRO GRATIS BLOQUEADO
+                                      </Button>
+                                      <p className="text-xs text-red-400">
+                                        Te falta {2 - totalApprovedBmw} boleto{2 - totalApprovedBmw !== 1 ? 's' : ''} más para activar tus giradas gratis.
+                                      </p>
+                                    </div>
+                                  )
+                                }
+                                
+                                // Has enough approved tickets - show green button
+                                return (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleFreeSpinClick(ticket)}
+                                    className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-emerald-500 hover:to-green-600"
+                                  >
+                                    <Gift className="mr-2 h-4 w-4" />
+                                    {freeSpinsForAll > 0 
+                                      ? `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS` 
+                                      : 'COMPRAR GIROS'}
+                                  </Button>
+                                )
+                              }
+                              
                               return (
                                 <Button
                                   size="sm"
@@ -535,9 +582,7 @@ export default function VerificarPage() {
                                   className="w-full bg-gradient-to-r from-primary to-yellow-500 text-black font-bold hover:from-yellow-500 hover:to-primary"
                                 >
                                   <Gift className="mr-2 h-4 w-4" />
-                                  {girosDisponibles > 0 
-                                    ? `${girosDisponibles} GIRO${girosDisponibles > 1 ? 'S' : ''} GRATIS` 
-                                    : 'COMPRAR GIROS'}
+                                  COMPRAR GIROS
                                 </Button>
                               )
                             })()}

@@ -85,6 +85,9 @@ export async function GET(request: NextRequest) {
         banco: string
         sorteo_slug: string
         source: string
+        es_boleto_fisico?: boolean
+        caducado?: boolean
+        mensaje_caducado?: string
       }> = []
 
       // Get all players and match by normalized phone number (digits only)
@@ -245,7 +248,24 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'No se encontraron boletos para este teléfono' }, { status: 404 })
       }
 
-      return NextResponse.json({ telefono: telefono, results })
+      // Count approved BMW X6 and BMW X7 tickets
+      const approvedBmwX6Count = results.filter(
+        r => r.sorteo_slug === 'bmw-x6' && r.estado === 'aprobado' && !r.caducado
+      ).length
+      
+      const approvedBmwX7Count = results.filter(
+        r => r.sorteo_slug === 'bmw-x7' && r.estado === 'aprobado' && !r.caducado
+      ).length
+      
+      const totalApprovedBmw = approvedBmwX6Count + approvedBmwX7Count
+      const freeSpinsForAll = Math.floor(totalApprovedBmw / 2)
+
+      return NextResponse.json({ 
+        telefono: telefono, 
+        results,
+        totalApprovedBmw,
+        freeSpinsForAll,
+      })
     }
 
     // Search by ticket number - single result
