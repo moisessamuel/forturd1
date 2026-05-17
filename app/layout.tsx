@@ -62,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" className="bg-background" suppressHydrationWarning>
       <head>
         <meta property="og:image" content="https://www.forturd1.com/images/og-image.png" />
         <meta property="og:image:width" content="1200" />
