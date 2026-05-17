@@ -274,3 +274,201 @@ html.light .text-amber-400 {
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
 }
 
+/* ============================================================
+   LIGHT MODE — Comprehensive overrides for hardcoded dark colors
+   Covers: black backgrounds, zinc, gray, slate, neutral variants
+   Does NOT touch: green (success), red (error), gold (primary)
+   ============================================================ */
+
+/* Dark backgrounds → white/light in day mode */
+html.light .bg-black,
+html.light .bg-black\/80,
+html.light .bg-black\/70,
+html.light .bg-black\/60,
+html.light .bg-black\/50,
+html.light .bg-black\/40,
+html.light .bg-black\/30,
+html.light .bg-black\/20,
+html.light .bg-black\/10 {
+  background-color: rgba(255,255,255, var(--tw-bg-opacity, 1)) !important;
+}
+
+html.light .bg-zinc-900,
+html.light .bg-zinc-800,
+html.light .bg-zinc-700 {
+  background-color: oklch(0.97 0.005 85) !important;
+}
+
+html.light .bg-zinc-900\/80,
+html.light .bg-zinc-900\/90 {
+  background-color: oklch(0.95 0.005 85 / 0.95) !important;
+}
+
+html.light .bg-gray-900,
+html.light .bg-gray-800,
+html.light .bg-gray-700 {
+  background-color: oklch(0.95 0.005 85) !important;
+}
+
+html.light .bg-gray-700\/60,
+html.light .bg-gray-800\/60 {
+  background-color: oklch(0.88 0.008 85 / 0.8) !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-800,
+html.light .bg-slate-700 {
+  background-color: oklch(0.95 0.003 240) !important;
+}
+
+html.light .bg-neutral-900,
+html.light .bg-neutral-800,
+html.light .bg-neutral-700 {
+  background-color: oklch(0.95 0 0) !important;
+}
+
+/* Text on dark-turned-light backgrounds */
+html.light .bg-zinc-900 *,
+html.light .bg-zinc-800 *,
+html.light .bg-gray-900 *,
+html.light .bg-gray-800 *,
+html.light .bg-slate-900 *,
+html.light .bg-slate-800 * {
+  color: oklch(0.15 0 0);
+}
+
+/* Borders in light mode */
+html.light .border-white\/10,
+html.light .border-white\/5 {
+  border-color: oklch(0.82 0.02 85) !important;
+}
+
+html.light .border-gray-700,
+html.light .border-gray-800,
+html.light .border-zinc-700,
+html.light .border-zinc-800 {
+  border-color: oklch(0.82 0.02 85) !important;
+}
+
+/* Gray text overrides */
+html.light .text-gray-400,
+html.light .text-gray-300,
+html.light .text-zinc-400,
+html.light .text-zinc-300,
+html.light .text-neutral-400,
+html.light .text-slate-400 {
+  color: oklch(0.35 0.01 85) !important;
+}
+
+html.light .text-gray-500,
+html.light .text-zinc-500,
+html.light .text-neutral-500 {
+  color: oklch(0.45 0.01 85) !important;
+}
+
+html.light .text-gray-200,
+html.light .text-gray-100,
+html.light .text-zinc-200,
+html.light .text-zinc-100 {
+  color: oklch(0.2 0 0) !important;
+}
+
+/* Overlay divs commonly used as dark glass panels */
+html.light .backdrop-blur-sm,
+html.light .backdrop-blur-md,
+html.light .backdrop-blur-lg,
+html.light .backdrop-blur-xl {
+  background-color: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* Input fields */
+html.light input,
+html.light textarea,
+html.light select {
+  background-color: oklch(1 0 0) !important;
+  color: oklch(0.1 0 0) !important;
+  border-color: oklch(0.80 0.02 85) !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: oklch(0.55 0.01 85) !important;
+}
+
+/* Table overrides */
+html.light thead,
+html.light th {
+  background-color: oklch(0.93 0.01 85) !important;
+  color: oklch(0.15 0 0) !important;
+}
+
+html.light tr:nth-child(even) td {
+  background-color: oklch(0.96 0.004 85) !important;
+}
+
+html.light tr:hover td {
+  background-color: oklch(0.93 0.008 85) !important;
+}
+
+/* Modal/dialog overlays */
+html.light [role="dialog"],
+html.light [data-radix-dialog-content] {
+  background-color: oklch(1 0 0) !important;
+  border-color: oklch(0.82 0.02 85) !important;
+  color: oklch(0.1 0 0) !important;
+}
+
+/* Ruleta canvas — keep dark for visibility */
+html.light canvas {
+  filter: none;
+}
+
+/* Giros usados button — adapt for light mode */
+html.light .bg-gray-700\/60 {
+  background-color: oklch(0.88 0.005 85 / 0.8) !important;
+  color: oklch(0.4 0 0) !important;
+}
+
+/* Mix-blend override for logos on light backgrounds */
+html.light .mix-blend-lighten {
+  mix-blend-mode: multiply;
+}
+
+/* Scrollbar light mode */
+html.light ::-webkit-scrollbar-track {
+  background: oklch(0.93 0.005 85);
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.05 85);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.62 0.17 85);
+}
+
+/* BMW menu icon: remove invert in light mode */
+html.light .invert {
+  filter: none !important;
+}
+
+/* Header border visible in light */
+html.light header {
+  border-color: oklch(0.82 0.02 85) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+}
+
+/* Admin panel sidebar/nav areas */
+html.light nav,
+html.light aside {
+  background-color: oklch(0.97 0.005 85) !important;
+  border-color: oklch(0.82 0.02 85) !important;
+}
+
+/* Badge overrides */
+html.light .bg-primary\/10 { background-color: oklch(0.62 0.17 85 / 0.12) !important; }
+html.light .bg-primary\/20 { background-color: oklch(0.62 0.17 85 / 0.2) !important; }
+html.light .bg-green-500\/10 { background-color: oklch(0.65 0.2 145 / 0.12) !important; }
+html.light .bg-red-500\/10 { background-color: oklch(0.55 0.22 25 / 0.12) !important; }
+html.light .bg-yellow-500\/10 { background-color: oklch(0.75 0.15 85 / 0.12) !important; }
+
+
