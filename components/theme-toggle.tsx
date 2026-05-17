@@ -4,8 +4,6 @@ import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
 
-const MANUAL_KEY = 'forturd-theme-manual'
-
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
@@ -19,7 +17,9 @@ export function ThemeToggle() {
   const toggle = () => {
     const next = isDark ? 'light' : 'dark'
     setTheme(next)
-    localStorage.setItem(MANUAL_KEY, '1')
+    // Save choice only for this session — next visit resets to light
+    sessionStorage.setItem('theme-chosen', '1')
+    localStorage.setItem('forturd-theme', next)
   }
 
   return (
