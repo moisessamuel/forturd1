@@ -115,18 +115,20 @@ export async function POST(request: Request) {
           )
         }
 
-        // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
+        // FÓRMULA CORRECTA con snapshot (evita resurrección de giros):
         const totalGirosGratis = Math.floor(approvedTicketsCount / 2)
 
-        // Check how many free spins have been used
+        // Check how many free spins have been used and the boletos snapshot
         const { data: usageData } = await supabase
           .from('ruleta_giros_gratis')
-          .select('giros_usados')
+          .select('giros_usados, boletos_contados')
           .eq('telefono', telefono)
           .single()
 
         const freeSpinsUsed = usageData?.giros_usados || 0
-        const freeSpinsAvailable = totalGirosGratis - freeSpinsUsed
+        const boletosContados = usageData?.boletos_contados || 0
+        const boletosNuevos = Math.max(0, approvedTicketsCount - boletosContados)
+        const freeSpinsAvailable = Math.floor(boletosNuevos / 2)
 
         if (freeSpinsAvailable <= 0) {
           return NextResponse.json(
@@ -148,7 +150,7 @@ export async function POST(request: Request) {
         moneda: 'DOP',
         banco: 'Giro Gratis',
         estado: 'jugado',
-        premio_id: premio_id || null,
+        premio_id: (premio_id && premio_id !== 'no-prize') ? premio_id : null,
         resultado: resultado || null,
         numero_boleto_referencia: numero_boleto,
         es_giro_gratis: true,

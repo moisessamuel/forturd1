@@ -84,22 +84,25 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // FÓRMULA OFICIAL: FLOOR(TotalBoletosAprobados / 2)
-    const girosGratisTotales = Math.floor(totalBoletosAprobados / 2)
-
-    // Count free spins already used (from ruleta_giros_gratis)
+    // Count free spins already used and boletos snapshot (from ruleta_giros_gratis)
     let girosUsados = 0
+    let boletosContados = 0
     if (telefono) {
       const { data: usageData } = await supabase
         .from('ruleta_giros_gratis')
-        .select('giros_usados')
+        .select('giros_usados, boletos_contados')
         .eq('telefono', telefono)
         .single()
       girosUsados = usageData?.giros_usados || 0
+      boletosContados = usageData?.boletos_contados || 0
     }
 
-    // FÓRMULA DE CONTROL: Giradas Restantes = FLOOR(total/2) - usadas
-    const girosDisponibles = Math.max(0, girosGratisTotales - girosUsados)
+    // FÓRMULA CORRECTA con snapshot (evita resurrección de giros al comprar más boletos):
+    // boletosNuevos = boletos aprobados por encima del último snapshot
+    // girosDisponibles = FLOOR(boletosNuevos / 2)
+    const boletosNuevos = Math.max(0, totalBoletosAprobados - boletosContados)
+    const girosGratisTotales = Math.floor(boletosNuevos / 2)
+    const girosDisponibles = girosGratisTotales
 
     return NextResponse.json({
       total_boletos: totalBoletosAprobados,

@@ -36,6 +36,7 @@ export default function VerificarPage() {
   const [singleResult, setSingleResult] = useState<TicketResult | null>(null)
   const [multiResults, setMultiResults] = useState<TicketResult[]>([])
   const [totalApprovedBmw, setTotalApprovedBmw] = useState(0)
+  const [boletosContados, setBoletosContados] = useState(0)
   const [freeSpinsForAll, setFreeSpinsForAll] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
   const [searched, setSearched] = useState(false)
@@ -61,6 +62,7 @@ export default function VerificarPage() {
         if (lastSearchParams.mode === 'telefono' && data.results) {
           setMultiResults(data.results)
           setTotalApprovedBmw(data.totalApprovedBmw || 0)
+          setBoletosContados(data.boletosContados || 0)
           setFreeSpinsForAll(data.freeSpinsForAll || 0)
         } else {
           setSingleResult(data)
@@ -114,6 +116,7 @@ export default function VerificarPage() {
     setSingleResult(null)
     setMultiResults([])
     setTotalApprovedBmw(0)
+    setBoletosContados(0)
     setFreeSpinsForAll(0)
 
     try {
@@ -140,6 +143,7 @@ export default function VerificarPage() {
       if (searchMode === 'telefono' && data.results) {
         setMultiResults(data.results)
         setTotalApprovedBmw(data.totalApprovedBmw || 0)
+        setBoletosContados(data.boletosContados || 0)
         setFreeSpinsForAll(data.freeSpinsForAll || 0)
       } else {
         setSingleResult(data)
@@ -157,6 +161,7 @@ export default function VerificarPage() {
     setSingleResult(null)
     setMultiResults([])
     setTotalApprovedBmw(0)
+    setBoletosContados(0)
     setFreeSpinsForAll(0)
     setSearched(false)
     setLastSearchParams(null)
@@ -364,11 +369,16 @@ export default function VerificarPage() {
               {/* Free Spin Button */}
               <div className="mt-4">
                 {(() => {
-                  const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
-                  const girosUsados = singleResult.giros_gratis_usados ?? 0
                   const isPending = singleResult.estado === 'pendiente'
                   const isCaducado = singleResult.estado === 'caducado' || singleResult.caducado
                   const esBoletoFisico = singleResult.es_boleto_fisico
+                  const isApproved = singleResult.estado === 'aprobado'
+                  const isBmwXTicket = singleResult.sorteo_slug === 'bmw-x6' || singleResult.sorteo_slug === 'bmw-x7'
+                  // BMW combined logic — comes from API for single result
+                  const singleTotalBmw = (singleResult as any).totalApprovedBmw ?? 0
+                  const singleBoletosContados = (singleResult as any).boletosContados ?? 0
+                  const singleFreeSpins = (singleResult as any).freeSpinsForAll ?? 0
+                  const singleBmwIndex = (singleResult as any).bmw_index ?? -1
                   
                   // Caducado tickets show expired message
                   if (isCaducado) {
@@ -412,7 +422,60 @@ export default function VerificarPage() {
                       </>
                     )
                   }
-                  
+
+                  // BMW X6/X7 approved — apply combined logic
+                  if (isBmwXTicket && isApproved) {
+                    if (singleTotalBmw < 2) {
+                      return (
+                        <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-center">
+                          <Button
+                            disabled
+                            className="w-full bg-red-600/50 text-red-200 font-bold cursor-not-allowed mb-3"
+                          >
+                            <Gift className="mr-2 h-5 w-5" />
+                            GIRO GRATIS BLOQUEADO
+                          </Button>
+                          <p className="text-sm text-red-400">
+                            Te falta {2 - singleTotalBmw} boleto{2 - singleTotalBmw !== 1 ? 's' : ''} mas para activar tus giradas gratis.
+                          </p>
+                        </div>
+                      )
+                    }
+
+                    const isUsed = singleBmwIndex >= 0 && singleBmwIndex < singleBoletosContados
+                    if (isUsed) {
+                      return (
+                        <Button
+                          disabled
+                          className="w-full bg-gray-700/60 text-gray-400 font-bold cursor-not-allowed"
+                        >
+                          <Gift className="mr-2 h-5 w-5" />
+                          GIROS USADOS
+                        </Button>
+                      )
+                    }
+
+                    return (
+                      <>
+                        <Button
+                          onClick={() => handleFreeSpinClick(singleResult)}
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-emerald-500 hover:to-green-600"
+                        >
+                          <Gift className="mr-2 h-5 w-5" />
+                          {singleFreeSpins > 0
+                            ? `${singleFreeSpins} GIRO${singleFreeSpins > 1 ? 'S' : ''} GRATIS`
+                            : 'GIROS GRATIS'}
+                        </Button>
+                        <p className="mt-2 text-center text-xs text-muted-foreground">
+                          {singleTotalBmw} boleto{singleTotalBmw !== 1 ? 's' : ''} aprobados = {singleFreeSpins} giro{singleFreeSpins !== 1 ? 's' : ''} gratis disponible{singleFreeSpins !== 1 ? 's' : ''}.
+                        </p>
+                      </>
+                    )
+                  }
+
+                  // Non-BMW ticket fallback
+                  const girosDisponibles = singleResult.giros_gratis_disponibles ?? singleResult.cantidad_boletos
+                  const girosUsados = singleResult.giros_gratis_usados ?? 0
                   return (
                     <>
                       <Button
@@ -458,7 +521,14 @@ export default function VerificarPage() {
               )}
             </div>
 
-            {multiResults.map((ticket, idx) => {
+            {(() => {
+              // bmw_index comes from the API, assigned chronologically (oldest=0)
+              // boletos_contados tells us how many have been "consumed" into spins
+              const totalBmwApproved = multiResults.filter(
+                t => (t.sorteo_slug === 'bmw-x6' || t.sorteo_slug === 'bmw-x7') && t.estado === 'aprobado' && !t.caducado
+              ).length
+
+              return multiResults.map((ticket, idx) => {
               const status = getStatusConfig(ticket.estado)
               const StatusIcon = status.icon
               return (
@@ -503,7 +573,6 @@ export default function VerificarPage() {
                               const esBoletoFisico = ticket.es_boleto_fisico
                               const isApproved = ticket.estado === 'aprobado'
                               const isBmwXTicket = ticket.sorteo_slug === 'bmw-x6' || ticket.sorteo_slug === 'bmw-x7'
-                              const hasEnoughApproved = totalApprovedBmw >= 2
                               
                               // Caducado tickets show expired message
                               if (isCaducado) {
@@ -542,7 +611,7 @@ export default function VerificarPage() {
                               
                               // For approved BMW X6/X7 tickets, check combined count
                               if (isBmwXTicket && isApproved) {
-                                if (!hasEnoughApproved) {
+                                if (totalApprovedBmw < 2) {
                                   return (
                                     <div className="rounded border border-red-500/50 bg-red-500/10 p-3 text-center">
                                       <Button
@@ -559,8 +628,26 @@ export default function VerificarPage() {
                                     </div>
                                   )
                                 }
-                                
-                                // Has enough approved tickets - show green button
+
+                                // bmw_index from API (chronological, oldest=0)
+                                // If bmw_index < boletosContados → already consumed
+                                const bmwIdx = (ticket as any).bmw_index ?? -1
+                                const isUsed = bmwIdx >= 0 && bmwIdx < boletosContados
+
+                                if (isUsed) {
+                                  return (
+                                    <Button
+                                      size="sm"
+                                      disabled
+                                      className="w-full bg-gray-700/60 text-gray-400 font-bold cursor-not-allowed"
+                                    >
+                                      <Gift className="mr-2 h-4 w-4" />
+                                      GIROS USADOS
+                                    </Button>
+                                  )
+                                }
+
+                                // Available giros — show green button
                                 return (
                                   <Button
                                     size="sm"
@@ -568,9 +655,9 @@ export default function VerificarPage() {
                                     className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-emerald-500 hover:to-green-600"
                                   >
                                     <Gift className="mr-2 h-4 w-4" />
-                                    {freeSpinsForAll > 0 
-                                      ? `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS` 
-                                      : 'COMPRAR GIROS'}
+                                    {freeSpinsForAll > 0
+                                      ? `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS`
+                                      : 'GIROS GRATIS'}
                                   </Button>
                                 )
                               }
@@ -593,7 +680,8 @@ export default function VerificarPage() {
                   </CardContent>
                 </Card>
               )
-            })}
+            })
+            })()}
           </div>
         )}
 

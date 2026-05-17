@@ -249,21 +249,44 @@ export async function GET(request: NextRequest) {
       }
 
       // Count approved BMW X6 and BMW X7 tickets
-      const approvedBmwX6Count = results.filter(
-        r => r.sorteo_slug === 'bmw-x6' && r.estado === 'aprobado' && !r.caducado
-      ).length
-      
-      const approvedBmwX7Count = results.filter(
-        r => r.sorteo_slug === 'bmw-x7' && r.estado === 'aprobado' && !r.caducado
-      ).length
-      
-      const totalApprovedBmw = approvedBmwX6Count + approvedBmwX7Count
-      const freeSpinsForAll = Math.floor(totalApprovedBmw / 2)
+      // Sort chronologically ASC so the oldest tickets get the lowest bmw_index
+      // This matches how boletos_contados is incremented (oldest first)
+      const approvedBmwTickets = results
+        .filter(r => (r.sorteo_slug === 'bmw-x6' || r.sorteo_slug === 'bmw-x7') && r.estado === 'aprobado' && !r.caducado)
+        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+
+      const totalApprovedBmw = approvedBmwTickets.length
+
+      // Get boletos_contados from ruleta_giros_gratis (snapshot of already-processed tickets)
+      const cleanPhone = telefono.replace(/[^0-9]/g, '')
+      const { data: girosGratisRecord } = await supabase
+        .from('ruleta_giros_gratis')
+        .select('boletos_contados, giros_usados')
+        .eq('telefono', cleanPhone)
+        .single()
+
+      const boletosContados = girosGratisRecord?.boletos_contados || 0
+      const boletosNuevos = Math.max(0, totalApprovedBmw - boletosContados)
+      const freeSpinsForAll = Math.floor(boletosNuevos / 2)
+
+      // Assign bmw_index to each result so the frontend knows which tickets are "used"
+      // Index is based on chronological order: 0 = oldest, matches boletos_contados
+      const bmwIndexByBoleto: Record<string, number> = {}
+      approvedBmwTickets.forEach((t, i) => {
+        bmwIndexByBoleto[t.numero_boleto] = i
+      })
+
+      // Attach bmw_index to each result
+      const resultsWithIndex = results.map(r => ({
+        ...r,
+        bmw_index: bmwIndexByBoleto[r.numero_boleto] ?? -1,
+      }))
 
       return NextResponse.json({ 
         telefono: telefono, 
-        results,
+        results: resultsWithIndex,
         totalApprovedBmw,
+        boletosContados,
         freeSpinsForAll,
       })
     }
@@ -313,6 +336,71 @@ export async function GET(request: NextRequest) {
         ? { total_boletos: 0, giros_usados: 0, giros_disponibles: 0 }
         : await getFreeSpinCount(supabase, ticket.purchase_group?.id, ticket.numero_boleto)
       
+      // For BMW X6/X7 tickets, apply the combined logic (need total approved across both sorteos)
+      let totalApprovedBmw = 0
+      let boletosContados = 0
+      let freeSpinsForAll = 0
+
+      const isBmwTicket = sorteoSlug === 'bmw-x6' || sorteoSlug === 'bmw-x7'
+      if (isBmwTicket && playerInfo?.id && !esExpired && !esBoletoFisico) {
+        // Count ALL approved BMW X6+X7 tickets for this player
+        const { data: bmwPurchaseGroups } = await supabase
+          .from('purchase_groups')
+          .select('id')
+          .eq('player_id', playerInfo.id)
+          .eq('estado', 'aprobado')
+          .in('sorteo_slug', ['bmw-x6', 'bmw-x7'])
+
+        if (bmwPurchaseGroups && bmwPurchaseGroups.length > 0) {
+          const { count } = await supabase
+            .from('tickets')
+            .select('*', { count: 'exact', head: true })
+            .in('purchase_group_id', bmwPurchaseGroups.map(pg => pg.id))
+          totalApprovedBmw = count || 0
+        }
+
+        // Get snapshot from ruleta_giros_gratis
+        const cleanPhone = (playerInfo.phone_number || '').replace(/[^0-9]/g, '')
+        const { data: girosRecord } = await supabase
+          .from('ruleta_giros_gratis')
+          .select('boletos_contados, giros_usados')
+          .eq('telefono', cleanPhone)
+          .single()
+
+        boletosContados = girosRecord?.boletos_contados || 0
+        const boletosNuevos = Math.max(0, totalApprovedBmw - boletosContados)
+        freeSpinsForAll = Math.floor(boletosNuevos / 2)
+      }
+
+      // Calculate bmw_index for this specific ticket (chronological position among approved BMW tickets)
+      let bmwIndex = -1
+      const isBmwTicketForIndex = sorteoSlug === 'bmw-x6' || sorteoSlug === 'bmw-x7'
+      if (isBmwTicketForIndex && playerInfo?.id && !esExpired && !esBoletoFisico) {
+        const { data: allBmwPGs } = await supabase
+          .from('purchase_groups')
+          .select('id, fecha_aprobacion')
+          .eq('player_id', playerInfo.id)
+          .eq('estado', 'aprobado')
+          .in('sorteo_slug', ['bmw-x6', 'bmw-x7'])
+          .order('fecha_aprobacion', { ascending: true })
+
+        if (allBmwPGs && allBmwPGs.length > 0) {
+          const { data: allBmwTickets } = await supabase
+            .from('tickets')
+            .select('numero_boleto, purchase_group_id')
+            .in('purchase_group_id', allBmwPGs.map(pg => pg.id))
+          
+          if (allBmwTickets) {
+            // Sort by purchase_group order (chronological via fecha_aprobacion)
+            const pgOrder = allBmwPGs.map(pg => pg.id)
+            const sorted = allBmwTickets.sort((a, b) => {
+              return pgOrder.indexOf(a.purchase_group_id) - pgOrder.indexOf(b.purchase_group_id)
+            })
+            bmwIndex = sorted.findIndex(t => t.numero_boleto === ticket.numero_boleto)
+          }
+        }
+      }
+
       return NextResponse.json({
         numero_boleto: ticket.numero_boleto,
         nombre: playerInfo?.nombre || 'N/A',
@@ -330,6 +418,11 @@ export async function GET(request: NextRequest) {
         es_boleto_fisico: esBoletoFisico,
         caducado: esExpired,
         mensaje_caducado: esExpired ? EXPIRED_MESSAGE : undefined,
+        // BMW combined logic fields
+        totalApprovedBmw,
+        boletosContados,
+        freeSpinsForAll,
+        bmw_index: bmwIndex,
       })
     }
 

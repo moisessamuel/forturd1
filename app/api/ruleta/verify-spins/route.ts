@@ -63,17 +63,23 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Count how many FREE spins have been USED for this phone number
+    // Count how many FREE spins have been USED and boletos already snapshot
     const { data: freeSpinUsageData } = await supabase
       .from('ruleta_giros_gratis')
-      .select('giros_usados')
+      .select('giros_usados, boletos_contados')
       .eq('telefono', telefono)
       .single()
-    
+
     const freeSpinsUsed = freeSpinUsageData?.giros_usados || 0
-    // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
-    const totalGirosGratis = Math.floor(approvedTicketsCount / 2)
-    const freeSpinsAvailable = Math.max(0, totalGirosGratis - freeSpinsUsed)
+    const boletosContados = freeSpinUsageData?.boletos_contados || 0
+
+    // FÓRMULA CORRECTA (evita resurrección de giros al comprar más boletos):
+    // boletosNuevos = boletos aprobados por encima del último snapshot
+    // girasNuevas = FLOOR(boletosNuevos / 2)
+    // girosDisponibles = girasNuevas (las anteriores ya están "consumidas" en el snapshot)
+    const boletosNuevos = Math.max(0, approvedTicketsCount - boletosContados)
+    const totalGirosGratis = Math.floor(boletosNuevos / 2)
+    const freeSpinsAvailable = totalGirosGratis
 
     // =============================================
     // STEP 2: Check for PAID spins (ruleta_jugadas - direct spin purchases)
@@ -83,6 +89,7 @@ export async function GET(request: NextRequest) {
       .from('ruleta_jugadas')
       .select('*')
       .eq('telefono', telefono)
+      .eq('es_gratis', false) // Solo giros comprados directamente, NO giros gratis por boletos
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -183,7 +190,7 @@ export async function GET(request: NextRequest) {
     // User has available spins!
     return NextResponse.json({
       success: true,
-      // Free spins from tickets (REGLA: FLOOR(boletos/2))
+      // Free spins from tickets (REGLA: FLOOR(boletosNuevos/2) por snapshot)
       giros_gratis_disponibles: freeSpinsAvailable,
       giros_gratis_totales: totalGirosGratis,
       giros_gratis_usados: freeSpinsUsed,
