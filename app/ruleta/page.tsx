@@ -491,6 +491,14 @@ function RuletaPageContent() {
         // Capture approvedTicketsCount if provided (for 1 boleto case)
         if (data.approvedTicketsCount !== undefined) {
           setApprovedTicketsCount(data.approvedTicketsCount)
+          // Also set freeSpinData for the UI to show the red/green button
+          setFreeSpinData({
+            numero_boleto: 'TICKET',
+            nombre: data.nombre || '',
+            telefono: verificationPhone,
+            used: false,
+          })
+          setCanSpin(false)
         }
         setVerificationError(data.error || 'No se encontraron compras con este número de teléfono.')
       }
