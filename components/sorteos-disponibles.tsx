@@ -120,20 +120,25 @@ export function SorteosDisponibles() {
             </div>
 
             {/* Text below carousel */}
-            <div className="text-center">
+            <div className="text-center px-4">
               <h1 
-                className="mb-5 text-4xl font-extrabold uppercase tracking-tight text-primary md:text-5xl lg:text-6xl"
+                className="mb-6 text-4xl font-extrabold uppercase text-primary md:text-5xl lg:text-6xl"
                 style={{ 
                   textShadow: '0 0 25px rgba(218,165,32,1), 0 0 50px rgba(218,165,32,0.7), 0 0 80px rgba(218,165,32,0.4)',
-                  letterSpacing: '0.03em',
+                  letterSpacing: '0.12em',
+                  lineHeight: '1.15',
                 }}
               >
                 Participa y Gana con FortuRD
               </h1>
               <p 
-                className="mx-auto max-w-2xl text-xl font-extrabold uppercase tracking-tight text-foreground md:text-2xl lg:text-3xl"
+                className="mx-auto max-w-3xl font-extrabold uppercase text-foreground"
                 style={{
                   textShadow: '0 0 15px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.3)',
+                  fontSize: 'clamp(1rem, 2vw, 1.4rem)',
+                  letterSpacing: '0.1em',
+                  lineHeight: '2',
+                  wordSpacing: '0.15em',
                 }}
               >
                 Una de estas BMW puede ser tuya. Compra 2 boletos o más y recibe un giro{' '}
