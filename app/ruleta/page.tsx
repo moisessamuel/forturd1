@@ -1175,7 +1175,11 @@ function RuletaPageContent() {
             )}
 
             {verificationError && !isPendingPayment && (
-              <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-center text-sm text-red-400">
+              <div className={`rounded-lg border p-3 text-center text-sm ${
+                verificationError.includes('Te falta 1 boleto')
+                  ? 'border-red-500/50 bg-red-500/10 text-red-400'
+                  : 'border-red-500/50 bg-red-500/10 text-red-400'
+              }`}>
                 {verificationError}
               </div>
             )}
