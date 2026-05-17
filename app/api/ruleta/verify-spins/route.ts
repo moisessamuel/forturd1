@@ -63,13 +63,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Count how many FREE spins have been USED for this phone number
-    const { data: freeSpinUsageData } = await supabase
-      .from('ruleta_giros_gratis')
-      .select('giros_usados')
-      .eq('telefono', telefono)
-      .single()
-    
     // Count how many FREE spins have been USED and boletos already snapshot
     const { data: freeSpinUsageData } = await supabase
       .from('ruleta_giros_gratis')
