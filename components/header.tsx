@@ -51,15 +51,15 @@ export function Header() {
           <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background"
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary/40 bg-transparent transition-all duration-200 hover:border-primary hover:scale-105"
             aria-label="Menu"
           >
             <Image
-              src="/images/bmw-menu.png"
-              alt="Menu"
-              width={48}
-              height={48}
-              className="h-11 w-11 object-contain invert mix-blend-screen"
+              src="/images/bmw-logo.png"
+              alt="Menu BMW"
+              width={44}
+              height={44}
+              className="h-11 w-11 object-contain"
             />
           </button>
 
