@@ -122,14 +122,23 @@ export function SorteosDisponibles() {
             {/* Text below carousel */}
             <div className="text-center">
               <h1 
-                className="mb-4 text-3xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.9)] md:text-4xl lg:text-5xl"
-                style={{ textShadow: '0 0 20px rgba(218,165,32,0.8), 0 0 40px rgba(218,165,32,0.5), 0 0 60px rgba(218,165,32,0.3)' }}
+                className="mb-5 text-4xl font-bold uppercase tracking-wide text-primary md:text-5xl lg:text-6xl"
+                style={{ 
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  textShadow: '0 0 20px rgba(218,165,32,0.8), 0 0 40px rgba(218,165,32,0.5), 0 0 60px rgba(218,165,32,0.3)',
+                  letterSpacing: '0.04em',
+                }}
               >
-                PARTICIPA Y GANA CON FORTURD
+                Participa y Gana con FortuRD
               </h1>
-              <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg">
-                Una de estas BMW puede ser tuya. Por cada boleto comprado recibes un giro en la ruleta FortuRD. 
-                Participa y aumenta tus oportunidades de ganar increíbles premios.
+              <p 
+                className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg"
+                style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontStyle: 'italic', letterSpacing: '0.01em' }}
+              >
+                Una de estas BMW puede ser tuya. Compra 2 boletos o más y recibe un giro{' '}
+                <span className="not-italic font-semibold text-primary">GRATIS</span> en nuestra Ruleta FortuRD.
+                <br className="hidden md:block" />
+                {' '}Participa hoy y aumenta tus posibilidades de ganar grandes premios y sorpresas exclusivas.
               </p>
             </div>
           </div>

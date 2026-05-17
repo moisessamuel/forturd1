@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { WhatsAppBubble } from '@/components/whatsapp-bubble'
@@ -7,6 +7,11 @@ import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const playfair = Playfair_Display({ 
+  subsets: ["latin"],
+  variable: '--font-playfair',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
@@ -119,7 +124,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased" suppressHydrationWarning>
+      <body className={`font-sans antialiased ${playfair.variable}`} suppressHydrationWarning>
         {children}
         <WhatsAppBubble />
         <Toaster 
