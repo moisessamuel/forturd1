@@ -122,29 +122,32 @@ export function SorteosDisponibles() {
             {/* Text below carousel */}
             <div className="text-center px-4">
               <h1 
-                className="mb-6 text-4xl font-extrabold uppercase text-primary md:text-5xl lg:text-6xl"
+                className="mb-6 text-4xl font-extrabold uppercase text-primary md:text-5xl lg:text-7xl"
                 style={{ 
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontStyle: 'italic',
                   textShadow: '0 0 25px rgba(218,165,32,1), 0 0 50px rgba(218,165,32,0.7), 0 0 80px rgba(218,165,32,0.4)',
-                  letterSpacing: '0.12em',
-                  lineHeight: '1.15',
+                  letterSpacing: '0.06em',
+                  lineHeight: '1.1',
                 }}
               >
                 Participa y Gana con FortuRD
               </h1>
               <p 
-                className="mx-auto max-w-3xl font-extrabold uppercase text-foreground"
+                className="mx-auto max-w-3xl font-semibold text-white"
                 style={{
-                  textShadow: '0 0 15px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.3)',
-                  fontSize: 'clamp(1rem, 2vw, 1.4rem)',
-                  letterSpacing: '0.1em',
-                  lineHeight: '2',
-                  wordSpacing: '0.15em',
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontStyle: 'italic',
+                  textShadow: '0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.5)',
+                  fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)',
+                  letterSpacing: '0.03em',
+                  lineHeight: '1.9',
                 }}
               >
                 Una de estas BMW puede ser tuya. Compra 2 boletos o más y recibe un giro{' '}
                 <span 
-                  className="text-primary"
-                  style={{ textShadow: '0 0 20px rgba(218,165,32,1), 0 0 40px rgba(218,165,32,0.7)' }}
+                  className="font-extrabold not-italic text-primary"
+                  style={{ textShadow: '0 0 20px rgba(218,165,32,1), 0 0 40px rgba(218,165,32,0.8)' }}
                 >
                   GRATIS
                 </span>{' '}
