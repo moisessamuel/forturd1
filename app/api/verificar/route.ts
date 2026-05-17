@@ -249,9 +249,12 @@ export async function GET(request: NextRequest) {
       }
 
       // Count approved BMW X6 and BMW X7 tickets
-      const approvedBmwTickets = results.filter(
-        r => (r.sorteo_slug === 'bmw-x6' || r.sorteo_slug === 'bmw-x7') && r.estado === 'aprobado' && !r.caducado
-      )
+      // Sort chronologically ASC so the oldest tickets get the lowest bmw_index
+      // This matches how boletos_contados is incremented (oldest first)
+      const approvedBmwTickets = results
+        .filter(r => (r.sorteo_slug === 'bmw-x6' || r.sorteo_slug === 'bmw-x7') && r.estado === 'aprobado' && !r.caducado)
+        .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+
       const totalApprovedBmw = approvedBmwTickets.length
 
       // Get boletos_contados from ruleta_giros_gratis (snapshot of already-processed tickets)
@@ -266,9 +269,22 @@ export async function GET(request: NextRequest) {
       const boletosNuevos = Math.max(0, totalApprovedBmw - boletosContados)
       const freeSpinsForAll = Math.floor(boletosNuevos / 2)
 
+      // Assign bmw_index to each result so the frontend knows which tickets are "used"
+      // Index is based on chronological order: 0 = oldest, matches boletos_contados
+      const bmwIndexByBoleto: Record<string, number> = {}
+      approvedBmwTickets.forEach((t, i) => {
+        bmwIndexByBoleto[t.numero_boleto] = i
+      })
+
+      // Attach bmw_index to each result
+      const resultsWithIndex = results.map(r => ({
+        ...r,
+        bmw_index: bmwIndexByBoleto[r.numero_boleto] ?? -1,
+      }))
+
       return NextResponse.json({ 
         telefono: telefono, 
-        results,
+        results: resultsWithIndex,
         totalApprovedBmw,
         boletosContados,
         freeSpinsForAll,

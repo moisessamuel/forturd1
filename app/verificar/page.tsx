@@ -464,17 +464,11 @@ export default function VerificarPage() {
             </div>
 
             {(() => {
-              // Pre-calcular el índice BMW de cada boleto para saber cuáles están "usados"
-              let bmwCounter = 0
-              const bmwIndexMap: Record<number, number> = {}
-              multiResults.forEach((t, i) => {
-                const isBmw = (t.sorteo_slug === 'bmw-x6' || t.sorteo_slug === 'bmw-x7')
-                const isApproved = t.estado === 'aprobado' && !t.caducado
-                if (isBmw && isApproved) {
-                  bmwIndexMap[i] = bmwCounter
-                  bmwCounter++
-                }
-              })
+              // bmw_index comes from the API, assigned chronologically (oldest=0)
+              // boletos_contados tells us how many have been "consumed" into spins
+              const totalBmwApproved = multiResults.filter(
+                t => (t.sorteo_slug === 'bmw-x6' || t.sorteo_slug === 'bmw-x7') && t.estado === 'aprobado' && !t.caducado
+              ).length
 
               return multiResults.map((ticket, idx) => {
               const status = getStatusConfig(ticket.estado)
@@ -521,7 +515,6 @@ export default function VerificarPage() {
                               const esBoletoFisico = ticket.es_boleto_fisico
                               const isApproved = ticket.estado === 'aprobado'
                               const isBmwXTicket = ticket.sorteo_slug === 'bmw-x6' || ticket.sorteo_slug === 'bmw-x7'
-                              const hasEnoughApproved = totalApprovedBmw >= 2
                               
                               // Caducado tickets show expired message
                               if (isCaducado) {
@@ -560,7 +553,7 @@ export default function VerificarPage() {
                               
                               // For approved BMW X6/X7 tickets, check combined count
                               if (isBmwXTicket && isApproved) {
-                                if (!hasEnoughApproved) {
+                                if (totalApprovedBmw < 2) {
                                   return (
                                     <div className="rounded border border-red-500/50 bg-red-500/10 p-3 text-center">
                                       <Button
@@ -578,17 +571,17 @@ export default function VerificarPage() {
                                   )
                                 }
 
-                                // Determine if this specific ticket's giros are already used
-                                const thisBmwIndex = bmwIndexMap[idx]
-                                const isUsedTicket = thisBmwIndex !== undefined && thisBmwIndex < boletosContados
+                                // bmw_index from API (chronological, oldest=0)
+                                // If bmw_index < boletosContados → already consumed
+                                const bmwIdx = (ticket as any).bmw_index ?? -1
+                                const isUsed = bmwIdx >= 0 && bmwIdx < boletosContados
 
-                                if (isUsedTicket) {
-                                  // This ticket's giros were already consumed
+                                if (isUsed) {
                                   return (
                                     <Button
                                       size="sm"
                                       disabled
-                                      className="w-full bg-gray-600/50 text-gray-300 font-bold cursor-not-allowed"
+                                      className="w-full bg-gray-700/60 text-gray-400 font-bold cursor-not-allowed"
                                     >
                                       <Gift className="mr-2 h-4 w-4" />
                                       GIROS USADOS
@@ -596,9 +589,7 @@ export default function VerificarPage() {
                                   )
                                 }
 
-                                // This ticket has available giros - show green button
-                                // Only the LAST new ticket shows the button with the total available count
-                                const isLastNewTicket = thisBmwIndex !== undefined && thisBmwIndex === (bmwCounter - 1)
+                                // Available giros — show green button
                                 return (
                                   <Button
                                     size="sm"
@@ -606,9 +597,9 @@ export default function VerificarPage() {
                                     className="w-full bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold hover:from-emerald-500 hover:to-green-600"
                                   >
                                     <Gift className="mr-2 h-4 w-4" />
-                                    {isLastNewTicket && freeSpinsForAll > 0
+                                    {freeSpinsForAll > 0
                                       ? `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS`
-                                      : `${freeSpinsForAll} GIRO${freeSpinsForAll > 1 ? 'S' : ''} GRATIS`}
+                                      : 'GIROS GRATIS'}
                                   </Button>
                                 )
                               }

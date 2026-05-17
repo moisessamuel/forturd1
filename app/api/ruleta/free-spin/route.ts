@@ -150,7 +150,7 @@ export async function POST(request: Request) {
         moneda: 'DOP',
         banco: 'Giro Gratis',
         estado: 'jugado',
-        premio_id: premio_id || null,
+        premio_id: (premio_id && premio_id !== 'no-prize') ? premio_id : null,
         resultado: resultado || null,
         numero_boleto_referencia: numero_boleto,
         es_giro_gratis: true,
