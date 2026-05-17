@@ -122,23 +122,29 @@ export function SorteosDisponibles() {
             {/* Text below carousel */}
             <div className="text-center">
               <h1 
-                className="mb-5 text-4xl font-bold uppercase tracking-wide text-primary md:text-5xl lg:text-6xl"
+                className="mb-5 text-4xl font-extrabold uppercase tracking-tight text-primary md:text-5xl lg:text-6xl"
                 style={{ 
-                  fontFamily: 'var(--font-playfair), Georgia, serif',
-                  textShadow: '0 0 20px rgba(218,165,32,0.8), 0 0 40px rgba(218,165,32,0.5), 0 0 60px rgba(218,165,32,0.3)',
-                  letterSpacing: '0.04em',
+                  textShadow: '0 0 25px rgba(218,165,32,1), 0 0 50px rgba(218,165,32,0.7), 0 0 80px rgba(218,165,32,0.4)',
+                  letterSpacing: '0.03em',
                 }}
               >
                 Participa y Gana con FortuRD
               </h1>
               <p 
-                className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg"
-                style={{ fontFamily: 'var(--font-playfair), Georgia, serif', fontStyle: 'italic', letterSpacing: '0.01em' }}
+                className="mx-auto max-w-2xl text-xl font-extrabold uppercase tracking-tight text-foreground md:text-2xl lg:text-3xl"
+                style={{
+                  textShadow: '0 0 15px rgba(255,255,255,0.6), 0 0 30px rgba(255,255,255,0.3)',
+                }}
               >
                 Una de estas BMW puede ser tuya. Compra 2 boletos o más y recibe un giro{' '}
-                <span className="not-italic font-semibold text-primary">GRATIS</span> en nuestra Ruleta FortuRD.
-                <br className="hidden md:block" />
-                {' '}Participa hoy y aumenta tus posibilidades de ganar grandes premios y sorpresas exclusivas.
+                <span 
+                  className="text-primary"
+                  style={{ textShadow: '0 0 20px rgba(218,165,32,1), 0 0 40px rgba(218,165,32,0.7)' }}
+                >
+                  GRATIS
+                </span>{' '}
+                en nuestra Ruleta FortuRD.{' '}
+                Participa hoy y aumenta tus posibilidades de ganar grandes premios y sorpresas exclusivas.
               </p>
             </div>
           </div>
