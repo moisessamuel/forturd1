@@ -162,15 +162,7 @@ export async function GET(request: NextRequest) {
     // Calculate total available spins (free + paid)
     const totalSpinsAvailable = freeSpinsAvailable + paidSpinsAvailable
 
-    // NEW LOGIC: Require 2+ approved tickets for free spins
-    // If user has only 1 approved ticket, they cannot use free spins yet
-    if (approvedTicketsCount === 1) {
-      return NextResponse.json({
-        success: false,
-        approvedTicketsCount: 1,
-        error: 'Te falta 1 boleto más para activar tus giradas gratis.'
-      })
-    }    // If no spins available at all
+    // If no spins available at all
     if (totalSpinsAvailable <= 0) {
       // Check if they have pending items to inform them
       if (pendingTicketsCount > 0) {
