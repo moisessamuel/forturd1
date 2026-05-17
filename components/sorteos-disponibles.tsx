@@ -120,15 +120,22 @@ export function SorteosDisponibles() {
             </div>
 
             {/* Text below carousel */}
-            <div className="text-center px-4">
+            <div className="text-center px-2">
               <h1 
-                className="mb-6 text-4xl font-extrabold uppercase text-primary md:text-5xl lg:text-7xl"
+                className="mb-6 w-full font-extrabold uppercase text-primary"
                 style={{ 
                   fontFamily: 'var(--font-playfair), Georgia, serif',
                   fontStyle: 'italic',
                   textShadow: '0 0 25px rgba(218,165,32,1), 0 0 50px rgba(218,165,32,0.7), 0 0 80px rgba(218,165,32,0.4)',
                   letterSpacing: '0.06em',
                   lineHeight: '1.1',
+                  fontSize: 'clamp(2rem, 7.5vw, 6rem)',
+                  display: 'block',
+                  whiteSpace: 'nowrap',
+                  transform: 'scaleX(1)',
+                  width: '100%',
+                  textAlign: 'center',
+                  wordSpacing: 'calc((100% - 30ch) / 5)',
                 }}
               >
                 Participa y Gana con FortuRD
