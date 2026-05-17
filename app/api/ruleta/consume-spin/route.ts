@@ -46,37 +46,44 @@ export async function POST(request: Request) {
       .eq('phone_number', telefono)
       .single()
 
-    // 1B. Calcular GIROS GRATIS por boletos aprobados DE SORTEOS BMW ÚNICAMENTE
-    // IMPORTANTE: Solo boletos de bmw-x6 y bmw-x7 generan giros gratis
-    // Las compras directas de giros NO generan giros adicionales
-    let totalGirosGratis = 0
-    if (player) {
+    // 1B+1C. Obtener registro de giros gratis y calcular disponibles con fórmula correcta
+    const { data: freeSpinRecord } = await supabase
+      .from('ruleta_giros_gratis')
+      .select('id, giros_usados, boletos_contados')
+      .eq('telefono', telefono)
+      .single()
+
+    // FÓRMULA CORRECTA (evita resurrección de giros al comprar más boletos):
+    // - boletos_contados: snapshot del total de boletos cuando se consumió el último giro
+    // - boletosNuevos: boletos aprobados DESDE el último snapshot
+    // - girasNuevas: FLOOR(boletosNuevos / 2) → giradas que generan los boletos nuevos
+    // - girosDisponibles = girasNuevas (los usados ya están "cocinados" en boletos_contados)
+    const girosGratisUsados = freeSpinRecord?.giros_usados || 0
+    const boletosContados = freeSpinRecord?.boletos_contados || 0
+
+    // Boletos aprobados que aún no han sido "procesados" hacia giradas
+    // Solo contamos los boletos por encima del snapshot anterior
+    const totalBoletosAprobados = player ? await (async () => {
       const { data: purchaseGroups } = await supabase
         .from('purchase_groups')
         .select('id')
         .eq('player_id', player.id)
         .eq('estado', 'aprobado')
-        .in('sorteo_slug', ['bmw-x6', 'bmw-x7']) // SOLO sorteos BMW
+        .in('sorteo_slug', ['bmw-x6', 'bmw-x7'])
+      if (!purchaseGroups || purchaseGroups.length === 0) return 0
+      const { count } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .in('purchase_group_id', purchaseGroups.map(pg => pg.id))
+      return count || 0
+    })() : 0
 
-      if (purchaseGroups && purchaseGroups.length > 0) {
-        const { count } = await supabase
-          .from('tickets')
-          .select('*', { count: 'exact', head: true })
-          .in('purchase_group_id', purchaseGroups.map(pg => pg.id))
-        // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
-        totalGirosGratis = Math.floor((count || 0) / 2)
-      }
-    }
-
-    // 1C. Obtener giros gratis YA USADOS
-    const { data: freeSpinRecord } = await supabase
-      .from('ruleta_giros_gratis')
-      .select('id, giros_usados')
-      .eq('telefono', telefono)
-      .single()
-    
-    const girosGratisUsados = freeSpinRecord?.giros_usados || 0
-    const girosGratisDisponibles = Math.max(0, totalGirosGratis - girosGratisUsados)
+    // boletosNuevos = boletos que aún no han generado giradas
+    const boletosNuevos = Math.max(0, totalBoletosAprobados - boletosContados)
+    // girasNuevas = giradas que generan los boletos nuevos (FLOOR / 2)
+    const girasNuevas = Math.floor(boletosNuevos / 2)
+    // Giradas disponibles = solo las nuevas (las anteriores ya fueron usadas en snapshots previos)
+    const girosGratisDisponibles = girasNuevas
 
     // 1D. Calcular GIROS PAGADOS (solo de la jugada activa más reciente)
     const { data: jugadas } = await supabase
@@ -141,22 +148,26 @@ export async function POST(request: Request) {
     if (girosGratisDisponibles > 0) {
       // CONSUMIR UN GIRO GRATIS
       tipoConsumido = 'gratis'
-      const newGirosUsados = girosGratisUsados + 1
       nuevosGirosGratisRestantes = girosGratisDisponibles - 1
 
+      // Al consumir 1 girada gratis, avanzamos el snapshot en 2 boletos
+      // (porque 2 boletos = 1 girada). Esto previene que esos 2 boletos
+      // vuelvan a generar una girada en el futuro.
+      const newGirosUsados = girosGratisUsados + 1
+      const newBoletosContados = boletosContados + 2
+
       if (freeSpinRecord) {
-        // Actualizar registro existente con OPTIMISTIC LOCK
         const { error: updateError, count } = await supabase
           .from('ruleta_giros_gratis')
           .update({
             giros_usados: newGirosUsados,
+            boletos_contados: newBoletosContados,
             updated_at: new Date().toISOString(),
           })
           .eq('id', freeSpinRecord.id)
-          .eq('giros_usados', girosGratisUsados) // LOCK: solo actualiza si no cambió
+          .eq('giros_usados', girosGratisUsados) // LOCK optimista
 
         if (updateError || count === 0) {
-          // Race condition detectada - otro request ya consumió un giro
           return NextResponse.json({
             success: false,
             error: 'Error de sincronización. Por favor intenta de nuevo.',
@@ -164,16 +175,15 @@ export async function POST(request: Request) {
           })
         }
       } else {
-        // Crear nuevo registro
         const { error: insertError } = await supabase
           .from('ruleta_giros_gratis')
           .insert({
             telefono,
             giros_usados: 1,
+            boletos_contados: boletosContados + 2, // 2 boletos = 1 girada
           })
 
         if (insertError) {
-          // Podría ser un conflicto si otro request creó el registro primero
           return NextResponse.json({
             success: false,
             error: 'Error al registrar giro. Por favor intenta de nuevo.',

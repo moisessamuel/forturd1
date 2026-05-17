@@ -70,10 +70,23 @@ export async function GET(request: NextRequest) {
       .eq('telefono', telefono)
       .single()
     
+    // Count how many FREE spins have been USED and boletos already snapshot
+    const { data: freeSpinUsageData } = await supabase
+      .from('ruleta_giros_gratis')
+      .select('giros_usados, boletos_contados')
+      .eq('telefono', telefono)
+      .single()
+
     const freeSpinsUsed = freeSpinUsageData?.giros_usados || 0
-    // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
-    const totalGirosGratis = Math.floor(approvedTicketsCount / 2)
-    const freeSpinsAvailable = Math.max(0, totalGirosGratis - freeSpinsUsed)
+    const boletosContados = freeSpinUsageData?.boletos_contados || 0
+
+    // FÓRMULA CORRECTA (evita resurrección de giros al comprar más boletos):
+    // boletosNuevos = boletos aprobados por encima del último snapshot
+    // girasNuevas = FLOOR(boletosNuevos / 2)
+    // girosDisponibles = girasNuevas (las anteriores ya están "consumidas" en el snapshot)
+    const boletosNuevos = Math.max(0, approvedTicketsCount - boletosContados)
+    const totalGirosGratis = Math.floor(boletosNuevos / 2)
+    const freeSpinsAvailable = totalGirosGratis
 
     // =============================================
     // STEP 2: Check for PAID spins (ruleta_jugadas - direct spin purchases)
@@ -183,7 +196,7 @@ export async function GET(request: NextRequest) {
     // User has available spins!
     return NextResponse.json({
       success: true,
-      // Free spins from tickets (REGLA: FLOOR(boletos/2))
+      // Free spins from tickets (REGLA: FLOOR(boletosNuevos/2) por snapshot)
       giros_gratis_disponibles: freeSpinsAvailable,
       giros_gratis_totales: totalGirosGratis,
       giros_gratis_usados: freeSpinsUsed,
