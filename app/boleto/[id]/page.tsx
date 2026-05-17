@@ -161,7 +161,7 @@ export default function BoletoPage() {
         <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/images/forturd-logo.png"
+              src="/images/forturd-logo-new.png"
               alt="FortuRD"
               width={120}
               height={40}

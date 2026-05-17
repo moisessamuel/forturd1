@@ -120,16 +120,39 @@ export function SorteosDisponibles() {
             </div>
 
             {/* Text below carousel */}
-            <div className="text-center">
+            <div className="text-center px-4">
               <h1 
-                className="mb-4 text-3xl font-extrabold uppercase tracking-wide text-primary drop-shadow-[0_0_15px_rgba(218,165,32,0.9)] md:text-4xl lg:text-5xl"
-                style={{ textShadow: '0 0 20px rgba(218,165,32,0.8), 0 0 40px rgba(218,165,32,0.5), 0 0 60px rgba(218,165,32,0.3)' }}
+                className="mb-6 text-4xl font-extrabold uppercase text-primary md:text-5xl lg:text-7xl"
+                style={{ 
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontStyle: 'italic',
+                  textShadow: '0 0 25px rgba(218,165,32,1), 0 0 50px rgba(218,165,32,0.7), 0 0 80px rgba(218,165,32,0.4)',
+                  letterSpacing: '0.06em',
+                  lineHeight: '1.1',
+                }}
               >
-                PARTICIPA Y GANA CON FORTURD
+                Participa y Gana con FortuRD
               </h1>
-              <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg">
-                Una de estas BMW puede ser tuya. Por cada boleto comprado recibes un giro en la ruleta FortuRD. 
-                Participa y aumenta tus oportunidades de ganar increíbles premios.
+              <p 
+                className="mx-auto max-w-3xl font-semibold text-white"
+                style={{
+                  fontFamily: 'var(--font-playfair), Georgia, serif',
+                  fontStyle: 'italic',
+                  textShadow: '0 0 20px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.5)',
+                  fontSize: 'clamp(1.15rem, 2.2vw, 1.6rem)',
+                  letterSpacing: '0.03em',
+                  lineHeight: '1.9',
+                }}
+              >
+                Una de estas BMW puede ser tuya. Compra 2 boletos o más y recibe un giro{' '}
+                <span 
+                  className="font-extrabold not-italic text-primary"
+                  style={{ textShadow: '0 0 20px rgba(218,165,32,1), 0 0 40px rgba(218,165,32,0.8)' }}
+                >
+                  GRATIS
+                </span>{' '}
+                en nuestra Ruleta FortuRD.{' '}
+                Participa hoy y aumenta tus posibilidades de ganar grandes premios y sorpresas exclusivas.
               </p>
             </div>
           </div>

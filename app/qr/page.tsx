@@ -211,7 +211,7 @@ export default function QRPage() {
         <CardContent className="flex flex-col items-center p-8">
           {/* Logo */}
           <Image
-            src="/images/forturd-logo.png"
+            src="/images/forturd-logo-new.png"
             alt="FortuRD"
             width={300}
             height={100}

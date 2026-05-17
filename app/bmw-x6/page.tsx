@@ -108,7 +108,7 @@ export default function BMWX6Page() {
           </Link>
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/images/forturd-logo.png"
+              src="/images/forturd-logo-new.png"
               alt="FortuRD"
               width={120}
               height={40}
