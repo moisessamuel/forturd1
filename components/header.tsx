@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Home, Phone, Search } from 'lucide-react'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -42,19 +43,23 @@ export function Header() {
           />
         </Link>
 
-        {/* BMW Menu Button */}
-        <div className="relative" ref={menuRef}>
+        {/* Right side: Theme Toggle + BMW Menu */}
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+
+          {/* BMW Menu Button */}
+          <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary bg-background"
+            className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-primary/40 bg-transparent transition-all duration-200 hover:border-primary hover:scale-105"
             aria-label="Menu"
           >
             <Image
-              src="/images/bmw-menu.png"
-              alt="Menu"
-              width={48}
-              height={48}
-              className="h-11 w-11 object-contain invert mix-blend-screen"
+              src="/images/bmw-logo.png"
+              alt="Menu BMW"
+              width={44}
+              height={44}
+              className="h-11 w-11 object-contain dark:mix-blend-screen"
             />
           </button>
 
@@ -91,6 +96,7 @@ export function Header() {
               </a>
             </div>
           )}
+          </div>
         </div>
       </div>
     </header>

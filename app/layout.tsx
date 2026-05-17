@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'sonner'
 import { WhatsAppBubble } from '@/components/whatsapp-bubble'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -61,7 +62,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" className="bg-background" suppressHydrationWarning>
       <head>
         <meta property="og:image" content="https://www.forturd1.com/images/og-image.png" />
         <meta property="og:image:width" content="1200" />
@@ -125,20 +126,23 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans antialiased ${playfair.variable}`} suppressHydrationWarning>
-        {children}
-        <WhatsAppBubble />
-        <Toaster 
-          position="top-center" 
-          richColors 
-          toastOptions={{
-            style: {
-              background: 'oklch(0.12 0 0)',
-              border: '1px solid oklch(0.25 0.02 85)',
-              color: 'oklch(0.95 0 0)',
-            },
-          }}
-        />
-        <Analytics />
+        <ThemeProvider>
+          {children}
+          <WhatsAppBubble />
+          <Toaster 
+            position="top-center" 
+            richColors 
+            theme="system"
+            toastOptions={{
+              style: {
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                color: 'var(--foreground)',
+              },
+            }}
+          />
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   )

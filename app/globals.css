@@ -2,16 +2,16 @@
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant light (&:is(.light *));
 
 :root {
-  /* FortuRD Dark Theme - Black & Gold */
+  /* FortuRD Dark Theme - Black & Gold (default) */
   --background: oklch(0.08 0 0);
   --foreground: oklch(0.95 0 0);
   --card: oklch(0.12 0 0);
   --card-foreground: oklch(0.95 0 0);
   --popover: oklch(0.12 0 0);
   --popover-foreground: oklch(0.95 0 0);
-  /* Gold primary */
   --primary: oklch(0.75 0.15 85);
   --primary-foreground: oklch(0.1 0 0);
   --secondary: oklch(0.18 0 0);
@@ -22,7 +22,6 @@
   --accent-foreground: oklch(0.1 0 0);
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.95 0 0);
-  /* Green for success */
   --success: oklch(0.65 0.2 145);
   --success-foreground: oklch(0.95 0 0);
   --border: oklch(0.25 0.02 85);
@@ -79,6 +78,49 @@
   --sidebar-ring: oklch(0.75 0.15 85);
 }
 
+/* ============================================================
+   FortuRD LIGHT THEME — Day Mode
+   Premium white/cream palette with gold accents
+   ============================================================ */
+.light {
+  --background: oklch(0.97 0.005 85);
+  --foreground: oklch(0.05 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.05 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.05 0 0);
+  /* Gold primary — slightly deeper for contrast on white */
+  --primary: oklch(0.62 0.17 85);
+  --primary-foreground: oklch(0.05 0 0);
+  --secondary: oklch(0.93 0.01 85);
+  --secondary-foreground: oklch(0.05 0 0);
+  --muted: oklch(0.93 0.005 85);
+  --muted-foreground: oklch(0.35 0.01 85);
+  --accent: oklch(0.62 0.17 85);
+  --accent-foreground: oklch(0.05 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --success: oklch(0.5 0.2 145);
+  --success-foreground: oklch(1 0 0);
+  --border: oklch(0.82 0.02 85);
+  --input: oklch(0.95 0.005 85);
+  --ring: oklch(0.62 0.17 85);
+  --chart-1: oklch(0.62 0.17 85);
+  --chart-2: oklch(0.5 0.2 145);
+  --chart-3: oklch(0.55 0.22 25);
+  --chart-4: oklch(0.5 0.15 260);
+  --chart-5: oklch(0.6 0.14 35);
+  --sidebar: oklch(0.95 0.008 85);
+  --sidebar-foreground: oklch(0.05 0 0);
+  --sidebar-primary: oklch(0.62 0.17 85);
+  --sidebar-primary-foreground: oklch(0.05 0 0);
+  --sidebar-accent: oklch(0.9 0.01 85);
+  --sidebar-accent-foreground: oklch(0.05 0 0);
+  --sidebar-border: oklch(0.82 0.02 85);
+  --sidebar-ring: oklch(0.62 0.17 85);
+}
+
+
 @theme inline {
   --font-sans: 'Geist', 'Geist Fallback', system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
@@ -125,6 +167,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.3s ease, box-shadow 0.4s ease;
   }
   body {
     @apply bg-background text-foreground;
@@ -181,3 +224,251 @@
     radial-gradient(ellipse at 80% 20%, oklch(0.75 0.15 85 / 0.05) 0%, transparent 50%),
     linear-gradient(180deg, oklch(0.08 0 0) 0%, oklch(0.06 0 0) 100%);
 }
+
+.light .abstract-bg {
+  background-image: 
+    radial-gradient(ellipse at 20% 80%, oklch(0.62 0.17 85 / 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(0.62 0.17 85 / 0.05) 0%, transparent 50%),
+    linear-gradient(180deg, oklch(0.97 0.005 85) 0%, oklch(0.95 0.008 85) 100%);
+}
+
+/* Light mode: force white text → black, keep gold text as-is */
+html.light .text-white,
+html.light .text-foreground {
+  color: oklch(0.05 0 0) !important;
+}
+
+html.light .text-muted-foreground {
+  color: oklch(0.35 0.01 85) !important;
+}
+
+/* Buttons/badges with white text on gold bg — keep white */
+html.light .bg-primary .text-white,
+html.light .bg-accent .text-white,
+html.light button.text-white {
+  color: oklch(0.05 0 0) !important;
+}
+
+/* Gold/primary text stays gold */
+html.light .text-primary,
+html.light .text-accent,
+html.light .text-yellow-500,
+html.light .text-yellow-400,
+html.light .text-amber-500,
+html.light .text-amber-400 {
+  /* keep their own color — no override */
+}
+
+
+/* Gold text adapts in light mode */
+.light .gold-text {
+  color: oklch(0.55 0.18 85);
+}
+
+/* Light mode card shadows */
+.light .shadow-black\/20 {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.light .shadow-black\/30 {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+/* ============================================================
+   LIGHT MODE — Comprehensive overrides for hardcoded dark colors
+   Covers: black backgrounds, zinc, gray, slate, neutral variants
+   Does NOT touch: green (success), red (error), gold (primary)
+   ============================================================ */
+
+/* Dark backgrounds → white/light in day mode */
+html.light .bg-black,
+html.light .bg-black\/80,
+html.light .bg-black\/70,
+html.light .bg-black\/60,
+html.light .bg-black\/50,
+html.light .bg-black\/40,
+html.light .bg-black\/30,
+html.light .bg-black\/20,
+html.light .bg-black\/10 {
+  background-color: rgba(255,255,255, var(--tw-bg-opacity, 1)) !important;
+}
+
+html.light .bg-zinc-900,
+html.light .bg-zinc-800,
+html.light .bg-zinc-700 {
+  background-color: oklch(0.97 0.005 85) !important;
+}
+
+html.light .bg-zinc-900\/80,
+html.light .bg-zinc-900\/90 {
+  background-color: oklch(0.95 0.005 85 / 0.95) !important;
+}
+
+html.light .bg-gray-900,
+html.light .bg-gray-800,
+html.light .bg-gray-700 {
+  background-color: oklch(0.95 0.005 85) !important;
+}
+
+html.light .bg-gray-700\/60,
+html.light .bg-gray-800\/60 {
+  background-color: oklch(0.88 0.008 85 / 0.8) !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-800,
+html.light .bg-slate-700 {
+  background-color: oklch(0.95 0.003 240) !important;
+}
+
+html.light .bg-neutral-900,
+html.light .bg-neutral-800,
+html.light .bg-neutral-700 {
+  background-color: oklch(0.95 0 0) !important;
+}
+
+/* Text on dark-turned-light backgrounds */
+html.light .bg-zinc-900 *,
+html.light .bg-zinc-800 *,
+html.light .bg-gray-900 *,
+html.light .bg-gray-800 *,
+html.light .bg-slate-900 *,
+html.light .bg-slate-800 * {
+  color: oklch(0.15 0 0);
+}
+
+/* Borders in light mode */
+html.light .border-white\/10,
+html.light .border-white\/5 {
+  border-color: oklch(0.82 0.02 85) !important;
+}
+
+html.light .border-gray-700,
+html.light .border-gray-800,
+html.light .border-zinc-700,
+html.light .border-zinc-800 {
+  border-color: oklch(0.82 0.02 85) !important;
+}
+
+/* Gray text overrides */
+html.light .text-gray-400,
+html.light .text-gray-300,
+html.light .text-zinc-400,
+html.light .text-zinc-300,
+html.light .text-neutral-400,
+html.light .text-slate-400 {
+  color: oklch(0.35 0.01 85) !important;
+}
+
+html.light .text-gray-500,
+html.light .text-zinc-500,
+html.light .text-neutral-500 {
+  color: oklch(0.45 0.01 85) !important;
+}
+
+html.light .text-gray-200,
+html.light .text-gray-100,
+html.light .text-zinc-200,
+html.light .text-zinc-100 {
+  color: oklch(0.2 0 0) !important;
+}
+
+/* Overlay divs commonly used as dark glass panels */
+html.light .backdrop-blur-sm,
+html.light .backdrop-blur-md,
+html.light .backdrop-blur-lg,
+html.light .backdrop-blur-xl {
+  background-color: rgba(255,255,255,0.75) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* Input fields */
+html.light input,
+html.light textarea,
+html.light select {
+  background-color: oklch(1 0 0) !important;
+  color: oklch(0.1 0 0) !important;
+  border-color: oklch(0.80 0.02 85) !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: oklch(0.55 0.01 85) !important;
+}
+
+/* Table overrides */
+html.light thead,
+html.light th {
+  background-color: oklch(0.93 0.01 85) !important;
+  color: oklch(0.15 0 0) !important;
+}
+
+html.light tr:nth-child(even) td {
+  background-color: oklch(0.96 0.004 85) !important;
+}
+
+html.light tr:hover td {
+  background-color: oklch(0.93 0.008 85) !important;
+}
+
+/* Modal/dialog overlays */
+html.light [role="dialog"],
+html.light [data-radix-dialog-content] {
+  background-color: oklch(1 0 0) !important;
+  border-color: oklch(0.82 0.02 85) !important;
+  color: oklch(0.1 0 0) !important;
+}
+
+/* Ruleta canvas — keep dark for visibility */
+html.light canvas {
+  filter: none;
+}
+
+/* Giros usados button — adapt for light mode */
+html.light .bg-gray-700\/60 {
+  background-color: oklch(0.88 0.005 85 / 0.8) !important;
+  color: oklch(0.4 0 0) !important;
+}
+
+/* Mix-blend override for logos on light backgrounds */
+html.light .mix-blend-lighten {
+  mix-blend-mode: multiply;
+}
+
+/* Scrollbar light mode */
+html.light ::-webkit-scrollbar-track {
+  background: oklch(0.93 0.005 85);
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.05 85);
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.62 0.17 85);
+}
+
+/* BMW menu icon: remove invert in light mode */
+html.light .invert {
+  filter: none !important;
+}
+
+/* Header border visible in light */
+html.light header {
+  border-color: oklch(0.82 0.02 85) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+}
+
+/* Admin panel sidebar/nav areas */
+html.light nav,
+html.light aside {
+  background-color: oklch(0.97 0.005 85) !important;
+  border-color: oklch(0.82 0.02 85) !important;
+}
+
+/* Badge overrides */
+html.light .bg-primary\/10 { background-color: oklch(0.62 0.17 85 / 0.12) !important; }
+html.light .bg-primary\/20 { background-color: oklch(0.62 0.17 85 / 0.2) !important; }
+html.light .bg-green-500\/10 { background-color: oklch(0.65 0.2 145 / 0.12) !important; }
+html.light .bg-red-500\/10 { background-color: oklch(0.55 0.22 25 / 0.12) !important; }
+html.light .bg-yellow-500\/10 { background-color: oklch(0.75 0.15 85 / 0.12) !important; }
+
+
