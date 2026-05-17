@@ -84,9 +84,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // FÓRMULA OFICIAL: FLOOR(TotalBoletosAprobados / 2)
-    const girosGratisTotales = Math.floor(totalBoletosAprobados / 2)
-
     // Count free spins already used and boletos snapshot (from ruleta_giros_gratis)
     let girosUsados = 0
     let boletosContados = 0
