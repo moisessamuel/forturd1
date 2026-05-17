@@ -434,18 +434,17 @@ function RuletaPageContent() {
           setFreeSpinsRemaining(freeSpins)
           setPaidSpinsRemaining(paidSpins)
           
-          if (freeSpins > 0) {
-            // Create a free spin data object for the session (solo para tracking, NO para conteo)
-            const newFreeSpinData = {
-              numero_boleto: 'TICKET',
-              nombre: data.nombre || '',
-              telefono: verificationPhone,
-              used: false,
-              // NO guardamos giros_disponibles aquí - siempre consultamos al servidor
-            }
-            setFreeSpinData(newFreeSpinData)
-            // NO guardamos en sessionStorage - el servidor es la fuente de verdad
+          // Always create a free spin data object for UI display (even if 0 spins)
+          // This allows us to show red/green button states based on approvedTicketsCount
+          const newFreeSpinData = {
+            numero_boleto: 'TICKET',
+            nombre: data.nombre || '',
+            telefono: verificationPhone,
+            used: false,
+            // NO guardamos giros_disponibles aquí - siempre consultamos al servidor
           }
+          setFreeSpinData(newFreeSpinData)
+          // NO guardamos en sessionStorage - el servidor es la fuente de verdad
           
           // Set jugada_id if they have paid spins
           if (paidSpins > 0) {
