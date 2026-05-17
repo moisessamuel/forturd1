@@ -71,7 +71,9 @@ export async function GET(request: NextRequest) {
       .single()
     
     const freeSpinsUsed = freeSpinUsageData?.giros_usados || 0
-    const freeSpinsAvailable = Math.max(0, approvedTicketsCount - freeSpinsUsed)
+    // REGLA OFICIAL: cada 2 boletos aprobados = 1 girada gratis
+    const totalGirosGratis = Math.floor(approvedTicketsCount / 2)
+    const freeSpinsAvailable = Math.max(0, totalGirosGratis - freeSpinsUsed)
 
     // =============================================
     // STEP 2: Check for PAID spins (ruleta_jugadas - direct spin purchases)
@@ -168,9 +170,7 @@ export async function GET(request: NextRequest) {
         approvedTicketsCount: 1,
         error: 'Te falta 1 boleto más para activar tus giradas gratis.'
       })
-    }
-
-    // If no spins available at all
+    }    // If no spins available at all
     if (totalSpinsAvailable <= 0) {
       // Check if they have pending items to inform them
       if (pendingTicketsCount > 0) {
@@ -191,9 +191,9 @@ export async function GET(request: NextRequest) {
     // User has available spins!
     return NextResponse.json({
       success: true,
-      // Free spins from tickets
+      // Free spins from tickets (REGLA: FLOOR(boletos/2))
       giros_gratis_disponibles: freeSpinsAvailable,
-      giros_gratis_totales: approvedTicketsCount,
+      giros_gratis_totales: totalGirosGratis,
       giros_gratis_usados: freeSpinsUsed,
       // Paid spins
       giros_pagados_disponibles: paidSpinsAvailable,
