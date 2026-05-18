@@ -836,53 +836,17 @@ function RuletaPageContent() {
         )}
 
         {/* Premios Disponibles */}
-        <div className="mt-12">
-          <div className="mb-8 flex items-center justify-center gap-4">
-            <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary opacity-60" />
-            <h2 className="text-center text-3xl font-bold">
-              <span className="text-foreground">PREMIOS</span>
-              <span className="ml-2 text-primary">DISPONIBLES</span>
-            </h2>
-            <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary opacity-60" />
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
-            <PrizeCard 
-              nombre="1 Boleto del Sorteo" 
-              imagen="/images/premio-boleto.png"
-            />
-            <PrizeCard 
-              nombre="1 Boleto BMW X6 + 1 Boleto BMW X7" 
-              imagen="/images/premio-bmw.png"
-            />
-            <PrizeCard 
-              nombre="RD$5,000" 
-              imagen="/images/premio-dinero-pequeno.png"
-            />
-            <PrizeCard 
-              nombre="RD$100,000" 
-              imagen="/images/premio-dinero-grande.png"
-            />
-            <PrizeCard 
-              nombre="iPhone" 
-              imagen="/images/premio-iphone.png"
-            />
-            <PrizeCard 
-              nombre="Motor" 
-              imagen="/images/premio-motor.png"
-            />
-            <PrizeCard 
-              nombre="PS5" 
-              imagen="/images/premio-ps5.png"
-            />
-            <PrizeCard 
-              nombre="Smart TV 4K" 
-              imagen="/images/premio-tv.png"
-            />
-            <PrizeCard 
-              nombre="Scooter Eléctrica" 
-              imagen="/images/premio-scooter.png"
-            />
-          </div>
+        <div className="mt-12 group relative overflow-hidden rounded-lg transition-transform duration-300 hover:scale-105">
+          <Image
+            src="/images/premios-disponibles-section.png"
+            alt="Premios Disponibles"
+            width={1600}
+            height={900}
+            priority={false}
+            quality={95}
+            className="w-full h-auto object-contain"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 1200px"
+          />
         </div>
       </div>
 
