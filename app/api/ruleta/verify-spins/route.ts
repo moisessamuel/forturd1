@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { normalizePhone } from '@/lib/phone-utils'
 
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { searchParams } = new URL(request.url)
-    const telefono = searchParams.get('telefono')
+    const telefonoRaw = searchParams.get('telefono')
 
-    if (!telefono) {
+    if (!telefonoRaw) {
       return NextResponse.json({ error: 'Telefono es requerido' }, { status: 400 })
+    }
+
+    // Normalizar el número de teléfono (soporta múltiples formatos)
+    const telefono = normalizePhone(telefonoRaw)
+    if (!telefono) {
+      return NextResponse.json({ error: 'Número de teléfono inválido. Debe tener 10 dígitos.' }, { status: 400 })
     }
 
     // =============================================
