@@ -841,13 +841,38 @@ function RuletaPageContent() {
             PREMIOS DISPONIBLES
           </h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <PrizeCard nombre="1 Boleto del Sorteo" />
-            <PrizeCard nombre="1 Boleto BMW X6 + 1 Boleto BMW X7" />
-            <PrizeCard nombre="RD$5,000" />
-            <PrizeCard nombre="RD$100,000" />
-            <PrizeCard nombre="iPhone" />
-            <PrizeCard nombre="Motor" />
-            <PrizeCard nombre="Patineta/PS5/TV" />
+            <PrizeCard 
+              nombre="1 Boleto del Sorteo" 
+              imagen="/images/premio-boleto.png"
+            />
+            <PrizeCard 
+              nombre="1 Boleto BMW X6 + 1 Boleto BMW X7" 
+              imagen="/images/premio-bmw.png"
+            />
+            <PrizeCard 
+              nombre="RD$5,000" 
+              imagen="/images/premio-dinero-pequeno.png"
+            />
+            <PrizeCard 
+              nombre="RD$100,000" 
+              imagen="/images/premio-dinero-grande.png"
+            />
+            <PrizeCard 
+              nombre="iPhone" 
+              imagen="/images/premio-iphone.png"
+            />
+            <PrizeCard 
+              nombre="Motor" 
+              imagen="/images/premio-motor.png"
+            />
+            <PrizeCard 
+              nombre="Patineta/PS5/TV" 
+              imagen="/images/premio-ps5.png"
+            />
+            <PrizeCard 
+              nombre="Smart TV 4K" 
+              imagen="/images/premio-tv.png"
+            />
           </div>
         </div>
       </div>
@@ -1282,12 +1307,26 @@ function RuletaPageContent() {
 }
 
 // Prize Card Component (for Premios Disponibles section)
-function PrizeCard({ nombre }: { nombre: string }) {
+function PrizeCard({ nombre, imagen }: { nombre: string; imagen?: string }) {
   return (
-    <Card className="border-primary/30 bg-card/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10">
-      <CardContent className="flex flex-col items-center p-6 text-center">
-        <Gift className="mb-3 h-10 w-10 text-primary" />
-        <p className="text-sm font-bold text-foreground">{nombre}</p>
+    <Card className="group relative border-primary/30 bg-card/50 overflow-hidden transition-all duration-300 hover:border-primary/70 hover:scale-105 hover:shadow-xl hover:shadow-primary/20">
+      <CardContent className="flex flex-col items-center justify-center p-6 text-center h-40">
+        {imagen ? (
+          <div className="relative w-full h-full flex items-center justify-center">
+            <Image
+              src={imagen}
+              alt={nombre}
+              fill
+              className="object-contain group-hover:brightness-110 transition-all duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            />
+          </div>
+        ) : (
+          <>
+            <Gift className="mb-3 h-10 w-10 text-primary" />
+            <p className="text-sm font-bold text-foreground">{nombre}</p>
+          </>
+        )}
       </CardContent>
     </Card>
   )
