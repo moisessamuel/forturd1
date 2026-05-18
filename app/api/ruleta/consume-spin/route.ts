@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { normalizePhone } from '@/lib/phone-utils'
 
 /**
  * CONSUME-SPIN: Endpoint ATÓMICO para consumir UN giro ANTES de la animación.
@@ -26,12 +27,21 @@ export async function POST(request: Request) {
   try {
     const supabase = await createClient()
     const body = await request.json()
-    const { telefono } = body
+    const telefonoRaw = body.telefono
 
-    if (!telefono) {
+    if (!telefonoRaw) {
       return NextResponse.json({ 
         success: false, 
         error: 'Teléfono es requerido' 
+      }, { status: 400 })
+    }
+
+    // Normalizar el número de teléfono
+    const telefono = normalizePhone(telefonoRaw)
+    if (!telefono) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Número de teléfono inválido' 
       }, { status: 400 })
     }
 

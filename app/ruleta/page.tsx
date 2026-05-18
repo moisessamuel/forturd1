@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus, Clock } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
+import { normalizePhone } from '@/lib/phone-utils'
 
 interface FreeSpinData {
   numero_boleto: string
@@ -403,11 +404,18 @@ function RuletaPageContent() {
       return
     }
 
+    // Normalizar el número de teléfono (soporta múltiples formatos)
+    const normalizedPhone = normalizePhone(verificationPhone)
+    if (!normalizedPhone) {
+      setVerificationError('Número de teléfono inválido. Debe tener 10 dígitos.')
+      return
+    }
+
     setVerifying(true)
     setVerificationError('')
 
     try {
-      const response = await fetch(`/api/ruleta/verify-spins?telefono=${encodeURIComponent(verificationPhone)}`)
+      const response = await fetch(`/api/ruleta/verify-spins?telefono=${encodeURIComponent(normalizedPhone)}`)
       const data = await response.json()
 
       if (response.ok && data.success) {
@@ -439,7 +447,7 @@ function RuletaPageContent() {
           const newFreeSpinData = {
             numero_boleto: 'TICKET',
             nombre: data.nombre || '',
-            telefono: verificationPhone,
+            telefono: normalizedPhone,
             used: false,
             // NO guardamos giros_disponibles aquí - siempre consultamos al servidor
           }
@@ -451,7 +459,7 @@ function RuletaPageContent() {
             setJugadaId(data.jugada_id)
           }
           
-          setFormData(prev => ({ ...prev, telefono: verificationPhone, nombre: data.nombre || '' }))
+          setFormData(prev => ({ ...prev, telefono: normalizedPhone, nombre: data.nombre || '' }))
           setCanSpin(true)
           setShowVerificationModal(false)
           setVerificationPhone('')

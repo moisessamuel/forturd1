@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { sendAdminRuletaPurchaseNotification } from '@/lib/email'
+import { normalizePhone } from '@/lib/phone-utils'
 
 export async function GET() {
   try {
@@ -43,17 +44,23 @@ export async function POST(request: Request) {
       cantidad_giros = 1
     } = body
 
+    // Normalizar el número de teléfono
+    const telefonoNormalizado = normalizePhone(telefono)
+    if (!telefonoNormalizado) {
+      return NextResponse.json({ error: 'Número de teléfono inválido' }, { status: 400 })
+    }
+
     // Create or get player (players table uses phone_number, not telefono)
     let { data: player } = await supabase
       .from('players')
       .select('id')
-      .eq('phone_number', telefono)
+      .eq('phone_number', telefonoNormalizado)
       .single()
 
     if (!player) {
       const { data: newPlayer, error: playerError } = await supabase
         .from('players')
-        .insert({ nombre, phone_number: telefono, email })
+        .insert({ nombre, phone_number: telefonoNormalizado, email })
         .select('id')
         .single()
 
@@ -75,7 +82,7 @@ export async function POST(request: Request) {
       .insert({
         player_id: player.id,
         nombre,
-        telefono,
+        telefono: telefonoNormalizado,
         email,
         monto: es_gratis ? 0 : monto,
         moneda: es_gratis ? 'DOP' : moneda,

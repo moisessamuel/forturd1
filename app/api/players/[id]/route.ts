@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSession } from '@/lib/auth'
+import { normalizePhone } from '@/lib/phone-utils'
 
 export async function PATCH(
   request: NextRequest,
@@ -19,7 +20,13 @@ export async function PATCH(
     const updateData: Record<string, string> = {}
 
     if (body.nombre !== undefined) updateData.nombre = body.nombre
-    if (body.phone_number !== undefined) updateData.phone_number = body.phone_number
+    if (body.phone_number !== undefined) {
+      const normalizedPhone = normalizePhone(body.phone_number)
+      if (!normalizedPhone) {
+        return NextResponse.json({ error: 'Número de teléfono inválido' }, { status: 400 })
+      }
+      updateData.phone_number = normalizedPhone
+    }
     if (body.email !== undefined) updateData.email = body.email
 
     if (Object.keys(updateData).length === 0) {
