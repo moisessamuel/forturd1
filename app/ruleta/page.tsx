@@ -837,10 +837,15 @@ function RuletaPageContent() {
 
         {/* Premios Disponibles */}
         <div className="mt-12">
-          <h2 className="mb-6 text-center text-2xl font-bold text-foreground">
-            PREMIOS DISPONIBLES
-          </h2>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="mb-8 flex items-center justify-center gap-4">
+            <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary opacity-60" />
+            <h2 className="text-center text-3xl font-bold">
+              <span className="text-foreground">PREMIOS</span>
+              <span className="ml-2 text-primary">DISPONIBLES</span>
+            </h2>
+            <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary opacity-60" />
+          </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
             <PrizeCard 
               nombre="1 Boleto del Sorteo" 
               imagen="/images/premio-boleto.png"
@@ -866,12 +871,16 @@ function RuletaPageContent() {
               imagen="/images/premio-motor.png"
             />
             <PrizeCard 
-              nombre="Patineta/PS5/TV" 
+              nombre="PS5" 
               imagen="/images/premio-ps5.png"
             />
             <PrizeCard 
               nombre="Smart TV 4K" 
               imagen="/images/premio-tv.png"
+            />
+            <PrizeCard 
+              nombre="Scooter Eléctrica" 
+              imagen="/images/premio-scooter.png"
             />
           </div>
         </div>
@@ -1309,25 +1318,55 @@ function RuletaPageContent() {
 // Prize Card Component (for Premios Disponibles section)
 function PrizeCard({ nombre, imagen }: { nombre: string; imagen?: string }) {
   return (
-    <Card className="group relative border-primary/30 bg-card/50 overflow-hidden transition-all duration-300 hover:border-primary/70 hover:scale-105 hover:shadow-xl hover:shadow-primary/20">
-      <CardContent className="flex flex-col items-center justify-center p-6 text-center h-40">
+    <Card className="group relative border-2 border-primary/80 bg-black/60 overflow-hidden transition-all duration-300 hover:border-primary hover:scale-110 hover:shadow-2xl"
+      style={{
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(50,30,0,0.3) 100%)',
+        boxShadow: '0 0 30px rgba(218,165,32,0.3), inset 0 0 20px rgba(218,165,32,0.05), 0 -20px 40px rgba(218,165,32,0.25) inset'
+      }}>
+      <CardContent className="flex flex-col items-center justify-center p-8 text-center h-48 relative">
+        {/* Radial glow behind product */}
+        <div 
+          className="absolute inset-0 rounded-lg opacity-40 group-hover:opacity-60 transition-opacity"
+          style={{
+            background: 'radial-gradient(circle at center, rgba(218,165,32,0.4) 0%, transparent 70%)',
+          }}
+        />
+        
         {imagen ? (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center z-10">
             <Image
               src={imagen}
               alt={nombre}
               fill
-              className="object-contain group-hover:brightness-110 transition-all duration-300"
+              className="object-contain group-hover:brightness-125 group-hover:drop-shadow-lg transition-all duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             />
           </div>
         ) : (
           <>
-            <Gift className="mb-3 h-10 w-10 text-primary" />
-            <p className="text-sm font-bold text-foreground">{nombre}</p>
+            <Gift className="mb-3 h-12 w-12 text-primary z-10" />
+            <p className="text-sm font-bold text-primary z-10">{nombre}</p>
           </>
         )}
+        
+        {/* Golden platform glow at bottom */}
+        {imagen && (
+          <div 
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-1 rounded-full opacity-50 group-hover:opacity-100 transition-opacity"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(218,165,32,0.8) 0%, transparent 70%)',
+              filter: 'blur(8px)'
+            }}
+          />
+        )}
       </CardContent>
+      
+      {/* Bottom label */}
+      {imagen && (
+        <div className="relative z-10 bg-black/40 px-4 py-2 text-center border-t border-primary/20">
+          <p className="text-xs font-bold text-primary uppercase">{nombre}</p>
+        </div>
+      )}
     </Card>
   )
 }
