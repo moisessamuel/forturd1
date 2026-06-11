@@ -47,34 +47,6 @@ export async function POST() {
       .eq('slug', 'bmw-x7')
       .single()
 
-    if (!x7) {
-      console.log('[v0] Creating BMW X7 sorteo...')
-      const { error: insertError, data: insertData } = await supabase
-        .from('sorteos')
-        .insert({
-          slug: 'bmw-x7',
-          nombre: 'BMW X7 2024',
-          descripcion: 'SUV espacioso, cómodo y confortable. Ideal para toda la familia.',
-          precio_rd: 490,
-          precio_usd: 9,
-          total_boletos: 99999,
-          estado: 'activo',
-          metadata: { progreso_manual: 0 },
-        })
-        .select()
-
-      if (insertError) {
-        console.error('[v0] Error creating BMW X7:', insertError)
-        return NextResponse.json(
-          { error: `Error creating BMW X7: ${insertError.message}` },
-          { status: 400 }
-        )
-      }
-      console.log('[v0] BMW X7 created successfully')
-    } else {
-      console.log('[v0] BMW X7 already exists')
-    }
-
     return NextResponse.json(
       { 
         message: 'Sorteos initialized successfully',

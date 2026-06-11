@@ -195,8 +195,6 @@ export function SorteosDisponibles() {
                   <div className="mb-3 text-sm text-muted-foreground">
                     {sorteo.slug === 'bmw-x6' ? (
                       <span>Deportivo, elegante y potente. Diseñado para destacar.</span>
-                    ) : sorteo.slug === 'bmw-x7' ? (
-                      <span>Espacioso, cómodo y confortable. Ideal para toda la familia.</span>
                     ) : (
                       <span>CON LA VENTA DEL 100%</span>
                     )}

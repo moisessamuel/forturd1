@@ -12,15 +12,6 @@ const REQUIRED_SORTEOS: Record<string, any> = {
     total_boletos: 99999,
     estado: 'activo',
   },
-  'bmw-x7': {
-    slug: 'bmw-x7',
-    nombre: 'BMW X7 2024',
-    descripcion: 'Espacioso, cómodo y confortable. Ideal para toda la familia.',
-    precio_rd: 490,
-    precio_usd: 9,
-    total_boletos: 99999,
-    estado: 'activo',
-  },
 }
 
 export async function GET(request: Request) {
