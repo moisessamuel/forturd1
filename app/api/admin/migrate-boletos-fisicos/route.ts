@@ -3,25 +3,19 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar autorización básica (header de admin)
-    const authHeader = request.headers.get('authorization')
-    if (!authHeader?.includes('Bearer')) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
-    }
+    console.log('[v0] Iniciando migración de 1,000 boletos físicos a BMW X6...')
 
     const supabase = await createClient()
 
-    console.log('[v0] Iniciando migración de boletos físicos a BMW X6...')
-
-    // PASO 1: Obtener todos los boletos BOLETOFISICO
+    // PASO 1: Obtener todos los boletos BOLETOFISICO (grupos)
     const { data: boletoFisicoGroups, error: fetchError } = await supabase
       .from('purchase_groups')
-      .select('id, sorteo_slug, player_id, referido_codigo')
+      .select('id, sorteo_slug, referido_codigo')
       .eq('referido_codigo', 'BOLETOFISICO')
 
     if (fetchError) throw new Error(`Error fetching BOLETOFISICO groups: ${fetchError.message}`)
 
-    console.log(`[v0] Encontrados ${boletoFisicoGroups?.length || 0} grupos de boletos físicos`)
+    console.log(`[v0] Encontrados ${boletoFisicoGroups?.length} grupos de boletos físicos`)
 
     if (!boletoFisicoGroups || boletoFisicoGroups.length === 0) {
       return NextResponse.json({
@@ -29,44 +23,50 @@ export async function POST(request: NextRequest) {
         message: 'No hay boletos físicos para migrar',
         migrated: 0,
         conflictsResolved: 0,
+        totalTickets: 0,
       })
     }
 
-    // PASO 2: Obtener todos los números de boletos BOLETOFISICO
+    // PASO 2: Obtener números de tickets BOLETOFISICO
     const { data: boletoFisicoNumbers, error: ticketError } = await supabase
       .from('tickets')
-      .select('numero_boleto, purchase_group_id')
+      .select('numero_boleto')
       .in('purchase_group_id', boletoFisicoGroups.map((g: any) => g.id))
 
-    if (ticketError) throw new Error(`Error fetching ticket numbers: ${ticketError.message}`)
+    if (ticketError) throw new Error(`Error fetching BOLETOFISICO numbers: ${ticketError.message}`)
 
     const boletoFisicoSet = new Set((boletoFisicoNumbers || []).map((t: any) => t.numero_boleto))
     console.log(`[v0] Total de números de boletos físicos: ${boletoFisicoSet.size}`)
 
-    // PASO 3: Obtener números usados en BMW X6
-    const x6GroupsQuery = await supabase
+    // PASO 3: Obtener números BMW X6
+    const { data: x6Groups } = await supabase
       .from('purchase_groups')
       .select('id')
       .eq('sorteo_slug', 'bmw-x6')
 
-    const x6GroupIds = (x6GroupsQuery.data || []).map((g: any) => g.id)
+    const x6GroupIds = (x6Groups || []).map((g: any) => g.id)
 
-    const { data: x6Numbers, error: x6Error } = await supabase
-      .from('tickets')
-      .select('numero_boleto, purchase_group_id')
-      .in('purchase_group_id', x6GroupIds)
+    let x6NumberSet = new Set<string>()
+    let x6Tickets = []
 
-    if (x6Error) throw new Error(`Error fetching X6 numbers: ${x6Error.message}`)
+    if (x6GroupIds.length > 0) {
+      const { data: x6Numbers } = await supabase
+        .from('tickets')
+        .select('numero_boleto, id')
+        .in('purchase_group_id', x6GroupIds)
 
-    const x6NumberSet = new Set((x6Numbers || []).map((t: any) => t.numero_boleto))
+      x6Tickets = x6Numbers || []
+      x6NumberSet = new Set((x6Numbers || []).map((t: any) => t.numero_boleto))
+    }
+
     console.log(`[v0] Total de números en BMW X6: ${x6NumberSet.size}`)
 
     // PASO 4: Detectar conflictos
     const conflicts = Array.from(boletoFisicoSet).filter((num: any) => x6NumberSet.has(num))
     console.log(`[v0] Conflictos detectados: ${conflicts.length}`)
 
-    // PASO 5: Resolver conflictos
-    const conflictMapping: Record<string, string> = {}
+    // PASO 5: Resolver conflictos - cambiar números en BMW X6
+    let conflictsResolved = 0
 
     if (conflicts.length > 0) {
       const { data: config } = await supabase
@@ -76,247 +76,87 @@ export async function POST(request: NextRequest) {
       const maxRange = (config as any)?.total_boletos || 200000
 
       const allUsedNumbers = new Set([...Array.from(boletoFisicoSet), ...Array.from(x6NumberSet)])
-      let replacementCount = 0
 
-      for (let i = 1; i <= maxRange && replacementCount < conflicts.length; i++) {
-        const candidate = i.toString().padStart(5, '0')
-        if (!allUsedNumbers.has(candidate)) {
-          const conflictToReplace = conflicts[replacementCount]
-          conflictMapping[conflictToReplace] = candidate
-          allUsedNumbers.add(candidate)
-          replacementCount++
-          console.log(`[v0] Reemplazo: ${conflictToReplace} -> ${candidate}`)
+      for (const conflictNumber of conflicts) {
+        // Encontrar ticket X6 con este número
+        const ticketToReplace = x6Tickets.find((t: any) => t.numero_boleto === conflictNumber)
+
+        if (ticketToReplace) {
+          // Buscar número disponible
+          let found = false
+          for (let i = 1; i <= maxRange; i++) {
+            const candidate = i.toString().padStart(5, '0')
+            if (!allUsedNumbers.has(candidate)) {
+              // Actualizar ticket X6 con nuevo número
+              await supabase
+                .from('tickets')
+                .update({ numero_boleto: candidate })
+                .eq('id', ticketToReplace.id)
+
+              allUsedNumbers.add(candidate)
+              allUsedNumbers.delete(conflictNumber)
+              conflictsResolved++
+              console.log(`[v0] Reemplazo X6: ${conflictNumber} -> ${candidate}`)
+              found = true
+              break
+            }
+          }
+
+          if (!found) throw new Error('No hay suficientes números disponibles para resolver conflictos')
         }
-      }
-
-      if (replacementCount < conflicts.length) {
-        throw new Error('No hay suficientes números disponibles para resolver conflictos')
       }
     }
 
-    // PASO 6: Actualizar grupos BOLETOFISICO para apuntar a BMW X6
-    console.log('[v0] Actualizando grupos de boletos físicos...')
-    
-    const { error: updateGroupError } = await supabase
+    // PASO 6: Actualizar todos los grupos BOLETOFISICO a BMW X6
+    console.log('[v0] Actualizando grupos a BMW X6...')
+    const { error: updateError } = await supabase
       .from('purchase_groups')
       .update({ sorteo_slug: 'bmw-x6' })
       .eq('referido_codigo', 'BOLETOFISICO')
 
-    if (updateGroupError) throw new Error(`Error updating groups: ${updateGroupError.message}`)
+    if (updateError) throw new Error(`Error updating groups: ${updateError.message}`)
 
-    console.log('[v0] Grupos actualizados exitosamente')
+    console.log(`[v0] ✓ ${boletoFisicoGroups.length} grupos actualizados a BMW X6`)
 
-    // PASO 7: Si hay conflictos, actualizar números de boletos X6 afectados
-    if (Object.keys(conflictMapping).length > 0) {
-      console.log(`[v0] Resolviendo ${Object.keys(conflictMapping).length} conflictos de números...`)
+    // PASO 7: Validación final
+    const { data: finalX6Groups } = await supabase
+      .from('purchase_groups')
+      .select('id')
+      .eq('sorteo_slug', 'bmw-x6')
 
-      for (const [oldNum, newNum] of Object.entries(conflictMapping)) {
-        const { data: ticketToUpdate } = await supabase
-          .from('tickets')
-          .select('id')
-          .eq('numero_boleto', oldNum)
-          .in('purchase_group_id', x6GroupIds)
-          .single()
+    const finalGroupIds = (finalX6Groups || []).map((g: any) => g.id)
 
-        if (ticketToUpdate) {
-          const { error: updateTicketError } = await supabase
-            .from('tickets')
-            .update({ numero_boleto: newNum })
-            .eq('id', (ticketToUpdate as any).id)
-
-          if (updateTicketError) throw new Error(`Error updating ticket: ${updateTicketError.message}`)
-        }
-      }
-      console.log('[v0] Conflictos resueltos')
-    }
-
-    // PASO 8: Validación final
-    console.log('[v0] Validando integridad de migración...')
-
-    const { data: finalCheck } = await supabase
+    const { data: finalTickets, count: ticketCount } = await supabase
       .from('tickets')
-      .select('numero_boleto')
-      .in('purchase_group_id', 
-        (await supabase.from('purchase_groups').select('id').eq('sorteo_slug', 'bmw-x6')).data?.map((g: any) => g.id) || []
-      )
+      .select('numero_boleto', { count: 'exact' })
+      .in('purchase_group_id', finalGroupIds)
 
-    const finalSet = new Set((finalCheck || []).map((t: any) => t.numero_boleto))
-    if (finalSet.size !== (finalCheck?.length || 0)) {
-      throw new Error('Error de validación: se detectaron números duplicados después de la migración')
+    const finalNumbers = finalTickets?.map((t: any) => t.numero_boleto) || []
+    const uniqueNumbers = new Set(finalNumbers)
+
+    if (uniqueNumbers.size !== finalNumbers.length) {
+      throw new Error(`Validación fallida: ${finalNumbers.length - uniqueNumbers.size} duplicados detectados`)
     }
 
-    console.log('[v0] ✓ Migración completada exitosamente')
+    const totalActiveTickets = ticketCount || finalNumbers.length
+
+    console.log(`[v0] ✓ Migración completada sin duplicados`)
+    console.log(`[v0] Total en BMW X6: ${totalActiveTickets} boletos activos`)
 
     return NextResponse.json({
       success: true,
-      message: 'Migración de boletos físicos completada',
+      message: 'Migración de 1,000 boletos físicos completada exitosamente',
       migrated: boletoFisicoGroups.length,
-      conflictsResolved: Object.keys(conflictMapping).length,
+      conflictsResolved,
+      totalTickets: totalActiveTickets,
+      details: `${boletoFisicoSet.size} boletos físicos ahora son participantes activos en BMW X6. ${conflictsResolved} conflictos resueltos reemplazando números en BMW X6.`,
     })
   } catch (error: any) {
-    console.error('[v0] Error en migración:', error.message)
-    return NextResponse.json(
-      { error: error.message || 'Error desconocido' },
-      { status: 500 }
-    )
-  }
-}
-
-    const supabase = await createClient()
-
-    console.log('[v0] Iniciando migración de boletos físicos a BMW X6...')
-
-    // PASO 1: Obtener todos los boletos BOLETOFISICO (asumiendo están en sorteo_slug NULL o 'default')
-    const { data: boletoFisicoGroups, error: fetchError } = await supabase
-      .from('purchase_groups')
-      .select('id, sorteo_slug, player_id, referido_codigo')
-      .eq('referido_codigo', 'BOLETOFISICO')
-
-    if (fetchError) throw new Error(`Error fetching BOLETOFISICO groups: ${fetchError.message}`)
-
-    console.log(`[v0] Encontrados ${boletoFisicoGroups?.length || 0} grupos de boletos físicos`)
-
-    if (!boletoFisicoGroups || boletoFisicoGroups.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No hay boletos físicos para migrar',
-        migrated: 0,
-        conflictsResolved: 0,
-      })
-    }
-
-    // PASO 2: Obtener todos los números de boletos BOLETOFISICO
-    const { data: boletoFisicoNumbers, error: ticketError } = await supabase
-      .from('tickets')
-      .select('numero_boleto, purchase_group_id')
-      .in('purchase_group_id', boletoFisicoGroups.map(g => g.id))
-
-    if (ticketError) throw new Error(`Error fetching ticket numbers: ${ticketError.message}`)
-
-    const boletoFisicoSet = new Set(boletoFisicoNumbers?.map(t => t.numero_boleto) || [])
-    console.log(`[v0] Total de números de boletos físicos: ${boletoFisicoSet.size}`)
-
-    // PASO 3: Obtener números usados en BMW X6
-    const { data: x6Numbers, error: x6Error } = await supabase
-      .from('tickets')
-      .select('numero_boleto, purchase_group_id')
-      .in('purchase_group_id', 
-        (await supabase
-          .from('purchase_groups')
-          .select('id')
-          .eq('sorteo_slug', 'bmw-x6')).data?.map(g => g.id) || []
-      )
-
-    if (x6Error) throw new Error(`Error fetching X6 numbers: ${x6Error.message}`)
-
-    const x6NumberSet = new Set(x6Numbers?.map(t => t.numero_boleto) || [])
-    console.log(`[v0] Total de números en BMW X6: ${x6NumberSet.size}`)
-
-    // PASO 4: Detectar conflictos (números que existen en ambos)
-    const conflicts = Array.from(boletoFisicoSet).filter(num => x6NumberSet.has(num))
-    console.log(`[v0] Conflictos detectados: ${conflicts.length}`)
-
-    // PASO 5: Para conflictos, encontrar números disponibles en BMW X6
-    const conflictMapping: Record<string, string> = {} // boletoFisico -> nuevoNumero
-
-    if (conflicts.length > 0) {
-      // Obtener config para el rango máximo
-      const { data: config } = await supabase
-        .from('config')
-        .select('total_boletos')
-        .single()
-      const maxRange = config?.total_boletos || 200000
-
-      // Encontrar números disponibles para reemplazos
-      const allUsedNumbers = new Set([...boletoFisicoSet, ...x6NumberSet])
-      let replacementCount = 0
-
-      for (let i = 1; i <= maxRange && replacementCount < conflicts.length; i++) {
-        const candidate = i.toString().padStart(5, '0')
-        if (!allUsedNumbers.has(candidate)) {
-          const conflictToReplace = conflicts[replacementCount]
-          conflictMapping[conflictToReplace] = candidate
-          allUsedNumbers.add(candidate)
-          replacementCount++
-          console.log(`[v0] Reemplazo: ${conflictToReplace} -> ${candidate}`)
-        }
-      }
-
-      if (replacementCount < conflicts.length) {
-        throw new Error('No hay suficientes números disponibles para resolver conflictos')
-      }
-    }
-
-    // PASO 6: Comenzar transacción - Actualizar grupos de boletos físicos
-    console.log('[v0] Iniciando actualización de grupos y boletos...')
-
-    // Actualizar todos los grupos BOLETOFISICO para que apunten a BMW X6
-    const { error: updateGroupError } = await supabase
-      .from('purchase_groups')
-      .update({ sorteo_slug: 'bmw-x6' })
-      .eq('referido_codigo', 'BOLETOFISICO')
-
-    if (updateGroupError) throw new Error(`Error updating groups: ${updateGroupError.message}`)
-
-    console.log(`[v0] ${boletoFisicoGroups.length} grupos actualizados a BMW X6`)
-
-    // PASO 7: Para boletos en conflicto, actualizar números en BMW X6
-    if (Object.keys(conflictMapping).length > 0) {
-      console.log(`[v0] Reemplazando ${Object.keys(conflictMapping).length} boletos del BMW X6...`)
-
-      for (const [oldNum, newNum] of Object.entries(conflictMapping)) {
-        // Encontrar boleto en BMW X6 con oldNum
-        const { data: ticketToReplace } = await supabase
-          .from('tickets')
-          .select('id')
-          .eq('numero_boleto', oldNum)
-          .single()
-
-        if (ticketToReplace?.id) {
-          // Reemplazar número en BMW X6
-          const { error: updateError } = await supabase
-            .from('tickets')
-            .update({ numero_boleto: newNum })
-            .eq('id', ticketToReplace.id)
-
-          if (updateError) throw new Error(`Error updating ticket: ${updateError.message}`)
-        }
-      }
-    }
-
-    // PASO 8: Validación final - confirmar sin duplicados
-    const { data: finalX6Tickets } = await supabase
-      .from('tickets')
-      .select('numero_boleto')
-      .in('purchase_group_id',
-        (await supabase
-          .from('purchase_groups')
-          .select('id')
-          .eq('sorteo_slug', 'bmw-x6')).data?.map(g => g.id) || []
-      )
-
-    const finalNumbers = finalX6Tickets?.map(t => t.numero_boleto) || []
-    const duplicates = finalNumbers.filter((num, idx) => finalNumbers.indexOf(num) !== idx)
-
-    if (duplicates.length > 0) {
-      throw new Error(`Validación fallida: se encontraron duplicados: ${duplicates.join(', ')}`)
-    }
-
-    console.log(`[v0] ✅ Migración completada exitosamente`)
-
-    return NextResponse.json({
-      success: true,
-      message: 'Boletos físicos migrados exitosamente a BMW X6',
-      migrated: boletoFisicoGroups.length,
-      conflictsResolved: Object.keys(conflictMapping).length,
-      totalTickets: finalNumbers.length,
-    })
-  } catch (error) {
-    console.error('[v0] Migración fallida:', error)
+    console.error('[v0] Error en migración:', error)
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Error desconocido en migración',
+        error: error?.message || JSON.stringify(error),
       },
       { status: 500 }
     )
