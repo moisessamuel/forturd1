@@ -14,10 +14,11 @@ interface SorteoWithProgress extends Sorteo {
 }
 
 const carouselImages = [
-  '/images/bmw-carousel-cover.jpg',
-  '/images/bmw-carousel-1.png',
-  '/images/bmw-carousel-2.png',
-  '/images/bmw-carousel-3.png',
+  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_54%20%287%29-sN5x7xzJk90iflSeDITmvQRY3kT8KJ.png',
+  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_53%20%284%29-DgVK2VhcE9JtCqFdbocrIWhwt0J2w4.png',
+  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_52%20%282%29-uVsQFDEwcmSkT4Daic2XGPIWksxUvh.png',
+  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_52%20%281%29-5j1WJMuaawR223yWU3N2LYhU53cpo2.png',
+  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_20_01-qiVEwPIXjBVZr4B6WvCfwUYNMppV5S.png',
 ]
 
 export function SorteosDisponibles() {
