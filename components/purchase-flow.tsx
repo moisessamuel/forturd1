@@ -59,7 +59,7 @@ export function PurchaseFlow({ initialQuantity, referralCode, onClose }: Purchas
 
   const [step, setStep] = useState<Step>(1)
   const [quantity] = useState(initialQuantity)
-  const [precioBoleto, setPrecioBoleto] = useState(490)
+  const [precioBoleto, setPrecioBoleto] = useState(300)
   const [precioBoletoUsd, setPrecioBoletoUsd] = useState(9)
   const [moneda, setMoneda] = useState<'DOP' | 'USD'>('DOP')
   const [bancos, setBancos] = useState<Banco[]>([])

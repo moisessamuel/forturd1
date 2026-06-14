@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { generateTicketNumbers } from '@/lib/ticket'
 import { getSessionFromRequest } from '@/lib/auth'
+import { getDiscountedPrice } from '@/lib/pricing'
 import { randomUUID } from 'crypto'
 import { sendTicketPendingEmail, sendAdminPurchaseNotification } from '@/lib/email'
 
@@ -138,10 +139,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate total
+    // Calculate total with volume discount
     const isUsd = body.moneda === 'USD'
     const precioUnitario = isUsd ? (config.precio_boleto_usd || 20) : config.precio_boleto_dop
-    const monto = precioUnitario * body.cantidad
+    const precioConDescuento = getDiscountedPrice(precioUnitario, body.cantidad)
+    const monto = precioConDescuento * body.cantidad
 
     // 1. Find or create player by phone number
     const phoneNumber = body.telefono.trim()

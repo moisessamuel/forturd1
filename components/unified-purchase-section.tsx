@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import Image from 'next/image'
 import Link from 'next/link'
 import { QRCodeSVG } from 'qrcode.react'
+import { getDiscountedPrice } from '@/lib/pricing'
 import type { Banco } from '@/lib/types'
 
 interface FormData {
@@ -60,7 +61,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
   const [referralCode, setReferralCode] = useState('')
   
   // Config state
-  const [precioBoleto, setPrecioBoleto] = useState(490)
+  const [precioBoleto, setPrecioBoleto] = useState(300)
   const [precioBoletoUsd, setPrecioBoletoUsd] = useState(9)
   const [moneda, setMoneda] = useState<'DOP' | 'USD'>('DOP')
   const [bancos, setBancos] = useState<Banco[]>([])
@@ -158,7 +159,9 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
   }
 
   const precioActual = moneda === 'DOP' ? precioBoleto : precioBoletoUsd
-  const total = (parseInt(quantity) || 0) * precioActual
+  const qty = parseInt(quantity) || 0
+  const precioUnitarioConDescuento = getDiscountedPrice(precioActual, qty)
+  const total = qty * precioUnitarioConDescuento
 
   useEffect(() => {
     // If sorteo-specific prices are provided, use them
@@ -512,13 +515,30 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
             </div>
 
             {/* Total Display - La moneda se determina automáticamente por el método de pago */}
-            <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-2">
-              <span className="text-xs text-muted-foreground">
-                {selectedBanco ? (moneda === 'USD' ? 'Pago en USD' : 'Pago en RD$') : 'Selecciona método de pago'}
-              </span>
-              <span className="text-sm font-bold text-primary">
-                {formatCurrency(total || 0)}
-              </span>
+            <div className="space-y-2 rounded-lg bg-secondary/30 p-3">
+              {qty > 0 && precioUnitarioConDescuento !== precioActual && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    Precio por boleto
+                  </span>
+                  <span className="font-semibold text-primary">
+                    {formatCurrency(precioUnitarioConDescuento)}
+                    {qty >= 4 && (
+                      <span className="ml-1 text-xs text-yellow-600">
+                        {qty >= 10 ? '(50% desc.)' : '(17% desc.)'}
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center justify-between rounded-lg bg-secondary/30 p-2">
+                <span className="text-xs text-muted-foreground">
+                  {selectedBanco ? (moneda === 'USD' ? 'Total USD' : 'Total RD$') : 'Selecciona método de pago'}
+                </span>
+                <span className="text-sm font-bold text-primary">
+                  {formatCurrency(total || 0)}
+                </span>
+              </div>
             </div>
 
             {/* Personal Data - Compact */}
