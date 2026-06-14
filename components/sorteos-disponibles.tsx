@@ -99,7 +99,7 @@ export function SorteosDisponibles() {
                     src={src}
                     alt={`BMW X6 y X7 - Imagen ${index + 1}`}
                     fill
-                    className="object-contain"
+                    className={index === 0 ? 'object-contain' : 'object-cover'}
                     priority={index === 0}
                   />
                 </div>
