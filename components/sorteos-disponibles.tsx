@@ -14,6 +14,7 @@ interface SorteoWithProgress extends Sorteo {
 }
 
 const carouselImages = [
+  'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-UHzMAPHm4Z49bcIwCkEbVy8bjStXSi.png',
   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_54%20%287%29-sN5x7xzJk90iflSeDITmvQRY3kT8KJ.png',
   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_53%20%284%29-DgVK2VhcE9JtCqFdbocrIWhwt0J2w4.png',
   'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_52%20%282%29-uVsQFDEwcmSkT4Daic2XGPIWksxUvh.png',
@@ -98,7 +99,7 @@ export function SorteosDisponibles() {
                     src={src}
                     alt={`BMW X6 y X7 - Imagen ${index + 1}`}
                     fill
-                    className="object-cover"
+                    className={index === 0 ? 'object-contain' : 'object-cover'}
                     priority={index === 0}
                   />
                 </div>
