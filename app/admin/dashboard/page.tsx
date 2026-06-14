@@ -853,7 +853,7 @@ export default function AdminDashboard() {
               </div>
               <p className="mb-4 text-sm text-muted-foreground">
                 Los boletos seleccionados serán asignados a un nuevo comprador con la información que ingreses.
-                El monto se calculará automáticamente (RD$490 por boleto).
+                El monto se calculará automáticamente (RD$300 por boleto).
               </p>
               <div className="space-y-4">
                 <div>
@@ -887,7 +887,7 @@ export default function AdminDashboard() {
               <div className="mt-4 rounded-lg border border-primary/30 bg-primary/5 p-3">
                 <p className="text-sm">
                   <span className="text-muted-foreground">Monto total: </span>
-                  <span className="font-bold text-primary">{formatCurrency(selectedTickets.size * 490, 'DOP')}</span>
+                  <span className="font-bold text-primary">{formatCurrency(selectedTickets.size * 300, 'DOP')}</span>
                 </p>
               </div>
               <div className="mt-6 flex gap-3">

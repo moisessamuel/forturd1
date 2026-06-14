@@ -7,7 +7,7 @@ const REQUIRED_SORTEOS = [
     slug: 'bmw-x6',
     nombre: 'BMW X6 2024',
     descripcion: 'Deportivo, elegante y potente. Diseñado para destacar.',
-    precio_rd: 490,
+    precio_rd: 300,
     precio_usd: 9,
     total_boletos: 99999,
     estado: 'activo',
