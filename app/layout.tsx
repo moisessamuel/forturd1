@@ -16,12 +16,12 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-  description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+  description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Compra tus boletos y gana.',
   generator: 'FortuRD',
   metadataBase: new URL('https://www.forturd1.com'),
   openGraph: {
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-    description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+    description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Compra tus boletos y gana.',
     url: 'https://www.forturd1.com',
     siteName: 'FortuRD',
     images: [
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
         url: 'https://www.forturd1.com/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'FortuRD - BMW X6 y X7',
+        alt: 'FortuRD - BMW X6',
       },
     ],
     locale: 'es_DO',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
-    description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+    description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Compra tus boletos y gana.',
     images: ['https://www.forturd1.com/images/og-image.png'],
   },
   icons: {
@@ -69,7 +69,7 @@ export default function RootLayout({
         <meta property="og:image:height" content="630" />
         <meta property="og:image:type" content="image/png" />
         <meta property="og:title" content="FortuRD - Arranca tu sueño, Enciende tu fortuna" />
-        <meta property="og:description" content="Tu decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana." />
+        <meta property="og:description" content="Tu decides tu suerte. La BMW X6 esperando dueño. Compra tus boletos y gana." />
         <meta property="og:url" content="https://www.forturd1.com" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="FortuRD" />
@@ -81,7 +81,7 @@ export default function RootLayout({
               '@type': 'WebSite',
               name: 'FortuRD',
               url: 'https://www.forturd1.com',
-              description: 'Tú decides tu suerte. Una BMW X6 y una BMW X7 esperando dueño. Compra tus boletos y gana.',
+              description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Compra tus boletos y gana.',
               potentialAction: {
                 '@type': 'SearchAction',
                 target: 'https://www.forturd1.com/verificar?q={search_term_string}',
@@ -97,7 +97,7 @@ export default function RootLayout({
               '@context': 'https://schema.org',
               '@type': 'Event',
               name: 'Sorteo FortuRD - BMW X6 y BMW X7',
-              description: 'Tú decides tu suerte. Una BMW X6 esperando dueño. Boletos a 300 DOP.',
+              description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Boletos a 300 DOP.',
               image: 'https://www.forturd1.com/images/og-image.png',
               organizer: {
                 '@type': 'Organization',
