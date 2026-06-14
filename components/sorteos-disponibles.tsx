@@ -144,15 +144,14 @@ export function SorteosDisponibles() {
                   lineHeight: '1.9',
                 }}
               >
-                Una de estas BMW puede ser tuya. Compra 2 boletos o más y recibe un giro{' '}
+                ¡Solo faltan 2 meses! Esta máquina BMW X6 puede ser tuya… o si prefieres, llévate RD$4,000,000 en efectivo. Tú decides. Por la compra de 2 boletos obtienes 1 giro{' '}
                 <span 
                   className="font-extrabold not-italic text-primary"
                   style={{ textShadow: '0 0 20px rgba(218,165,32,1), 0 0 40px rgba(218,165,32,0.8)' }}
                 >
                   GRATIS
                 </span>{' '}
-                en nuestra Ruleta FortuRD.{' '}
-                Participa hoy y aumenta tus posibilidades de ganar grandes premios y sorpresas exclusivas.
+                en la Ruleta FortuRD.
               </p>
             </div>
           </div>
