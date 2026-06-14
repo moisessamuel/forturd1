@@ -525,7 +525,7 @@ export function UnifiedPurchaseSection({ sorteoSlug, precioDop, precioUsd }: Uni
                     {formatCurrency(precioUnitarioConDescuento)}
                     {qty >= 4 && (
                       <span className="ml-1 text-xs text-yellow-600">
-                        {qty >= 10 ? '(50% desc.)' : '(17% desc.)'}
+                        {qty >= 10 ? '(33% desc.)' : '(17% desc.)'}
                       </span>
                     )}
                   </span>
