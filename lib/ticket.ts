@@ -21,6 +21,25 @@ export async function generateTicketNumbers(count: number): Promise<string[]> {
     ...(newTickets?.map(t => t.numero_boleto) || []),
   ])
 
+  // EXCLUSIÓN: Obtener números de boletos físicos para excluirlos de generación aleatoria
+  const { data: boletoFisicoGroups } = await supabase
+    .from('purchase_groups')
+    .select('id')
+    .eq('referido_codigo', 'BOLETOFISICO')
+
+  if (boletoFisicoGroups && boletoFisicoGroups.length > 0) {
+    const boletoFisicoIds = boletoFisicoGroups.map(g => g.id)
+    const { data: boletoFisicoTickets } = await supabase
+      .from('tickets')
+      .select('numero_boleto')
+      .in('purchase_group_id', boletoFisicoIds)
+
+    const boletoFisicoNumbers = boletoFisicoTickets?.map(t => t.numero_boleto) || []
+    console.log(`[v0] Excluyendo ${boletoFisicoNumbers.length} números de boletos físicos de generación aleatoria`)
+    
+    boletoFisicoNumbers.forEach(num => usedNumbers.add(num))
+  }
+
   const generated: string[] = []
   let attempts = 0
   const maxAttempts = count * 100
