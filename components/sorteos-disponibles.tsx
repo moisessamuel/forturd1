@@ -167,11 +167,19 @@ export function SorteosDisponibles() {
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={
+              activeSorteos.length === 1
+                ? 'flex justify-center'
+                : 'grid gap-6 md:grid-cols-2 lg:grid-cols-3'
+            }
+          >
             {activeSorteos.map((sorteo) => (
               <Card 
                 key={sorteo.id} 
-                className="group overflow-hidden border-border/50 bg-card/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10"
+                className={`group overflow-hidden border-border/50 bg-card/50 transition-all hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10${
+                  activeSorteos.length === 1 ? ' w-full max-w-xl' : ''
+                }`}
               >
                 <Link href={`/${sorteo.slug}`} className="block">
                   <div className="relative aspect-[4/3] cursor-pointer overflow-hidden">
