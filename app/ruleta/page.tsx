@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus, Clock } from 'lucide-react'
+import { Gift, Upload, DollarSign, Phone, User, Mail, CheckCircle, PartyPopper, X, Copy, Plus, Minus, Clock, MessageCircle } from 'lucide-react'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import { normalizePhone } from '@/lib/phone-utils'
@@ -838,7 +838,7 @@ function RuletaPageContent() {
         {/* Premios Disponibles */}
         <div className="mt-12 group relative overflow-hidden rounded-lg transition-transform duration-300 hover:scale-105">
           <Image
-            src="/images/premios-disponibles-section.png"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SB1xsos189hxh2hzaMpuPkOrgrMwVS.png"
             alt="Premios Disponibles"
             width={1600}
             height={900}
@@ -1160,10 +1160,10 @@ function RuletaPageContent() {
             {spinResult?.tipo === 'premio' ? (
               <>
                 <PartyPopper className="mx-auto mb-4 h-20 w-20 text-primary" />
-                <p className="text-xl font-bold text-foreground">{spinResult.nombre}</p>
+                <p className="text-xl font-bold text-foreground">¡{spinResult.nombre}!</p>
                 <p className="mt-2 text-muted-foreground">{spinResult.descripcion}</p>
-                <p className="mt-4 text-sm text-muted-foreground">
-                  Te contactaremos para coordinar la entrega de tu premio
+                <p className="mt-4 text-xs text-yellow-500 font-semibold">
+                  Para reclamar tu premio escríbenos a soporte por WhatsApp.
                 </p>
               </>
             ) : (
@@ -1275,6 +1275,17 @@ function RuletaPageContent() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/18298059020"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-green-500 text-white shadow-lg transition-all duration-300 hover:bg-green-600 hover:shadow-2xl hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-400/50"
+        title="Contacta por WhatsApp"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </a>
     </main>
   )
 }

@@ -83,8 +83,8 @@ interface Stats {
 // Prize milestones configuration - OFFICIAL FORTURD PRIZES (cyclic/repeating)
 // Each prize repeats every X spins (e.g., boleto every 12 spins: 12, 24, 36, ...)
 const PRIZE_MILESTONES = [
-  { spins: 12, prize: '1 Boleto del Sorteo a Eleccion', icon: Ticket, color: 'text-green-500', bgColor: 'bg-green-500/10' },
-  { spins: 71, prize: '1 Boleto BMW X6 + 1 Boleto BMW X7', icon: Ticket, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+  { spins: 12, prize: '1 Boleto BMW X6', icon: Ticket, color: 'text-green-500', bgColor: 'bg-green-500/10' },
+  { spins: 71, prize: '2 Boletos BMW X6', icon: Ticket, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
   { spins: 211, prize: 'RD$5,000', icon: Banknote, color: 'text-pink-500', bgColor: 'bg-pink-500/10' },
   { spins: 3504, prize: 'Patineta Electrica / PS5 / Smart TV', icon: Gamepad2, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10' },
   { spins: 8605, prize: 'iPhone', icon: Smartphone, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
