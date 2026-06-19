@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     siteName: 'FortuRD',
     images: [
       {
-        url: 'https://www.forturd1.com/images/og-image.png',
+        url: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_54%20%287%29-sN5x7xzJk90iflSeDITmvQRY3kT8KJ.png',
         width: 1200,
         height: 630,
         alt: 'FortuRD - BMW X6',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FortuRD - Arranca tu sueño, Enciende tu fortuna',
     description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Compra tus boletos y gana.',
-    images: ['https://www.forturd1.com/images/og-image.png'],
+    images: ['https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_54%20%287%29-sN5x7xzJk90iflSeDITmvQRY3kT8KJ.png'],
   },
   icons: {
     icon: [
@@ -64,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="es" className="bg-background" suppressHydrationWarning>
       <head>
-        <meta property="og:image" content="https://www.forturd1.com/images/og-image.png" />
+        <meta property="og:image" content="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_54%20%287%29-sN5x7xzJk90iflSeDITmvQRY3kT8KJ.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:type" content="image/png" />
@@ -98,7 +98,7 @@ export default function RootLayout({
               '@type': 'Event',
               name: 'Sorteo FortuRD - BMW X6 y BMW X7',
               description: 'Tú decides tu suerte. La BMW X6 esperando dueño. Boletos a 300 DOP.',
-              image: 'https://www.forturd1.com/images/og-image.png',
+              image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/ChatGPT%20Image%2014%20jun%202026%2C%2010_46_54%20%287%29-sN5x7xzJk90iflSeDITmvQRY3kT8KJ.png',
               organizer: {
                 '@type': 'Organization',
                 name: 'FortuRD',
