@@ -838,7 +838,7 @@ function RuletaPageContent() {
         {/* Premios Disponibles */}
         <div className="mt-12 group relative overflow-hidden rounded-lg transition-transform duration-300 hover:scale-105">
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-UHzMAPHm4Z49bcIwCkEbVy8bjStXSi.png"
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-SB1xsos189hxh2hzaMpuPkOrgrMwVS.png"
             alt="Premios Disponibles"
             width={1600}
             height={900}
